@@ -49,7 +49,6 @@ var inject = function () {
     if (mention)
       mention.close();
   });
-  Notification.requestPermission();
 
   var WebSocket = window.WebSocket;
   window.WebSocket = function (url, protocols) {
