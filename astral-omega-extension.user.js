@@ -8,8 +8,18 @@
 
 var inject = function () {
 
+  var notify = 0; // 1で有効
   var mentionPattern = /[セせ][ンん][ゔヴべ]|senn?[bv]|🍘/i;
   var replyMsg = 'ｎ';
+  var userCSS = `
+:not(.p-inputswitch-slider,.character-selection-box-colorpalette *) {
+  background-color: #051404 !important;
+  color: #fff !important;
+}
+.character, .character :not(.bubble-area div),.character-selection-box-image,.character-selection-box-image *{
+  background-color: #0000 !important;
+}
+  `;
 
   var pngCache = {};
   var SVG2PNG = async function (url) {
@@ -81,7 +91,7 @@ var inject = function () {
         case 'COM':
           if (data[1].id === myId)
             return;
-          if (!document.hasFocus() && mentionPattern && mentionPattern.test(data[1].cmt))
+          if (notify && !document.hasFocus() && mentionPattern && mentionPattern.test(data[1].cmt))
             mentionNotification(users[data[1].id], data[1].cmt, () => {
               if (replyMsg)
                 socket.send('42' + JSON.stringify(['COM', {token: token, cmt: replyMsg}]));
@@ -95,5 +105,9 @@ var inject = function () {
   };
   window.WebSocket.prototype = WebSocket.prototype;
   window.WebSocket.__proto__ = WebSocket;
+  
+  addEventListener('load', () => {
+    document.querySelector('head').appendChild(document.createElement('style')).textContent = userCSS;
+  });
 };
 window.eval('(' + inject + ')()');
