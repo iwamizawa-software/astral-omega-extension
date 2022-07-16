@@ -16,7 +16,7 @@ var inject = function () {
   background-color: #051404 !important;
   color: #fff !important;
 }
-.character, .character :not(.bubble-area div),.character-selection-box-image,.character-selection-box-image *{
+.character, .character :not(.bubble-area div,.stat-text),.character-selection-box-image,.character-selection-box-image *{
   background-color: #0000 !important;
 }
   `;
