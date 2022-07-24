@@ -127,6 +127,10 @@ var inject = function () {
               u.name = u.name.slice(0, extensionConfig.maxName);
               modified = true;
             }
+            if (u.stat && u.stat.length > extensionConfig.maxStat) {
+              u.stat = u.stat.slice(0, extensionConfig.maxStat);
+              modified = true;
+            }
             users[u.id] = u;
           });
           if (modified)
