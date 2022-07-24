@@ -8,6 +8,7 @@
 
 ## インストール
 
-1. [astral-omega-extension.user.js](https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/main/astral-omega-extension.user.js)
-2. 自分で編集
+1. ChromeでTampermonkey ([Edge用リンク](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd), [Chrome用リンク](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja), [Firefox用リンク](https://addons.mozilla.org/ja/firefox/addon/tampermonkey/))をインストール
+2. [astral-omega-extension.user.js](https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/main/astral-omega-extension.user.js)をインストール
+3. 自分で編集
 
