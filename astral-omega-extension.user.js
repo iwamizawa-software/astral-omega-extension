@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name     astral-omega-extension
-// @version  16
+// @version  17
 // @grant    none
 // @run-at   document-start
 // @match    https://monachat.xyz/*
@@ -150,8 +150,8 @@ var inject = function () {
     return cond.some(c => {
       if (!c)
         return false;
-      if (/^\/.+\/[dgimsuy]*$/i.test(c)) {
-        var regex = new RegExp(c.slice(1, -1));
+      if (/^\/.+\/([dgimsuy]*)$/i.test(c)) {
+        var regex = new RegExp(c.slice(1, -(1 + RegExp.$1.length)), RegExp.$1);
         return regex.test(nospace) || regex.test(str);
       } else {
         return nospace.indexOf(c) !== -1 || str.indexOf(c) !== -1;
@@ -703,9 +703,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
               onclick: function () {
                 if (!addText.value)
                   return;
-                if (addText.value[0] === '/' && addText.value.endsWith('/') && addText.value.length > 2) {
+                if (/^\/.+\/([dgimsuy]*)$/i.test(addText.value)) {
                   try {
-                    new RegExp(addText.value.slice(1, -1));
+                    new RegExp(addText.value.slice(1, -(1 + RegExp.$1.length)), RegExp.$1);
                   } catch (err) {
                     alert('正規表現の書き方が違う:' + err);
                     return;
