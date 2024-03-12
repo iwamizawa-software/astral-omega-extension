@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name     astral-omega-extension
-// @version  17
+// @version  18
 // @grant    none
 // @run-at   document-start
 // @match    https://monachat.xyz/*
@@ -396,11 +396,11 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     u.fullName = (u.name || '') + u.shiro + u.kuro;
     if (u.kuro && extensionConfig.forcedShiro)
       u.name += u.shiro;
+    Bot.users[u.id] = u;
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
       ignoreInfo[u.ihash] = true;
     if (ignoreInfo[u.ihash])
       Bot.ignore(u.ihash, true);
-    Bot.users[u.id] = u;
   };
   var token;
   var astralParser = eventData => {
