@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name     astral-omega-extension
-// @version  18
+// @version  19
 // @grant    none
 // @run-at   document-start
 // @match    https://monachat.xyz/*
@@ -231,8 +231,9 @@ var inject = function () {
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
   };
   Bot.ignore = function (ihash, ignore) {
-    if (Bot.users[Bot.myId]?.ihash !== ihash)
-      Bot.send('IG', {ihash, stat: ignore ? 'on' : 'off'});
+    if (Bot.users[Bot.myId]?.ihash === ihash)
+      return;
+    Bot.send('IG', {ihash, stat: ignore ? 'on' : 'off'});
   };
   Bot.stat = function (stat) {
     Bot.set({stat});
@@ -399,8 +400,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     Bot.users[u.id] = u;
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
       ignoreInfo[u.ihash] = true;
-    if (ignoreInfo[u.ihash])
-      Bot.ignore(u.ihash, true);
   };
   var token;
   var astralParser = eventData => {
@@ -419,9 +418,17 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       case 'USER':
         Bot.users = {};
         data[1].forEach(addUser);
+        var hashTable = {};
+        data[1].forEach(u => {
+          if (ignoreInfo[u.ihash])
+            hashTable[u.ihash] = true;
+        });
+        Object.keys(hashTable).forEach(ihash => Bot.ignore(ihash, true));
         break;
       case 'ENTER':
         addUser(data[1]);
+        if (ignoreInfo[data[1].ihash])
+          Bot.ignore(data[1].ihash, true);
         writeLog(data[1].fullName + `が入室(${data[1].type}) x=${data[1].x} y=${data[1].y} r=${data[1].r} g=${data[1].g} b=${data[1].b}`);
         if (data[1].id === Bot.myId)
           setTimeout(() => writeLog('==========\nメンバー一覧\n' + Object.values(Bot.users).map(u=>u.fullName).join('\n') + '\n=========='), 0);
@@ -487,12 +494,24 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   window.WebSocket = function (url, protocols) {
     var socket = new WebSocket(url, protocols);
     var listeners = [];
+    var readyState = false;
+    var buffer = [];
     Bot.send = function (type, obj) {
-      socket.send('42' + JSON.stringify([type, Object.assign({token}, obj)]));
+      var msg = '42' + JSON.stringify([type, Object.assign({token}, obj)]);
+      if (readyState)
+        socket.send(msg);
+      else
+        buffer.push(msg);
     };
     socket.send = function (s) {
       if (typeof s === 'string') {
-        if (!s.indexOf('42["ERROR'))
+        if (!readyState && s === '5') {
+          readyState = true;
+          queueMicrotask(() => {
+            buffer.forEach(m => socket.send(m));
+            buffer = null;
+          });
+        } else if (!s.indexOf('42["ERROR'))
           return;
         try {
           if (!s.indexOf('42["COM')) {
