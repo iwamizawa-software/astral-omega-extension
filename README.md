@@ -1,6 +1,6 @@
 # astral-omega-extension
 
-[もなちゃと☆ω用](https://monachat.xyz/)拡張
+[もなちゃと☆ω用](https://monachat-like-z1zn.onrender.com/)拡張
 
 ## ライセンス
 

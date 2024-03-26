@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name     astral-omega-extension
-// @version  19
+// @version  20
 // @grant    none
 // @run-at   document-start
 // @match    https://monachat.xyz/*
+// @match    https://monachat-like-z1zn.onrender.com/*
 // ==/UserScript==
 
 var inject = function () {
