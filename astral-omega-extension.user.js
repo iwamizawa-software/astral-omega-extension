@@ -6,7 +6,7 @@
 // @match    https://monachat.xyz/*
 // ==/UserScript==
 
-const VERSION = 21;
+const VERSION = 22;
 
 var inject = function () {
 
