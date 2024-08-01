@@ -338,7 +338,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   onstorage = event => {
     if (event.key !== 'extensionConfig')
       return;
-    console.log(event);
     extensionConfig = JSON.parse(event.newValue);
     applyConfig();
   };
@@ -466,7 +465,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         var yomiageList = document.getElementById('yomiage').value.split(/[,，]/);
         if (yomiageList.length > 1 || yomiageList[0]) {
           var comment = yomiageReplacer(data[1].cmt || '');
-          console.log([user.fullName, yomiageList.some(name => user.fullName.indexOf(name) !== -1)]);
           if (comment && user.lastComment !== comment && yomiageList.some(name => user.fullName.indexOf(name) !== -1))
             speechSynthesis.speak(new SpeechSynthesisUtterance(comment));
           user.lastComment = comment;
@@ -794,7 +792,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     control.innerHTML = `読み上げる名前<input type="text" id="yomiage" style="width:50%" placeholder="カンマ区切り　全員読み上げはカンマだけ書く"><input type="button" value="読み上げ再起動" onclick="speechSynthesis.cancel()"><br>
     <label><input type="checkbox" id="enableSpeech">音声入力</label><br>
     スマホ接続維持用音声<audio src="data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxLEAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" loop controls></audio><br>
-    <input type="button" value="ログ窓" onclick="openLog()"><input type="button" value="設定" onclick="openConfig()">`;
+    <input type="button" value="通知を許可" onclick="Notification.requestPermission()"><input type="button" value="ログ窓" onclick="openLog()"><input type="button" value="設定" onclick="openConfig()">`;
     document.body.firstElementChild.before(control);
     var showControl = document.createElement('div');
     showControl.innerHTML = '<input type="checkbox" id="showControl"><label for="showControl">拡張メニューを表示</label>';
