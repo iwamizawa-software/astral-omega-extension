@@ -1,6 +1,6 @@
 # astral-omega-extension
 
-[もなちゃと☆ω用](https://monachat-like-z1zn.onrender.com/)拡張
+[もなちゃと☆ω用](https://monachat.xyz/)拡張
 
 ## ライセンス
 
@@ -9,13 +9,17 @@
 ## インストール
 
 1. Tampermonkeyをインストール ([Edge用リンク](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd), [Chrome用リンク](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja), [Firefox用リンク](https://addons.mozilla.org/ja/firefox/addon/tampermonkey/))
-2. ブラウザ再起動
-3. [astral-omega-extension.user.jsをインストール](https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/main/astral-omega-extension.user.js)
+2. **ChromeとEdgeだけ** chrome://extensions/ をアドレスバーにコピペして開く
+3. **ChromeとEdgeだけ** 右上か左下あたりにあるデベロッパーモードのスイッチをONにする
+4. ブラウザ再起動
+5. [astral-omega-extension.user.jsをインストール](https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/main/astral-omega-extension.user.js)
 
 ## Android（スマホ）のインストールの仕方
 
+Androidではダブルタップでキャラが移動できるようになります
+
 1. [Kiwi Browserをインストール](https://play.google.com/store/apps/details?id=com.kiwibrowser.browser&hl=ja&gl=US)
-2. [Tampermonkeyをインストール](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=ja)
+2. [Violentmonkeyをインストール](https://chromewebstore.google.com/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag?hl=ja)
 3. Kiwi Browserを再起動
 4. [astral-omega-extension.user.jsをインストール](https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/main/astral-omega-extension.user.js)
 

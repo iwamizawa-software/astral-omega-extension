@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name     astral-omega-extension
-// @version  20
+// @version  21
 // @grant    none
 // @run-at   document-start
 // @match    https://monachat.xyz/*
-// @match    https://monachat-like-z1zn.onrender.com/*
 // ==/UserScript==
+
+const VERSION = 21;
 
 var inject = function () {
 
@@ -777,6 +778,15 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   };
 
   addEventListener('load', () => {
+    (async () => {
+      var url = 'https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/main/astral-omega-extension.user.js';
+      var a = await (await fetch(url + '?t=' + (new Date).getTime())).text();
+      if (VERSION < +a?.match(/const VERSION = (\d+);/)?.[1])
+        document.body.insertAdjacentHTML('afterbegin', `<p><a href="${url}" target="_blank">スクリプト更新したのでここをクリックして更新したあとリロードして</a>`);
+    })();
+    //暫定処置
+    document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
+    
     document.querySelector('head').appendChild(extCSS);
     var control = document.createElement('div');
     control.style.display = 'none';
