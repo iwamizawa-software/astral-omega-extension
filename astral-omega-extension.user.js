@@ -397,7 +397,8 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     u.shiro = '◇' + u.ihash.slice(0, 6);
     u.kuro = u.trip ? '◆' + u.trip : '';
     u.fullName = (u.name || '') + u.shiro + u.kuro;
-    if (u.kuro && extensionConfig.forcedShiro)
+    //暫定処置
+    if (!u.trip || extensionConfig.forcedShiro)
       u.name += u.shiro;
     Bot.users[u.id] = u;
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
