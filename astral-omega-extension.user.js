@@ -4,11 +4,13 @@
 // @grant    none
 // @run-at   document-start
 // @match    https://monachat.xyz/*
+// @match    https://monachat.tech/*
+// @match    https://monachat-like-z1zn.onrender.com/*
 // ==/UserScript==
 
 var inject = function () {
 
-  const VERSION = 22;
+  const VERSION = 23;
 
   var configInfo = [
     {
@@ -780,7 +782,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       var url = 'https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/main/astral-omega-extension.user.js';
       var a = await (await fetch(url + '?t=' + (new Date).getTime())).text();
       if (VERSION < +a?.match(/const VERSION = (\d+);/)?.[1])
-        document.body.insertAdjacentHTML('afterbegin', `<p><a href="${url}" target="_blank">スクリプト更新したのでここをクリックして更新したあとリロードして</a>`);
+        document.body.insertAdjacentHTML('afterbegin', `<p><a href="${url}" target="_blank">スクリプト更新したのでここをクリックして再インストールしたあとリロードして</a>`);
+      if (location.hostname === 'monachat.xyz')
+        document.body.insertAdjacentHTML('afterbegin', `<p><a href="https://monachat.tech/" target="_blank">もなちゃとのURLが https://monachat.tech/ に変わり、今のURLにはアクセスできなくなる予定です</a>`);
     })();
     //暫定処置
     document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
