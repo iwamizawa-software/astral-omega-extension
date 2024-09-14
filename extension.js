@@ -33,6 +33,12 @@ var inject = function () {
       value: 0
     },
     {
+      key: 'mikey',
+      name: '某荒らし対策',
+      type: 'onoff',
+      value: 1
+    },
+    {
       name: '自動無視',
       description: '両端を半角スラッシュ(/)にすると正規表現として扱われます。',
       type: 'separator'
@@ -134,7 +140,7 @@ var inject = function () {
     },
   ];
 
-  window.extensionConfig = JSON.parse(localStorage.getItem('extensionConfig')) || Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value]));
+  window.extensionConfig = Object.assign(Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value])), JSON.parse(localStorage.getItem('extensionConfig')));
   
   const yomiageReplacer = s => s.replace(/https?:\S+/g, 'URL').replace(/([\s\S])\1{2,}/g, '$1$1$1');
   const removeSpace = str => str.replace(/[\u{0009}-\u{000D}\u{0020}\u{0085}\u{00A0}\u{00AD}\u{034F}\u{061C}\u{070F}\u{115F}\u{1160}\u{1680}\u{17B4}\u{17B5}\u{180E}\u{2000}-\u{200F}\u{2028}-\u{202F}\u{205F}-\u{206F}\u{2800}\u{3000}\u{3164}\u{FEFF}\u{FFA0}\u{110B1}\u{1BCA0}-\u{1BCA3}\u{1D159}\u{1D173}-\u{1D17A}\u{E0000}-\u{E0FFF}]/gu, '');
@@ -437,7 +443,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         user.cmt = data[1].cmt;
         if (user.ignored || user.hidden)
           break;
-        if (match(user.cmt, extensionConfig.ignoreWord)) {
+        if (match(user.cmt, extensionConfig.ignoreWord) || (extensionConfig.mikey && match(user.cmt, ['/マイキー.+https://discord\\.gg/']))) {
           Bot.ignore(user.ihash, true);
           break;
         }
