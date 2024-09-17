@@ -1,3 +1,10 @@
+// ==UserScript==
+// @name     astral-omega-extension
+// @grant    none
+// @run-at   document-start
+// @match    https://monachat.tech/*
+// ==/UserScript==
+
 var inject = function () {
 
   if (localStorage.getItem('/monachatchat/extension') !== 'true')
@@ -37,6 +44,25 @@ var inject = function () {
       name: '某荒らし対策',
       type: 'onoff',
       value: 1
+    },
+    {
+      name: '読み上げ',
+      description: '両端を半角スラッシュ(/)にすると正規表現として扱われます。',
+      type: 'separator'
+    },
+    {
+      key: 'yomiageList',
+      name: '読み上げる人の名前リスト',
+      description: '指定した名前を読み上げます。全員を読み上げたい場合は◇だけ指定します。',
+      type: 'list',
+      value: []
+    },
+    {
+      key: 'yomiageSpeed',
+      name: '読み上げる速度',
+      description: '0.1から10の間で指定します。標準は1です。',
+      type: 'input',
+      value: '1'
     },
     {
       name: '自動無視',
@@ -142,7 +168,7 @@ var inject = function () {
 
   window.extensionConfig = Object.assign(Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value])), JSON.parse(localStorage.getItem('extensionConfig')));
   
-  const yomiageReplacer = s => s.replace(/https?:\S+/g, 'URL').replace(/([\s\S])\1{2,}/g, '$1$1$1');
+  const yomiageReplacer = s => s.replace(/https?:\S+/g, 'URL').replace(/[wｗ]{2,}$/, 'わらわら').replace(/([\s\S])\1{2,}/g, '$1$1$1');
   const removeSpace = str => str.replace(/[\u{0009}-\u{000D}\u{0020}\u{0085}\u{00A0}\u{00AD}\u{034F}\u{061C}\u{070F}\u{115F}\u{1160}\u{1680}\u{17B4}\u{17B5}\u{180E}\u{2000}-\u{200F}\u{2028}-\u{202F}\u{205F}-\u{206F}\u{2800}\u{3000}\u{3164}\u{FEFF}\u{FFA0}\u{110B1}\u{1BCA0}-\u{1BCA3}\u{1D159}\u{1D173}-\u{1D17A}\u{E0000}-\u{E0FFF}]/gu, '');
   const match = (str, cond) => {
     if (!cond || cond.constructor !== Array || typeof str !== 'string')
@@ -296,8 +322,7 @@ var inject = function () {
       });
   };
 
-  var logWindow;
-  window.openLog = function () {
+  var logWindow, openLog = function () {
     if (logWindow && !logWindow.closed) {
       logWindow.focus();
       return;
@@ -443,11 +468,11 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         user.cmt = data[1].cmt;
         if (user.ignored || user.hidden)
           break;
-        if (match(user.cmt, extensionConfig.ignoreWord) || (extensionConfig.mikey && match(user.cmt, ['/マイキー.+https://discord\\.gg/']))) {
+        if (match(user.cmt, extensionConfig.ignoreWord) || (extensionConfig.mikey && match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']))) {
           Bot.ignore(user.ihash, true);
           break;
         }
-        if (data[1].id !== Bot.myId && !isActive() && match(data[1].cmt, extensionConfig.mentionList)) {
+        if (data[1].id !== Bot.myId && !isActive() && !pauseNotification && match(data[1].cmt, extensionConfig.mentionList)) {
           mentionNotification(user, data[1].cmt, function () {
             if (extensionConfig.replyMsg)
               Bot.send('COM', {cmt: extensionConfig.replyMsg});
@@ -460,11 +485,13 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         }
         if (data[1].cmt && data[1].cmt.length > +extensionConfig.maxComment)
           data[1].cmt = data[1].cmt.slice(0, +extensionConfig.maxComment);
-        var yomiageList = document.getElementById('yomiage').value.split(/[,，]/);
-        if (yomiageList.length > 1 || yomiageList[0]) {
+        if (extensionConfig.yomiageList?.length) {
           var comment = yomiageReplacer(data[1].cmt || '');
-          if (comment && user.lastComment !== comment && yomiageList.some(name => user.fullName.indexOf(name) !== -1))
-            speechSynthesis.speak(new SpeechSynthesisUtterance(comment));
+          if (!pauseYomiage && comment && user.lastComment !== comment && match(user.fullName, extensionConfig.yomiageList)) {
+            const utterThis = new SpeechSynthesisUtterance(comment);
+            utterThis.rate = extensionConfig.yomiageSpeed;
+            speechSynthesis.speak(utterThis);
+          }
           user.lastComment = comment;
         }
         writeLog(user.fullName + '： ' + data[1].cmt);
@@ -584,8 +611,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     return XMLHttpRequest_open.apply(this, arguments);
   };
 
-  var configWindow;
-  window.openConfig = function () {
+  var configWindow, openConfig = function () {
     if (configWindow && !configWindow.closed) {
       try {
         configWindow.location.href;
@@ -773,58 +799,135 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     configWindow.document.write(`<!doctype html>\n<title>☆ω拡張設定</title><body><script>var configInfo = ${JSON.stringify(configInfo)};(${configScript})();load(${JSON.stringify(extensionConfig)})</script></body>`);
     configWindow.document.close();
   };
+  var createMenu = function (list) {
+    var select = document.createElement('select');
+    list.forEach(opt => {
+      if (opt.oninit?.() === false)
+        return;
+      opt.element = document.createElement('option');
+      if (opt.type === 'toggle') {
+        opt.toggle = () => {
+          opt.checked = !opt.checked;
+          opt.element.text = (opt.checked ? '☑ ' : '☐ ') + opt.name;
+        };
+        opt.toggle();
+        opt.toggle();
+      } else {
+        opt.element.text = opt.name;
+      }
+      select.append(opt.element);
+    });
+    select.onchange = () => {
+      var opt = list[select.selectedIndex];
+      if (opt.type === 'toggle')
+        opt.toggle();
+      opt.onclick?.(opt.checked);
+      select.selectedIndex = 0;
+    };
+    return select;
+  };
+  var pauseNotification, pauseYomiage;
+  var menu = createMenu([
+    {
+      name: '拡張メニュー',
+    },
+    {
+      name: '音声入力',
+      type: 'toggle',
+      oninit: function () {
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition)
+          return false;
+        var r = this.recognition = new SpeechRecognition();
+        r.lang = 'ja-JP';
+        r.continuous = true;
+        r.onresult = function (event) {
+          var result = [];
+          for (var i = event.resultIndex; i < event.results.length; i++)
+                if (event.results[i].isFinal)
+              result.push(event.results[i][0].transcript);
+          var r = result.join(' ');
+          if (r)
+            Bot.send('COM', {cmt: r});
+        };
+        r.onend = () => {
+          if (this.checked)
+            r.start();
+        };
+      },
+      onclick: function (checked) {
+        if (checked)
+          navigator.permissions.query({name:'microphone'}).then(result => {
+            if (result.state === 'denied') {
+              alert('マイクへのアクセスを許可していないので使えません。許可したい場合は自分でサイト設定をいじってください。');
+              this.toggle();
+            }
+          });
+        this.recognition[checked ? 'start' : 'stop']();
+      }
+    },
+    {
+      name: 'スマホ接続維持機能',
+      type: 'toggle',
+      oninit: function () {
+        this.audio = new Audio();
+        this.audio.src = 'data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxLEAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+        this.audio.loop = true;
+      },
+      onclick: function (checked) {
+        this.audio[checked ? 'play' : 'pause']();
+      }
+    },
+    {
+      name: '通知一時停止',
+      type: 'toggle',
+      oninit: () => !!window.Notification,
+      onclick: checked => {
+        pauseNotification = checked;
+      }
+    },
+    {
+      name: '読み上げ一時停止',
+      type: 'toggle',
+      oninit: () => !!window.speechSynthesis,
+      onclick: checked => {
+        if (pauseYomiage = checked)
+          speechSynthesis.cancel();
+      }
+    },
+    {
+      name: '読み上げ再起動',
+      oninit: () => !!window.speechSynthesis,
+      onclick: () => speechSynthesis.cancel()
+    },
+    {
+      name: '通知を許可',
+      oninit: () => !!window.Notification && Notification.permission !== 'granted',
+      onclick: () => Notification.requestPermission().then(
+        permission => alert(permission === 'granted' ? '許可されました。' : '通知拒否に設定されているので、許可したい場合は自分でサイト設定をいじってください。')
+      )
+    },
+    {
+      name: 'ログ窓',
+      onclick: openLog
+    },
+    {
+      name: '設定',
+      onclick: openConfig
+    },
+  ]);
+  menu.setAttribute('style', 'display:block;position:absolute;top:0;left:0');
 
   addEventListener('load', () => {
-    (async () => {
-      if (location.hostname === 'monachat.xyz')
-        document.body.insertAdjacentHTML('afterbegin', `<p><a href="https://monachat.tech/" target="_blank">もなちゃとのURLが https://monachat.tech/ に変わり、今のURLにはアクセスできなくなる予定です</a>`);
-    })();
     //暫定処置
     document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
     
     document.querySelector('head').appendChild(extCSS);
-    var control = document.createElement('div');
-    control.style.display = 'none';
-    control.innerHTML = `読み上げる名前<input type="text" id="yomiage" style="width:50%" placeholder="カンマ区切り　全員読み上げはカンマだけ書く"><input type="button" value="読み上げ再起動" onclick="speechSynthesis.cancel()"><br>
-    <label><input type="checkbox" id="enableSpeech">音声入力</label><br>
-    スマホ接続維持用音声<audio src="data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxLEAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" loop controls></audio><br>
-    <input type="button" value="通知を許可" onclick="Notification.requestPermission()"><input type="button" value="ログ窓" onclick="openLog()"><input type="button" value="設定" onclick="openConfig()">`;
-    document.body.firstElementChild.before(control);
-    var showControl = document.createElement('div');
-    showControl.innerHTML = '<input type="checkbox" id="showControl"><label for="showControl">拡張メニューを表示</label>';
-    document.body.firstElementChild.before(showControl);
-    document.getElementById('showControl').onclick = function () {
-      control.style.display = this.checked ? 'block' : 'none';
-    };
-    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    var enableSpeech = document.getElementById('enableSpeech');
-    if (SpeechRecognition) {
-      enableSpeech.onclick = function () {
-        recognition.lang = 'ja-JP';
-        recognition[enableSpeech.checked ? 'start' : 'stop']();
-      };
-      var recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.onresult = function (event) {
-        var result = [];
-        for (var i = event.resultIndex; i < event.results.length; i++)
-          if (event.results[i].isFinal)
-            result.push(event.results[i][0].transcript);
-        var r = result.join(' ');
-        if (r)
-          Bot.send('COM', {cmt: '音声入力:' + r});
-      };
-      recognition.onend = function () {
-        if (enableSpeech.checked)
-          recognition.start();
-      };
-    } else {
-      enableSpeech.parentNode.remove();
-    }
+    document.body.firstElementChild.before(menu);
   });
   document.addEventListener('dblclick', e => {
     if (e.target.className === 'room')
       Bot.set({x: event.offsetX | 0, y: event.offsetY | 0});
   });
 };
-inject();
+window.eval('(' + inject + ')()');
