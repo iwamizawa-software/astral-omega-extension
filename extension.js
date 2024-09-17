@@ -830,7 +830,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   var silence = new Audio();
   silence.src = 'data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxLEAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
   silence.loop = true;
-  silence.style.display = 'none';
   var pauseNotification, pauseYomiage;
   var menu = createMenu([
     {
@@ -904,25 +903,35 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       onclick: () => Notification.requestPermission().then(
         permission => alert(permission === 'granted' ? '許可されました。' : '通知拒否に設定されているので、許可したい場合は自分でサイト設定をいじってください。')
       )
-    },
-    {
-      name: 'ログ窓',
-      onclick: openLog
-    },
-    {
-      name: '設定',
-      onclick: openConfig
-    },
+    }
   ]);
-  menu.setAttribute('style', 'display:block;');
+  var createElement = function (tagName, attr) {
+    var element = document.createElement(tagName);
+    Object.assign(element, attr);
+    return element;
+  };
 
   addEventListener('load', () => {
     //暫定処置
     document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
     
     document.querySelector('head').appendChild(extCSS);
-    document.body.firstElementChild.before(menu);
-    document.body.append(silence);
+    var div = document.createElement('div');
+    div.append(menu);
+    div.append(createElement('button',{ 
+      textContent: 'ログ窓',
+      onclick: openLog
+    }));
+    div.append(createElement('button',{ 
+      textContent: '設定',
+      onclick: openConfig
+    }));
+    div.append(createElement('button',{ 
+      textContent: 'スマホ接続維持機能',
+      onclick: checked => silence[checked ? 'play' : 'pause']()
+    }));
+    div.append(silence);
+    document.body.firstElementChild.before(div);
   });
   document.addEventListener('dblclick', e => {
     if (e.target.className === 'room')
