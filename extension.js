@@ -801,9 +801,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   };
   var createMenu = function (list) {
     var select = document.createElement('select');
-    list.forEach(opt => {
+    list = list.filter(opt => {
       if (opt.oninit?.() === false)
-        return;
+        return false;
       opt.element = document.createElement('option');
       if (opt.type === 'toggle') {
         opt.toggle = () => {
@@ -816,6 +816,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         opt.element.text = opt.name;
       }
       select.append(opt.element);
+      return true;
     });
     select.onchange = () => {
       var opt = list[select.selectedIndex];
