@@ -871,11 +871,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       }
     },
     {
-      name: 'スマホ接続維持機能',
-      type: 'toggle',
-      onclick: checked => silence[checked ? 'play' : 'pause']()
-    },
-    {
       name: '通知一時停止',
       type: 'toggle',
       oninit: () => !!window.Notification,
@@ -918,19 +913,25 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     document.querySelector('head').appendChild(extCSS);
     var div = document.createElement('div');
     div.append(menu);
-    div.append(createElement('button',{ 
+    div.append(createElement('button', {
       textContent: 'ログ窓',
       onclick: openLog
     }));
-    div.append(createElement('button',{ 
+    div.append(createElement('button', {
       textContent: '設定',
       onclick: openConfig
     }));
-    div.append(createElement('button',{ 
-      textContent: 'スマホ接続維持機能',
-      onclick: checked => silence[checked ? 'play' : 'pause']()
+    div.append(createElement('input', {
+      type: 'checkbox',
+      id: 'silence',
+      onclick: function () {
+        silence[this.checked ? 'play' : 'pause']();
+      }
     }));
-    div.append(silence);
+    div.append(createElement('label', {
+      htmlFor: 'silence',
+      textContent: 'スマホ接続維持'
+    }));
     document.body.firstElementChild.before(div);
   });
   document.addEventListener('dblclick', e => {
