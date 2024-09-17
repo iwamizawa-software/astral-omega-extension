@@ -916,7 +916,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       onclick: openConfig
     },
   ]);
-  menu.setAttribute('style', 'display:block;position:absolute;top:0;left:0');
+  menu.setAttribute('style', 'display:block;');
 
   addEventListener('load', () => {
     //暫定処置
