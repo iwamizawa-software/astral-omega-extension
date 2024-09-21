@@ -950,6 +950,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     //暫定処置
     document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
 
+    var defaultWidth = document.documentElement.clientWidth;
     document.querySelector('head').appendChild(extCSS);
     document.querySelector('meta[name=viewport]')?.remove();
     document.querySelector('head').appendChild(metaViewport);
@@ -989,7 +990,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           }
         }
       });
-      input.setAttribute('style', 'width:1000px;font-size:' + Math.ceil(16000 / innerWidth) + 'px');
+      input.setAttribute('style', 'width:1000px;font-size:' + Math.ceil(16000 / defaultWidth) + 'px');
       element.after(input);
     });
   });
@@ -1000,8 +1001,12 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     e.target.setPointerCapture(e.pointerId);
     isTouching = true;
     touchTimer = setTimeout(() => {
-      if (isTouching)
+      if (isTouching) {
         Bot.set({x: e.offsetX | 0, y: e.offsetY | 0});
+        e.target.addEventListener('click', e => {
+          e.stopImmediatePropagation();
+        }, {capture: true, once: true});
+      }
     }, 750);
   });
   document.addEventListener('pointerup', e => {
