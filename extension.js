@@ -16,8 +16,8 @@ var inject = function () {
       type: 'separator'
     },
     {
-      key: 'smartMode',
-      name: 'スマホモード',
+      key: 'invisibleMode',
+      name: 'キャラ画面を隠す（外出先用）',
       type: 'onoff',
       value: 0
     },
@@ -51,9 +51,15 @@ var inject = function () {
       type: 'separator'
     },
     {
+      key: 'yomiageAll',
+      name: '全員の発言を読み上げ',
+      type: 'onoff',
+      value: 0
+    },
+    {
       key: 'yomiageList',
-      name: '読み上げる人の名前リスト',
-      description: '指定した名前を読み上げます。全員を読み上げたい場合は◇だけ指定します。',
+      name: '読み上げる人を指定',
+      description: '指定した名前を読み上げます。',
       type: 'list',
       value: []
     },
@@ -258,9 +264,10 @@ var inject = function () {
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
   };
   Bot.ignore = function (ihash, ignore) {
-    if (Bot.users[Bot.myId]?.ihash === ihash)
+    if (!ihash || Bot.users[Bot.myId]?.ihash === ihash)
       return;
     Bot.send('IG', {ihash, stat: ignore ? 'on' : 'off'});
+    showMessage('◇' + ihash.slice(0, 6) + 'を自動無視しました');
   };
   Bot.stat = function (stat) {
     Bot.set({stat});
@@ -368,13 +375,13 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   var extCSS = document.createElement('style');
   var sound;
   var applyConfig = function () {
-    var cssText = '';
-    if (extensionConfig.smartMode) {
+    var cssText = '#extensionMessage{color:red;padding-left:1em}';
+    if (extensionConfig.invisibleMode) {
       cssText += '.panel-container:first-child{height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
       document.title = '☆';
       Object.defineProperty(document, 'title', { get: ()=>'☆', set: s => document.querySelector('title').text = s, configurable: true});
     }
-    if (extensionConfig.hideTimestamp || extensionConfig.smartMode)
+    if (extensionConfig.hideTimestamp || extensionConfig.invisibleMode)
       cssText += '.log-row span:last-child{display: none}';
     extCSS.textContent = cssText;
     if (extensionConfig.notifySoundURL) {
@@ -485,9 +492,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         }
         if (data[1].cmt && data[1].cmt.length > +extensionConfig.maxComment)
           data[1].cmt = data[1].cmt.slice(0, +extensionConfig.maxComment);
-        if (extensionConfig.yomiageList?.length) {
+        if (extensionConfig.yomiageList?.length || extensionConfig.yomiageAll) {
           var comment = yomiageReplacer(data[1].cmt || '');
-          if (!pauseYomiage && comment && user.lastComment !== comment && match(user.fullName, extensionConfig.yomiageList)) {
+          if (!pauseYomiage && comment && user.lastComment !== comment && (extensionConfig.yomiageAll || match(user.fullName, extensionConfig.yomiageList))) {
             const utterThis = new SpeechSynthesisUtterance(comment);
             utterThis.rate = extensionConfig.yomiageSpeed;
             speechSynthesis.speak(utterThis);
@@ -905,6 +912,11 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     Object.assign(element, attr);
     return element;
   };
+  var showMessage = function (s) {
+    var m = document.getElementById('extensionMessage');
+    if (m)
+      m.textContent = s;
+  };
 
   addEventListener('load', () => {
     //暫定処置
@@ -932,6 +944,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       htmlFor: 'silence',
       textContent: 'スマホ接続維持'
     }));
+    div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
   });
   document.addEventListener('dblclick', e => {
