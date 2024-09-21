@@ -395,9 +395,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    if (!extensionConfig.smartMode) {
-      cssText += '[id=silence],[for=silence],[id=smartInput]{display:none}';
-    }
+    cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}' : '[id=silence],[for=silence],[id=smartInput]{display:none}';
     extCSS.textContent = cssText;
     metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000px' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
