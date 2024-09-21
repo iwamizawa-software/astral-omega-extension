@@ -819,7 +819,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         }
       });
     };
-    configWindow.document.write(`<!doctype html>\n<title>☆ω拡張設定</title><body><script>var configInfo = ${JSON.stringify(configInfo)};(${configScript})();load(${JSON.stringify(extensionConfig)})</script></body>`);
+    configWindow.document.write(`<!doctype html>\n<head><title>☆ω拡張設定</title><meta name="viewport" content="width=device-width"></head><body><script>var configInfo = ${JSON.stringify(configInfo)};(${configScript})();load(${JSON.stringify(extensionConfig)})</script></body>`);
     configWindow.document.close();
   };
   var createMenu = function (list) {
