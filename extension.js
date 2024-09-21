@@ -740,9 +740,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
             var input = append(item.type, {id: item.key, spellcheck: false});
             if (item.type === 'input') {
               input.type = 'text';
-              input.style.width = '30em';
+              input.setAttribute('style', 'width:20em;max-width:50vw');
             } else {
-              input.setAttribute('style', 'width:50em;height:8em');
+              input.setAttribute('style', 'width:80em;max-width:80vw;height:8em');
             }
             append('input', {
               type: 'button',
@@ -763,7 +763,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
                   addButton.click();
               }
             });
-            addText.setAttribute('style', 'width:20em;box-sizing:border-box');
+            addText.setAttribute('style', 'width:20em;max-width:50vw;box-sizing:border-box');
             var addButton = append('input', {
               type: 'button',
               value: 'Add',
@@ -788,7 +788,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
               id: item.key,
               size: 4
             });
-            select.setAttribute('style', 'width:20em;box-sizing:border-box');
+            select.setAttribute('style', 'width:20em;max-width:50vw;box-sizing:border-box');
             append('input', {
               type: 'button',
               value: 'Delete',
