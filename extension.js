@@ -16,6 +16,13 @@ var inject = function () {
       type: 'separator'
     },
     {
+      key: 'smartMode',
+      name: 'スマホモード',
+      description: 'ONにするとロングタップでキャラ移動が出来るようになります。また接続維持用チェックボックスとスマホ入力用メッセージボックスが表示されます。',
+      type: 'onoff',
+      value: 0
+    },
+    {
       key: 'invisibleMode',
       name: 'キャラ画面を隠す（外出先用）',
       type: 'onoff',
@@ -47,7 +54,6 @@ var inject = function () {
     },
     {
       name: '読み上げ',
-      description: '両端を半角スラッシュ(/)にすると正規表現として扱われます。',
       type: 'separator'
     },
     {
@@ -59,7 +65,7 @@ var inject = function () {
     {
       key: 'yomiageList',
       name: '読み上げる人を指定',
-      description: '指定した名前を読み上げます。',
+      description: '指定した名前を読み上げます。両端を半角スラッシュ(/)にすると正規表現として扱われます。',
       type: 'list',
       value: []
     },
@@ -173,7 +179,12 @@ var inject = function () {
   ];
 
   window.extensionConfig = Object.assign(Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value])), JSON.parse(localStorage.getItem('extensionConfig')));
-  
+
+  var createElement = function (tagName, attr) {
+    var element = document.createElement(tagName);
+    Object.assign(element, attr);
+    return element;
+  };
   const yomiageReplacer = s => s.replace(/https?:\S+/g, 'URL').replace(/[wｗ]{2,}$/, 'わらわら').replace(/([\s\S])\1{2,}/g, '$1$1$1');
   const removeSpace = str => str.replace(/[\u{0009}-\u{000D}\u{0020}\u{0085}\u{00A0}\u{00AD}\u{034F}\u{061C}\u{070F}\u{115F}\u{1160}\u{1680}\u{17B4}\u{17B5}\u{180E}\u{2000}-\u{200F}\u{2028}-\u{202F}\u{205F}-\u{206F}\u{2800}\u{3000}\u{3164}\u{FEFF}\u{FFA0}\u{110B1}\u{1BCA0}-\u{1BCA3}\u{1D159}\u{1D173}-\u{1D17A}\u{E0000}-\u{E0FFF}]/gu, '');
   const match = (str, cond) => {
@@ -373,6 +384,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     applyConfig();
   };
   var extCSS = document.createElement('style');
+  var metaViewport = createElement('meta', {name:'viewport'});
   var sound;
   var applyConfig = function () {
     var cssText = '#extensionMessage{color:red;padding-left:1em}';
@@ -381,9 +393,13 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       document.title = '☆';
       Object.defineProperty(document, 'title', { get: ()=>'☆', set: s => document.querySelector('title').text = s, configurable: true});
     }
-    if (extensionConfig.hideTimestamp || extensionConfig.invisibleMode)
+    if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
+    if (!extensionConfig.smartMode) {
+      cssText += '[id=silence],[for=silence],[id=smartInput]{display:none}';
+    }
     extCSS.textContent = cssText;
+    metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000px' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
       sound = new Audio(extensionConfig.notifySoundURL);
       sound.volume = extensionConfig.notifySoundVolume;
@@ -907,22 +923,36 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       )
     }
   ]);
-  var createElement = function (tagName, attr) {
-    var element = document.createElement(tagName);
-    Object.assign(element, attr);
-    return element;
-  };
   var showMessage = function (s) {
     var m = document.getElementById('extensionMessage');
     if (m)
       m.textContent = s;
   };
+  var observedSelectors = [];
+  var observer = new MutationObserver(() => {
+    observedSelectors = observedSelectors.filter(obj => {
+      var element = document.querySelector(obj.selector);
+      if (element)
+        obj.resolve(element);
+      else
+        return true;
+    });
+    if (!observedSelectors.length)
+      observer.disconnect();
+  });
+  var querySelectorAsync = async selector => document.querySelector(selector) || new Promise(resolve => {
+    if (!observedSelectors.length)
+      observer.observe(document.body, {subtree: true, childList: true});
+    observedSelectors.push({selector, resolve});
+  });
 
   addEventListener('load', () => {
     //暫定処置
     document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
-    
+
     document.querySelector('head').appendChild(extCSS);
+    document.querySelector('meta[name=viewport]')?.remove();
+    document.querySelector('head').appendChild(metaViewport);
     var div = document.createElement('div');
     div.append(menu);
     div.append(createElement('button', {
@@ -946,10 +976,38 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     }));
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
+    querySelectorAsync('.panel-container').then(element => {
+      var input = createElement('input', {
+        type: 'text',
+        id: 'smartInput',
+        placeholder: 'スマホ入力用',
+        onkeydown: e => {
+          if (e.target.value && e.key === 'Enter') {
+            Bot.comment(e.target.value);
+            e.target.value = '';
+            e.stopImmediatePropagation();
+          }
+        }
+      });
+      input.setAttribute('style', 'width:1000px;font-size:' + Math.ceil(16000 / innerWidth) + 'px');
+      element.after(input);
+    });
   });
-  document.addEventListener('dblclick', e => {
-    if (e.target.className === 'room')
-      Bot.set({x: event.offsetX | 0, y: event.offsetY | 0});
+  var isTouching, touchTimer;
+  document.addEventListener('pointerdown', e => {
+    if (!extensionConfig.smartMode || e.target.className !== 'room')
+      return;
+    e.target.setPointerCapture(e.pointerId);
+    isTouching = true;
+    touchTimer = setTimeout(() => {
+      if (isTouching)
+        Bot.set({x: e.offsetX | 0, y: e.offsetY | 0});
+    }, 750);
+  });
+  document.addEventListener('pointerup', e => {
+    e.target.releasePointerCapture(e.pointerId);
+    isTouching = false;
+    clearTimeout(touchTimer);
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
 };
