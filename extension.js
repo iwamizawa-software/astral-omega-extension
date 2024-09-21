@@ -938,5 +938,10 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     if (e.target.className === 'room')
       Bot.set({x: event.offsetX | 0, y: event.offsetY | 0});
   });
+  document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
 };
-window.eval('(' + inject + ')()');
+try {
+  window.eval('(' + inject + ')()');
+} catch (err) {
+  alert('拡張機能でエラーが出ました。以下のエラーを報告してください。\n' + err);
+}
