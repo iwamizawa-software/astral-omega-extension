@@ -489,7 +489,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         user.cmt = data[1].cmt;
         if (user.ignored || user.hidden)
           break;
-        if (match(user.cmt, extensionConfig.ignoreWord) || (extensionConfig.mikey && match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']))) {
+        if (match(user.cmt, extensionConfig.ignoreWord) || (extensionConfig.mikey && match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/', '/(.)\\1{75,}/']))) {
           Bot.ignore(user.ihash, true);
           break;
         }
