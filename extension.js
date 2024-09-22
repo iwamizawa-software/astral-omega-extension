@@ -555,10 +555,8 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           break;
         
         calcScore(user.id, user.cmt);
-        if (mikeyCheckbox && user.score > +extensionConfig.forceScore) {
+        if (mikeyCheckbox && user.score > +extensionConfig.forceScore)
            mikeyCheckbox.checked = true;
-           showMessage('ログの流れが早いため荒らし対策が自動でONになりました');
-        }
         if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyCheckbox?.checked && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
           Bot.ignore(user.ihash, true, user.fullName);
           break;
@@ -1022,9 +1020,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
 
   var mikeyCheckbox;
   addEventListener('load', () => {
-    //暫定処置
-    document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
-
     var defaultWidth = document.documentElement.clientWidth;
     document.querySelector('head').appendChild(extCSS);
     document.querySelector('meta[name=viewport]')?.remove();
