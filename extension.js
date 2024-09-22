@@ -181,10 +181,16 @@ var inject = function () {
       value: 0
     },
     {
-      key: 'threshold',
-      name: 'threshold',
+      key: 'killScore',
+      name: 'killScore',
       type: 'input',
       value: '10'
+    },
+    {
+      key: 'forceScore',
+      name: 'forceScore',
+      type: 'input',
+      value: '200'
     },
   ];
 
@@ -549,7 +555,11 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           break;
         
         calcScore(user.id, user.cmt);
-        if (match(user.cmt, extensionConfig.ignoreWord) || (document.getElementById('mikey')?.checked && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.threshold))) {
+        if (mikeyCheckbox && user.score > +extensionConfig.forceScore) {
+           mikeyCheckbox.checked = true;
+           showMessage('ログの流れが早いため荒らし対策が自動でONになりました');
+        }
+        if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyCheckbox?.checked && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
           Bot.ignore(user.ihash, true, user.fullName);
           break;
         }
@@ -986,6 +996,12 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     if (m)
       m.textContent = s;
   };
+  var alertOnce = (msg, id) => {
+    if (localStorage.getItem('extensionAlert/' + id))
+      return;
+    localStorage.setItem('extensionAlert/' + id, 'a');
+    alert(msg);
+  };
   var observedSelectors = [];
   var observer = new MutationObserver(() => {
     observedSelectors = observedSelectors.filter(obj => {
@@ -1004,6 +1020,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     observedSelectors.push({selector, resolve});
   });
 
+  var mikeyCheckbox;
   addEventListener('load', () => {
     //暫定処置
     document.querySelector('head').appendChild(document.createElement('style')).textContent='.log-row{overflow:visible!important}';
@@ -1022,9 +1039,12 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       textContent: '拡張設定',
       onclick: openConfig
     }));
-    div.append(createElement('input', {
+    div.append(mikeyCheckbox = createElement('input', {
       type: 'checkbox',
-      id: 'mikey'
+      id: 'mikey',
+      onclick: () => {
+        alertOnce('荒らし対策は誤検出されやすいため、荒らしが来た時だけ有効にしてください。', 'mikey');
+      }
     }));
     div.append(createElement('label', {
       htmlFor: 'mikey',
