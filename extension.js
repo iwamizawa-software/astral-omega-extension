@@ -186,12 +186,6 @@ var inject = function () {
       type: 'input',
       value: '10'
     },
-    {
-      key: 'forceScore',
-      name: 'forceScore',
-      type: 'input',
-      value: '200'
-    },
   ];
 
   window.extensionConfig = Object.assign(Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value])), JSON.parse(localStorage.getItem('extensionConfig')));
@@ -555,8 +549,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           break;
         
         calcScore(user.id, user.cmt);
-        if (mikeyCheckbox && user.score > +extensionConfig.forceScore)
-           mikeyCheckbox.checked = true;
         if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyCheckbox?.checked && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
           Bot.ignore(user.ihash, true, user.fullName);
           break;
