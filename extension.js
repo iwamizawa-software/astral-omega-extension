@@ -18,7 +18,7 @@ var inject = function () {
     {
       key: 'smartMode',
       name: 'スマホモード',
-      description: 'ONにするとロングタップでキャラ移動が出来るようになります。また接続維持用チェックボックスとスマホ入力用メッセージボックスが表示されます。',
+      description: 'ONにすると移動したいところを長押しで移動出来るようになります。また接続維持用チェックボックスとスマホ入力用メッセージボックスが表示されます。',
       type: 'onoff',
       value: 0
     },
@@ -45,12 +45,6 @@ var inject = function () {
       name: '強制白トリップ',
       type: 'onoff',
       value: 0
-    },
-    {
-      key: 'mikey',
-      name: '某荒らし対策',
-      type: 'onoff',
-      value: 1
     },
     {
       name: '読み上げ',
@@ -176,6 +170,22 @@ var inject = function () {
       type: 'textarea',
       value: ''
     },
+    {
+      name: 'その他（基本いじらなくていい）',
+      type: 'separator'
+    },
+    {
+      key: 'monitorScore',
+      name: 'monitorScore',
+      type: 'onoff',
+      value: 0
+    },
+    {
+      key: 'threshold',
+      name: 'threshold',
+      type: 'input',
+      value: '10'
+    },
   ];
 
   window.extensionConfig = Object.assign(Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value])), JSON.parse(localStorage.getItem('extensionConfig')));
@@ -274,11 +284,11 @@ var inject = function () {
     var {x, y, scl, stat} = Bot.users[Bot.myId];
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
   };
-  Bot.ignore = function (ihash, ignore) {
+  Bot.ignore = function (ihash, ignore, fullName) {
     if (!ihash || Bot.users[Bot.myId]?.ihash === ihash)
       return;
     Bot.send('IG', {ihash, stat: ignore ? 'on' : 'off'});
-    showMessage('◇' + ihash.slice(0, 6) + 'を自動無視しました');
+    showMessage((fullName || ('◇' + ihash.slice(0, 6))) + 'を自動無視しました');
   };
   Bot.stat = function (stat) {
     Bot.set({stat});
@@ -377,17 +387,17 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     textarea.value = s + '\n' + textarea.value;
   };
 
-  onstorage = event => {
+  addEventListener('storage', event => {
     if (event.key !== 'extensionConfig')
       return;
     extensionConfig = JSON.parse(event.newValue);
     applyConfig();
-  };
+  });
   var extCSS = document.createElement('style');
   var metaViewport = createElement('meta', {name:'viewport'});
   var sound;
   var applyConfig = function () {
-    var cssText = '#extensionMessage{color:red;padding-left:1em}';
+    var cssText = '#extensionMessage{color:red;font-weight:bold;padding-left:1em}';
     if (extensionConfig.invisibleMode) {
       cssText += '.panel-container:first-child{height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
       document.title = '☆';
@@ -447,6 +457,48 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
       ignoreInfo[u.ihash] = true;
   };
+  try {
+    var segmenter = new Intl.Segmenter('ja', {granularity: 'word'});
+  } catch (err) {}
+  var calcRedundancy = function (msg) {
+    msg = msg?.replace(/[wWｗＷ]+/g, 'ｗ') || '';
+    if (segmenter) {
+      var words = new Set();
+      var list = [...segmenter.segment(msg)];
+      list.forEach(value => words.add(value.segment));
+      return list.length / words.size;
+    } else {
+      var tmp = msg, compressedMsg;
+      while ((compressedMsg = tmp.replace(/([\s\S]+)\1+/g, '')).length !== tmp.length)
+        tmp = compressedMsg;
+      return msg.length / compressedMsg.length;
+    }
+  };
+  const MAX_LOGSIZE = 4;
+  window.scoreLog = [];
+  var calcScore = (id, msg) => {
+    var user = Bot.users[id];
+    if (!user)
+      return;
+    var messageLog = user.messageLog = user.messageLog || [];
+    messageLog.unshift(msg);
+    if (messageLog.length > MAX_LOGSIZE)
+      messageLog.length = MAX_LOGSIZE;
+    var timeLog = user.timeLog = user.timeLog || [];
+    timeLog.unshift((new Date()).getTime());
+    if (timeLog.length > MAX_LOGSIZE)
+      timeLog.length = MAX_LOGSIZE;
+    user.score = user.redundancy = 0;
+    var msgs = '';
+    if (messageLog.length > 1) {
+      var duration = timeLog[0] - timeLog[timeLog.length - 1];
+      msgs = messageLog.slice(0, -1).join('\n');
+      user.redundancy = calcRedundancy(msgs);
+      user.score = 1000 * user.redundancy * msgs.length / duration || 0;
+    }
+    if (extensionConfig.monitorScore)
+      scoreLog.push([user.score, user.redundancy, msgs.length, user.fullName, msg]);
+  };
   var token;
   var astralParser = eventData => {
     if (!/^42/.test(eventData))
@@ -462,8 +514,13 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         Bot.myId = data[1].id;
         break;
       case 'USER':
+        var oldUsers = Bot.users;
         Bot.users = {};
-        data[1].forEach(addUser);
+        data[1].forEach(u => {
+          addUser(u);
+          if (oldUsers[u.id])
+            Bot.users[u.id] = Object.assign(oldUsers[u.id], Bot.users[u.id]);
+        });
         var hashTable = {};
         data[1].forEach(u => {
           if (ignoreInfo[u.ihash])
@@ -478,6 +535,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         writeLog(data[1].fullName + `が入室(${data[1].type}) x=${data[1].x} y=${data[1].y} r=${data[1].r} g=${data[1].g} b=${data[1].b}`);
         if (data[1].id === Bot.myId)
           setTimeout(() => writeLog('==========\nメンバー一覧\n' + Object.values(Bot.users).map(u=>u.fullName).join('\n') + '\n=========='), 0);
+        calcScore(data[1].id, '');
         break;
       case 'EXIT':
         delete Bot.users[data[1].id];
@@ -489,8 +547,10 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         user.cmt = data[1].cmt;
         if (user.ignored || user.hidden)
           break;
-        if (match(user.cmt, extensionConfig.ignoreWord) || (extensionConfig.mikey && match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/', '/([^wｗ])\\1{75,}/']))) {
-          Bot.ignore(user.ihash, true);
+        
+        calcScore(user.id, user.cmt);
+        if (match(user.cmt, extensionConfig.ignoreWord) || (document.getElementById('mikey')?.checked && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.threshold))) {
+          Bot.ignore(user.ihash, true, user.fullName);
           break;
         }
         if (data[1].id !== Bot.myId && !isActive() && !pauseNotification && match(data[1].cmt, extensionConfig.mentionList)) {
@@ -959,8 +1019,16 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       onclick: openLog
     }));
     div.append(createElement('button', {
-      textContent: '設定',
+      textContent: '拡張設定',
       onclick: openConfig
+    }));
+    div.append(createElement('input', {
+      type: 'checkbox',
+      id: 'mikey'
+    }));
+    div.append(createElement('label', {
+      htmlFor: 'mikey',
+      textContent: '荒らし対策'
     }));
     div.append(createElement('input', {
       type: 'checkbox',
