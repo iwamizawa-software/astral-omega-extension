@@ -461,7 +461,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     var segmenter = new Intl.Segmenter('ja', {granularity: 'word'});
   } catch (err) {}
   var calcRedundancy = function (msg) {
-    msg = msg?.replace(/[wWｗＷ]+/g, 'ｗ') || '';
+    msg = msg?.replace(/[wWｗＷ]+/g, 'ｗ').replace(/[！!]+/g, '!').replace(/[ー～]+/g, 'ー') || '';
     if (segmenter) {
       var words = new Set();
       var list = [...segmenter.segment(msg)];
