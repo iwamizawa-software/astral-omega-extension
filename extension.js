@@ -282,6 +282,10 @@ var inject = function () {
   };
   Bot.set = function (attr) {
     var {x, y, scl, stat} = Bot.users[Bot.myId];
+    if ('x' in attr)
+      attr.x = Math.max(0, Math.min(+extensionConfig.maxX, attr.x));
+    if ('y' in attr)
+      attr.y = Math.max(0, Math.min(+extensionConfig.maxY, attr.y));
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
     Object.assign(Bot.users[Bot.myId], attr);
   };
@@ -500,6 +504,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     if (extensionConfig.monitorScore)
       scoreLog.push([user.score, user.redundancy, msgs.length, user.fullName, msg]);
   };
+  var disableUpdate;
   var token;
   var astralParser = eventData => {
     if (!/^42/.test(eventData))
@@ -583,7 +588,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           data[1].stat = data[1].stat.slice(0, +extensionConfig.maxStat);
         data[1].x = Math.min(+extensionConfig.maxX, data[1].x);
         data[1].y = Math.min(+extensionConfig.maxY, data[1].y);
-        if (Bot.users[data[1].id])
+        if (Bot.users[data[1].id] && (data[1].id !== Bot.myId || !disableUpdate))
           Object.assign(Bot.users[data[1].id], data[1]);
         break;
       case 'IG':
@@ -1033,7 +1038,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     var updateDirection = e => {
       if (e) {
         var {top, left, width, height} = e.target.getBoundingClientRect();
-        currentDirection = getDirection(Object.assign({top, left, width, height}, {x: e.pageX, y: e.pageY}));
+        currentDirection = getDirection(Object.assign({top, left, width, height}, {x: e.clientX, y: e.clientY}));
       } else {
         currentDirection = null;
       }
@@ -1043,6 +1048,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       e.target.setPointerCapture(e.pointerId);
       updateDirection(e);
       var count = 0;
+      settings.onstart();
       settings.onpress(currentDirection, ++count);
       clearInterval(touchTimer);
       touchTimer = setInterval(() => settings.onpress(currentDirection, ++count), settings.interval);
@@ -1056,6 +1062,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     element.addEventListener('pointerup', e => {
       clearInterval(touchTimer);
       updateDirection();
+      settings.onend();
       e.target.releasePointerCapture(e.pointerId);
     });
     element.addEventListener('touchstart', e => e.preventDefault());
@@ -1117,6 +1124,8 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       input.setAttribute('style', 'width:1000px;font-size:' + Math.ceil(16000 / defaultWidth) + 'px');
       element.after(input);
       var controller = createController({
+        onstart: () => disableUpdate = true,
+        onend: () => disableUpdate = false,
         onpress: (direction, count) => {
           var myself = Bot.users[Bot.myId];
           if (!myself)
