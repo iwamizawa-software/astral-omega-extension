@@ -410,7 +410,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}' : '[id=silence],[for=silence],[id=smartInput]{display:none}';
+    cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
     extCSS.textContent = cssText;
     metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000px' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
@@ -1140,6 +1140,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         size: 64000 / defaultWidth,
         interval: 250
       });
+      controller.id = 'characterController';
       controller.style.marginLeft = 'auto';
       input.after(controller);
     });
