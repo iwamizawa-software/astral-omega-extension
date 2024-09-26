@@ -283,6 +283,7 @@ var inject = function () {
   Bot.set = function (attr) {
     var {x, y, scl, stat} = Bot.users[Bot.myId];
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
+    Object.assign(Bot.users[Bot.myId], attr);
   };
   Bot.ignore = function (ihash, ignore, fullName) {
     if (!ihash || Bot.users[Bot.myId]?.ihash === ihash)
@@ -582,6 +583,8 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           data[1].stat = data[1].stat.slice(0, +extensionConfig.maxStat);
         data[1].x = Math.min(+extensionConfig.maxX, data[1].x);
         data[1].y = Math.min(+extensionConfig.maxY, data[1].y);
+        if (Bot.users[data[1].id])
+          Object.assign(Bot.users[data[1].id], data[1]);
         break;
       case 'IG':
         if (Bot.myId === data[1].id) {
@@ -1009,7 +1012,55 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       observer.observe(document.body, {subtree: true, childList: true});
     observedSelectors.push({selector, resolve});
   });
-
+  var createController = function (settings) {
+    var element = document.createElement('div');
+    element.innerHTML = `
+<div class="up" style="width:100%;height:100%;position:absolute;top:0;left:0;clip-path: polygon(2% 0, 98% 0, 50% 48%)"></div>
+<div class="right" style="width:100%;height:100%;position:absolute;top:0;left:0;clip-path: polygon(52% 50%, 100% 2%, 100% 98%)"></div>
+<div class="down" style="width:100%;height:100%;position:absolute;top:0;left:0;clip-path: polygon(50% 52%, 98% 100%, 2% 100%)"></div>
+<div class="left" style="width:100%;height:100%;position:absolute;top:0;left:0;clip-path: polygon(0 2%, 48% 50%, 0 98%)"></div>
+`;
+    element.setAttribute('style', 'clip-path:circle(50%);position:relative');
+    element.style.width = element.style.height = settings.size + 'px';
+    var getDirection = ({top, left, width, height, x, y}) => {
+      x -= left + width / 2;
+      y -= top + height / 2;
+      return ['left', 'up', 'down', 'right'][(x > y) + (x > -y) * 2];
+    };
+    var currentDirection, touchTimer;
+    var paint = () => Array.from(element.children).forEach(e => e.style.backgroundColor = e.className === currentDirection ? '#6366f1' : 'white');
+    paint();
+    var updateDirection = e => {
+      if (e) {
+        var {top, left, width, height} = e.target.getBoundingClientRect();
+        currentDirection = getDirection(Object.assign({top, left, width, height}, {x: e.pageX, y: e.pageY}));
+      } else {
+        currentDirection = null;
+      }
+      paint();
+    };
+    element.addEventListener('pointerdown', e => {
+      e.target.setPointerCapture(e.pointerId);
+      updateDirection(e);
+      var count = 0;
+      settings.onpress(currentDirection, ++count);
+      clearInterval(touchTimer);
+      touchTimer = setInterval(() => settings.onpress(currentDirection, ++count), settings.interval);
+      e.preventDefault();
+    });
+    element.addEventListener('pointermove', e => {
+      if (!currentDirection)
+        return;
+      updateDirection(e);
+    });
+    element.addEventListener('pointerup', e => {
+      clearInterval(touchTimer);
+      updateDirection();
+      e.target.releasePointerCapture(e.pointerId);
+    });
+    element.addEventListener('touchstart', e => e.preventDefault());
+    return element;
+  };
   var mikeyCheckbox;
   addEventListener('load', () => {
     var defaultWidth = document.documentElement.clientWidth;
@@ -1065,27 +1116,24 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       });
       input.setAttribute('style', 'width:1000px;font-size:' + Math.ceil(16000 / defaultWidth) + 'px');
       element.after(input);
+      var controller = createController({
+        onpress: (direction, count) => {
+          var myself = Bot.users[Bot.myId];
+          if (!myself)
+            return;
+          var attr = {up: {y: -2}, down: {y: 2}, right: {x: 5}, left: {x: -5}}[direction];
+          Object.keys(attr).forEach(key => {
+            attr[key] *= count < 2 ? 5 : count < 4 ? 20 : 40;
+            attr[key] += myself[key];
+          });
+          Bot.set(attr);
+        },
+        size: 64000 / defaultWidth,
+        interval: 250
+      });
+      controller.style.marginLeft = 'auto';
+      input.after(controller);
     });
-  });
-  var isTouching, touchTimer;
-  document.addEventListener('pointerdown', e => {
-    if (!extensionConfig.smartMode || e.target.className !== 'room')
-      return;
-    e.target.setPointerCapture(e.pointerId);
-    isTouching = true;
-    touchTimer = setTimeout(() => {
-      if (isTouching) {
-        Bot.set({x: e.offsetX | 0, y: e.offsetY | 0});
-        e.target.addEventListener('click', e => {
-          e.stopImmediatePropagation();
-        }, {capture: true, once: true});
-      }
-    }, 750);
-  });
-  document.addEventListener('pointerup', e => {
-    e.target.releasePointerCapture(e.pointerId);
-    isTouching = false;
-    clearTimeout(touchTimer);
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
 };
