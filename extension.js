@@ -402,7 +402,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   var metaViewport = createElement('meta', {name:'viewport'});
   var sound;
   var applyConfig = function () {
-    var cssText = '#extensionMessage{color:red;font-weight:bold;padding-left:1em}';
+    var cssText = '#extensionMessage{color:red;font-weight:bold;padding-left:1em}.body{row-gap:5px !important}';
     if (extensionConfig.invisibleMode) {
       cssText += '.panel-container:first-child{height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
       document.title = '☆';
@@ -410,7 +410,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
+    cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
     extCSS.textContent = cssText;
     metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000px' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
@@ -1109,9 +1109,11 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
     querySelectorAsync('.panel-container').then(element => {
+      var inputContainer = createElement('div', {id: 'smartInput'});
+      inputContainer.setAttribute('style', 'width:1000px');
+      element.after(inputContainer);
       var input = createElement('input', {
         type: 'text',
-        id: 'smartInput',
         placeholder: 'スマホ入力用',
         onkeydown: e => {
           if (e.target.value && e.key === 'Enter') {
@@ -1121,8 +1123,17 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           }
         }
       });
-      input.setAttribute('style', 'width:1000px;font-size:' + Math.ceil(16000 / defaultWidth) + 'px');
-      element.after(input);
+      var smartSize = Math.ceil(16000 / defaultWidth) + 'px';
+      input.setAttribute('style', 'flex-grow:1;font-size:' + smartSize);
+      inputContainer.append(input);
+      var button = createElement('button', {
+        textContent: '🎮',
+        onclick: e => {
+          controller.style.display = controller.style.display ? '' : 'none';
+        }
+      });
+      button.setAttribute('style', 'font-size:' + smartSize);
+      inputContainer.append(button);
       var controller = createController({
         onstart: () => disableUpdate = true,
         onend: () => disableUpdate = false,
@@ -1142,7 +1153,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       });
       controller.id = 'characterController';
       controller.style.marginLeft = 'auto';
-      input.after(controller);
+      inputContainer.after(controller);
     });
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
