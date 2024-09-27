@@ -1025,7 +1025,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
 <div class="down" style="width:100%;height:100%;position:absolute;top:0;left:0;clip-path: polygon(50% 52%, 98% 100%, 2% 100%)"></div>
 <div class="left" style="width:100%;height:100%;position:absolute;top:0;left:0;clip-path: polygon(0 2%, 48% 50%, 0 98%)"></div>
 `;
-    element.setAttribute('style', 'clip-path:circle(50%);position:relative');
+    element.setAttribute('style', 'clip-path:circle(50%);position:absolute;right:2vw;top:2vw');
     element.style.width = element.style.height = settings.size + 'px';
     var getDirection = ({top, left, width, height, x, y}) => {
       x -= left + width / 2;
@@ -1033,7 +1033,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       return ['left', 'up', 'down', 'right'][(x > y) + (x > -y) * 2];
     };
     var currentDirection, touchTimer;
-    var paint = () => Array.from(element.children).forEach(e => e.style.backgroundColor = e.className === currentDirection ? '#6366f1' : 'white');
+    var paint = () => Array.from(element.children).forEach(e => e.style.backgroundColor = e.className === currentDirection ? '#6366f1' : '#d9d5da');
     paint();
     var updateDirection = e => {
       if (e) {
