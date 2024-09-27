@@ -412,7 +412,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       cssText += '.log-row span:last-child{display: none}';
     cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
     extCSS.textContent = cssText;
-    metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000px' : 'width=device-width');
+    metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
       sound = new Audio(extensionConfig.notifySoundURL);
       sound.volume = extensionConfig.notifySoundVolume;
