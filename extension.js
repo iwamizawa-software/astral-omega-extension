@@ -410,7 +410,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}#characterController{margin-left:auto}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
+    cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
     extCSS.textContent = cssText;
     metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000px' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
@@ -987,10 +987,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       onclick: () => Notification.requestPermission().then(
         permission => alert(permission === 'granted' ? '許可されました。' : '通知拒否に設定されているので、許可したい場合は自分でサイト設定をいじってください。')
       )
-    },
-    {
-      name: '十字キーを表示(スマホのみ)',
-      onclick: () => document.getElementById('characterController').style.display = ''
     }
   ]);
   var showMessage = function (s) {
@@ -1144,17 +1140,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         size: 64000 / defaultWidth,
         interval: 250
       });
-      controller.style.display = 'inline-block';
-      var controllerContainer = createElement('div', {id: 'characterController'});
-      controllerContainer.appendChild(createElement('button', {
-        textContent: '十字キーを非表示',
-        onclick: () => {
-          alertOnce('左上の拡張メニューから十字キーを表示できます', 'controller');
-          controllerContainer.style.display = 'none';
-        }
-      })).setAttribute('style', 'margin-right:1em;font-size:' + Math.ceil(16000 / defaultWidth) + 'px');
-      controllerContainer.append(controller);
-      input.after(controllerContainer);
+      controller.id = 'characterController';
+      controller.style.marginLeft = 'auto';
+      input.after(controller);
     });
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
