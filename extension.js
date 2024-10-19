@@ -1157,6 +1157,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     });
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
+  document.addEventListener('beforeunload', () => silence?.pause());
 };
 try {
   window.eval('(' + inject + ')()');
