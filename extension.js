@@ -1153,6 +1153,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       });
       controller.id = 'characterController';
       controller.style.marginLeft = 'auto';
+      controller.style.marginRight = controller.style.width;
       inputContainer.after(controller);
     });
   });
