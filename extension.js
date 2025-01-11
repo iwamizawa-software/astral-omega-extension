@@ -40,6 +40,26 @@ var inject = function () {
       value: 0
     },
     {
+      key: 'webhook',
+      name: 'アップロード用WebHook URL',
+      description: 'DiscordのWebHookを設定すると、アップロード機能が使えるようになります。アップロードしたものは削除できないので気を付けて使ってください。',
+      type: 'input',
+      value: ''
+    },
+    {
+      key: 'confirmUpload',
+      name: 'アップロード時確認する',
+      description: 'OFFにすると中身を確認できずにアップロードされるので気を付けてください。',
+      type: 'onoff',
+      value: 1
+    },
+    {
+      key: 'showImage',
+      name: 'アップロード画像をログに表示',
+      type: 'onoff',
+      value: 1
+    },
+    {
       name: '読み上げ',
       type: 'separator'
     },
@@ -348,6 +368,69 @@ var inject = function () {
       });
   };
 
+
+  var dialog = document.createElement('dialog'), dialogQueue = [], dialogCallback;
+  dialog.onclick = e => {
+    var {left, right, top, bottom} = dialog.getBoundingClientRect();
+    if (e.clientX < left || e.clientX > right || e.clientY < top || e.clientY > bottom || e.target.tagName === 'BUTTON') {
+      dialogCallback(!Array.from(dialog.querySelectorAll('button')).indexOf(e.target));
+      dialog.close();
+      if (dialogQueue.length)
+        dialogQueue.shift()();
+    }
+  };
+  var asyncConfirm = html => new Promise(async resolve => {
+    if (dialog.open)
+      await new Promise(r => dialogQueue.push(r));
+    dialogCallback = resolve;
+    dialog.innerHTML = `<div>${html}</div><div><button autofocus>OK</button><button>キャンセル</button></div>`;
+    dialog.showModal();
+  });
+  var escapeHTML = s => s.replace(/[<>&"]/g, s => '&#' + s.charCodeAt(0) + ';');
+  var getDetailHTML = async file => new Promise(resolve => {
+    var isImage = file.type.startsWith('image/')
+    if (!isImage && !file.type.startsWith('text/'))
+      resolve('');
+    var r = new FileReader();
+    r.onload = e => resolve(isImage ? `<img src="${e.target.result}"><br>` : `<pre>${escapeHTML(e.target.result)}</pre><br>`);
+    r.onerror = e => {
+      console.log(e);
+      resolve('');
+    };
+    r[isImage ? 'readAsDataURL' : 'readAsText'](file);
+  });
+  var upload = async file => {
+    try {
+      if (!extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/'))
+        return;
+      if (extensionConfig.confirmUpload && !await asyncConfirm(await getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？'))
+        return;
+      var formData = new FormData();
+      formData.append('file', file);
+      var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
+      Bot.comment(result.attachments[0].url);
+    } catch (err) {
+      alert('アップロード中にエラーが出た\n' + err);
+    }
+  };
+  addEventListener('dragover', e => {
+    if (!(extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.dataTransfer.types.includes('Files')))
+      return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  addEventListener('drop', e => {
+    if (!(extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.dataTransfer.types.includes('Files')))
+      return;
+    e.preventDefault();
+    upload(e.dataTransfer.files[0]);
+  });
+  addEventListener('paste', e => {
+    if (!(e.target.tagName === 'INPUT' && e.target.type === 'text' && extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.clipboardData.types.includes('Files')))
+      return;
+    e.preventDefault();
+    upload(e.clipboardData.files[0]);
+  });
   var logWindow, openLog = function () {
     if (logWindow && !logWindow.closed) {
       logWindow.focus();
@@ -395,7 +478,13 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   var metaViewport = createElement('meta', {name:'viewport'});
   var sound;
   var applyConfig = function () {
-    var cssText = '#extensionMessage{color:red;font-weight:bold;padding-left:1em}.body{row-gap:5px !important}';
+    var cssText = `
+      #extensionMessage{color:red;font-weight:bold;padding-left:1em}
+      .body{row-gap:5px !important}
+      ::backdrop{background-color:#000;opacity: 0.5}
+      dialog button{margin:10px;line-height:1.5}
+      dialog img,dialog pre{max-height:60vh;max-width:80vw;overflow:auto}
+    `;
     if (extensionConfig.invisibleMode) {
       cssText += '.panel-container:first-child{height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
       document.title = '☆';
@@ -404,7 +493,14 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
     cssText += extensionConfig.smartMode ? '.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
+    if (!extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/'))
+      cssText += '#uploadButton{display:none}';
+    cssText += extensionConfig.showImage
+      ? '[data-img]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000}.log-row:has([data-img]){flex:none;height:fit-content;max-height:200px}[data-img] *{display:none}'
+      : '[data-img]{background-image:none!important}';
     extCSS.textContent = cssText;
+    if (extensionConfig.showImage)
+      document.body?.appendChild(document.createElement('div')).remove();
     metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
       sound = new Audio(extensionConfig.notifySoundURL);
@@ -726,7 +822,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
               element.value = value;
               break;
             case 'list':
-              element.innerHTML = '';
+              element.textContent = '';
               value?.forEach?.(option => element.appendChild(document.createElement('option')).text = option);
               break;
             default:
@@ -1063,10 +1159,33 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   };
   var mikeyCheckbox;
   addEventListener('load', () => {
+    var observer = new MutationObserver(() => {
+      if (!extensionConfig.showImage)
+        return;
+      Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/"]:not([data-img])')).forEach(a => {
+        if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/.test(a.href))
+          return;
+        var img = new Image();
+        img.onload = function () {
+          var logContainer = document.querySelector('.log-container');
+          var isBottom = logContainer.scrollHeight !== logContainer.clientHeight && logContainer.scrollHeight - logContainer.scrollTop - logContainer.clientHeight < 2;
+          var height = Math.min(img.height, 150);
+          a.dataset.img = 'true';
+          a.style.backgroundImage = `url("${encodeURI(a.href)}")`;
+          a.style.width = Math.floor(img.width * height / img.height) + 'px';
+          a.style.height = height + 'px';
+          if (isBottom)
+            logContainer.scrollTop = logContainer.scrollHeight;
+        };
+        img.src = a.href;
+      });
+    });
+    observer.observe(document.body, {subtree: true, childList: true});
     var defaultWidth = document.documentElement.clientWidth;
-    document.querySelector('head').appendChild(extCSS);
+    document.head.append(extCSS);
+    document.body.append(dialog);
     document.querySelector('meta[name=viewport]')?.remove();
-    document.querySelector('head').appendChild(metaViewport);
+    document.head.appendChild(metaViewport);
     var div = document.createElement('div');
     div.append(menu);
     div.append(createElement('button', {
@@ -1119,6 +1238,20 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       var smartSize = Math.ceil(16000 / defaultWidth) + 'px';
       input.setAttribute('style', 'flex-grow:1;font-size:' + smartSize);
       inputContainer.append(input);
+      var file = createElement('input', {
+        type: 'file',
+        onchange: e => {
+          upload(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+      var uploadButton = createElement('button', {
+        id: 'uploadButton',
+        textContent: '＋',
+        onclick: e => file.click()
+      });
+      uploadButton.setAttribute('style', 'font-size:' + smartSize);
+      input.before(uploadButton);
       var button = createElement('button', {
         textContent: '🎮',
         onclick: e => {
@@ -1154,7 +1287,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   document.addEventListener('beforeunload', () => silence?.pause());
 };
 try {
-  window.eval('(' + inject + ')()');
+  inject();
 } catch (err) {
   alert('拡張機能でエラーが出ました。以下のエラーを報告してください。\n' + err);
 }
