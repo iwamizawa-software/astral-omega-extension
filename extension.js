@@ -407,10 +407,13 @@ var inject = function () {
         return;
       var formData = new FormData();
       formData.append('file', file);
+      showMessage('ファイルをアップロード中...');
       var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
       Bot.comment(result.attachments[0].url);
+      showMessage('');
     } catch (err) {
       alert('アップロード中にエラーが出た\n' + err);
+      showMessage('');
     }
   };
   addEventListener('dragover', e => {
