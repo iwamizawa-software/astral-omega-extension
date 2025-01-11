@@ -1,13 +1,6 @@
-// ==UserScript==
-// @name     astral-omega-extension
-// @grant    none
-// @run-at   document-start
-// @match    https://monachat.tech/*
-// ==/UserScript==
-
 var inject = function () {
 
-  if (localStorage.getItem('/monachatchat/extension') !== 'true')
+  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
   var configInfo = [
