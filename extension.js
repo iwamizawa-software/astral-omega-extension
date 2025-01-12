@@ -13,7 +13,7 @@ var inject = function () {
       name: 'スマホモード',
       description: 'ONにすると移動したいところを長押しで移動出来るようになります。また接続維持用チェックボックスとスマホ入力用メッセージボックスが表示されます。',
       type: 'onoff',
-      value: 0
+      value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
     },
     {
       key: 'invisibleMode',
