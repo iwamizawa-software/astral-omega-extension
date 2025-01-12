@@ -429,7 +429,7 @@ var inject = function () {
     upload(e.dataTransfer.files[0]);
   });
   addEventListener('paste', e => {
-    if (!(e.target.tagName === 'INPUT' && e.target.type === 'text' && extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.clipboardData.types.includes('Files')))
+    if (!(extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.clipboardData.types.includes('Files')))
       return;
     e.preventDefault();
     upload(e.clipboardData.files[0]);
