@@ -379,13 +379,14 @@ var inject = function () {
         dialogQueue.shift()();
     }
   };
-  var asyncConfirm = html => new Promise(async resolve => {
+  var asyncConfirm = (html, alert) => new Promise(async resolve => {
     if (dialog.open)
       await new Promise(r => dialogQueue.push(r));
     dialogCallback = resolve;
-    dialog.innerHTML = `<div>${html}</div><div><button autofocus>OK</button><button>キャンセル</button></div>`;
+    dialog.innerHTML = `<div>${html}</div><div><button autofocus>OK</button>${alert ? '' : '<button>キャンセル</button>'}</div>`;
     dialog.showModal();
   });
+  var asyncAlert = async html => await asyncConfirm(html, true);
   var escapeHTML = s => s.replace(/[<>&"]/g, s => '&#' + s.charCodeAt(0) + ';');
   var getDetailHTML = async file => new Promise(resolve => {
     var isImage = file.type.startsWith('image/')
@@ -1288,6 +1289,18 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
   document.addEventListener('beforeunload', () => silence?.pause());
+  addEventListener('unhandledrejection', event => {
+    if (event.reason?.constructor !== Event)
+      asyncAlert('エラー この画面をスクショして管理人に報告してください<BR>' + escapeHTML('' + event.reason));
+  });
+  var onerrorValue;
+  window.onerror = function () {
+    asyncAlert('エラー この画面をスクショして管理人に報告してください<BR>' + escapeHTML('' + Array.from(arguments)));
+    return onerrorValue?.apply(this, arguments);
+  };
+  Object.defineProperty(window, 'onerror', {
+    set: value => onerrorValue = value
+  });
 };
 try {
   inject();
