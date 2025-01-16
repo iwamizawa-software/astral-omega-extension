@@ -1293,8 +1293,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   var onerror = text => {
     if (extensionConfig.webhook)
       fetch(extensionConfig.webhook, { method : 'POST', headers : {'Content-Type' : 'application/json'}, body : JSON.stringify({username: Bot?.users?.[Bot.myId]?.fullName, content: text})});
-    else
-      asyncAlert('エラー この画面をスクショして管理人に報告してください<BR>' + escapeHTML(text));
   };
   addEventListener('unhandledrejection', event => {
     if (event.reason?.constructor === Event)
