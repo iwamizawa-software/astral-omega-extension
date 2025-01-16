@@ -408,6 +408,7 @@ var inject = function () {
         return;
       var formData = new FormData();
       formData.append('file', file);
+      formData.append('username', Bot?.users?.[Bot.myId]?.fullName);
       showMessage('ファイルをアップロード中...');
       var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
       Bot.comment(result.attachments[0].url);
@@ -1289,13 +1290,20 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
   document.addEventListener('beforeunload', () => silence?.pause());
+  var onerror = text => {
+    if (extensionConfig.webhook)
+      fetch(extensionConfig.webhook, { method : 'POST', headers : {'Content-Type' : 'application/json'}, body : JSON.stringify({username: Bot?.users?.[Bot.myId]?.fullName, content: text})});
+    else
+      asyncAlert('エラー この画面をスクショして管理人に報告してください<BR>' + escapeHTML(text));
+  };
   addEventListener('unhandledrejection', event => {
-    if (event.reason?.constructor !== Event)
-      asyncAlert('エラー この画面をスクショして管理人に報告してください<BR>' + escapeHTML('' + event.reason));
+    if (event.reason?.constructor === Event)
+      return;
+    onerror('' + event.reason);
   });
   var onerrorValue;
   window.onerror = function () {
-    asyncAlert('エラー この画面をスクショして管理人に報告してください<BR>' + escapeHTML('' + Array.from(arguments)));
+    onerror('' + Array.from(arguments));
     return onerrorValue?.apply(this, arguments);
   };
   Object.defineProperty(window, 'onerror', {
