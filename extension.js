@@ -62,6 +62,7 @@ var inject = function () {
     {
       key: 'miniPlayer',
       name: 'YouTubeとツイキャスをミニプレイヤーで表示',
+      description: 'iOSはツイキャス表示できません。',
       type: [
         'OFF',
         '右下',
