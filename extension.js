@@ -1321,14 +1321,17 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         innerHTML: configInfo.find(item => item.key === 'miniPlayer').type.slice(1).map(v => '<option>' + v).join(''),
         onchange: () => miniPlayer.setAttribute('data-position', miniPlayerPositionSelector.value)
       });
+      miniPlayerButtonContainer.style.fontSize = smartSize;
       miniPlayerButtonContainer.append(miniPlayerPositionSelector);
-      miniPlayerButtonContainer.append(createElement('button', {
+      var miniPlayerCloseButton = createElement('button', {
         textContent: '×',
         onclick: () => {
           miniPlayer.removeAttribute('data-position');
           miniPlayerIFrame.src = 'about:blank';
         }
-      }));
+      });
+      miniPlayerCloseButton.style.fontSize = smartSize;
+      miniPlayerButtonContainer.append(miniPlayerCloseButton);
       var miniPlayerIFrame = createElement('iframe', {
         src: 'about:blank',
         allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
