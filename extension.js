@@ -1321,7 +1321,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         innerHTML: configInfo.find(item => item.key === 'miniPlayer').type.slice(1).map(v => '<option>' + v).join(''),
         onchange: () => miniPlayer.setAttribute('data-position', miniPlayerPositionSelector.value)
       });
-      miniPlayerButtonContainer.style.fontSize = smartSize;
+      miniPlayerPositionSelector.style.fontSize = smartSize;
       miniPlayerButtonContainer.append(miniPlayerPositionSelector);
       var miniPlayerCloseButton = createElement('button', {
         textContent: '×',
