@@ -1352,6 +1352,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         miniPlayerIFrame.src = RegExp.$1 ? 'https://twitcasting.tv/' + RegExp.$1 + '/embeddedplayer/live' : 'https://www.youtube.com/embed/' + RegExp.$2 + (RegExp.$3 ? '?start=' + RegExp.$3 : '');
         miniPlayerPositionSelector.selectedIndex = extensionConfig.miniPlayer - 1;
         miniPlayerPositionSelector.onchange();
+        miniPlayer.scrollIntoView({block: 'nearest', inline: 'nearest'});
       });
     });
   });
