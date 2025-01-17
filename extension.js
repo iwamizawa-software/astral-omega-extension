@@ -692,7 +692,8 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
               ignoreInfo[user.ihash] = user.ignored = data[1].stat === 'on';
           });
         } else if (Bot.users[Bot.myId]?.ihash === data[1].ihash) {
-          Bot.users[data[1].id].hidden = data[1].stat === 'on';
+          if (Bot.users[data[1].id].hidden = data[1].stat === 'on')
+            showMessage(Bot.users[data[1].id]?.fullName + 'に無視されました');
         }
         break;
     }
@@ -1087,6 +1088,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     var m = document.getElementById('extensionMessage');
     if (m)
       m.textContent = s;
+    console.log(s);
   };
   var alertOnce = (msg, id) => {
     if (localStorage.getItem('extensionAlert/' + id))
