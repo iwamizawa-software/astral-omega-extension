@@ -60,6 +60,20 @@ var inject = function () {
       value: 1
     },
     {
+      key: 'miniPlayer',
+      name: 'YouTubeとツイキャスをミニプレイヤーで表示',
+      type: [
+        'OFF',
+        '右下',
+        '右上',
+        '左下',
+        '左上',
+        '下',
+        '上'
+      ],
+      value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
+    },
+    {
       name: '読み上げ',
       type: 'separator'
     },
@@ -489,7 +503,18 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       ::backdrop{background-color:#000;opacity: 0.5}
       dialog button{margin:10px;line-height:1.5}
       dialog img,dialog pre{max-height:60vh;max-width:80vw;overflow:auto}
+      #miniPlayer{display: none;flex-direction:column;position:fixed;background-color:#000;width:500px;height:310px}
+      #miniPlayer button{float:right}
+      #miniPlayer iframe{display:block;border:0;width:100%;height:100%}
+      #miniPlayer[data-position="右下"]{display:flex;right:0;bottom:0}
+      #miniPlayer[data-position="右上"]{display:flex;right:0;top:0}
+      #miniPlayer[data-position="左下"]{display:flex;left:0;bottom:0}
+      #miniPlayer[data-position="左上"]{display:flex;left:0;top:0}
+      #miniPlayer[data-position="下"]{display:flex;left:0;bottom:0;width:1000px;height:526px}
+      #miniPlayer[data-position="上"]{display:flex;left:0;top:0;width:1000px;height:526px}
     `;
+    if (!extensionConfig.miniPlayer)
+      document.querySelector('#miniPlayer button')?.click();
     if (extensionConfig.invisibleMode) {
       cssText += '.panel-container:first-child{height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
       document.title = '☆';
@@ -1288,6 +1313,40 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       controller.style.marginLeft = 'auto';
       controller.style.marginRight = controller.style.width;
       inputContainer.after(controller);
+      var miniPlayer = createElement('div', {id: 'miniPlayer'});
+      document.body.append(miniPlayer);
+      var miniPlayerButtonContainer = createElement('div');
+      miniPlayer.append(miniPlayerButtonContainer);
+      var miniPlayerPositionSelector = createElement('select', {
+        innerHTML: configInfo.find(item => item.key === 'miniPlayer').type.slice(1).map(v => '<option>' + v).join(''),
+        onchange: () => miniPlayer.setAttribute('data-position', miniPlayerPositionSelector.value)
+      });
+      miniPlayerButtonContainer.append(miniPlayerPositionSelector);
+      miniPlayerButtonContainer.append(createElement('button', {
+        textContent: '×',
+        onclick: () => {
+          miniPlayer.removeAttribute('data-position');
+          miniPlayerIFrame.src = 'about:blank';
+        }
+      }));
+      var miniPlayerIFrame = createElement('iframe', {
+        src: 'about:blank',
+        allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+        scrolling: 'no',
+        allowFullscreen: true
+      });
+      miniPlayer.append(miniPlayerIFrame);
+      document.body.addEventListener('click', e => {
+        if (!extensionConfig.miniPlayer)
+          return;
+        var a = [e.target, e.target.parentNode].find(a => a.tagName === 'A');
+        if (!(a && /^https:\/\/(?:twitcasting\.tv\/([^\/]+)|(?:www\.youtube\.com\/(?:watch.*[\?&]v=|shorts\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?)/.test(a.href)))
+          return;
+        e.preventDefault();
+        miniPlayerIFrame.src = RegExp.$1 ? 'https://twitcasting.tv/' + RegExp.$1 + '/embeddedplayer/live' : 'https://www.youtube.com/embed/' + RegExp.$2 + (RegExp.$3 ? '?start=' + RegExp.$3 : '');
+        miniPlayerPositionSelector.selectedIndex = extensionConfig.miniPlayer - 1;
+        miniPlayerPositionSelector.onchange();
+      });
     });
   });
   document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
