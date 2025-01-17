@@ -1207,12 +1207,12 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       type: 'checkbox',
       id: 'mikey',
       onclick: () => {
-        alertOnce('荒らし対策は誤検出されやすいため、荒らしが来た時だけ有効にしてください。', 'mikey');
+        alertOnce('連投対策は誤検出されやすいため、荒らしが来た時だけ有効にしてください。', 'mikey');
       }
     }));
     div.append(createElement('label', {
       htmlFor: 'mikey',
-      textContent: '荒らし対策'
+      textContent: '連投対策'
     }));
     div.append(createElement('input', {
       type: 'checkbox',
@@ -1242,7 +1242,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           }
         }
       });
-      var smartSize = Math.ceil(16000 / defaultWidth) + 'px';
+      var smartSize = Math.max(16, Math.ceil(16000 / defaultWidth)) + 'px';
       input.setAttribute('style', 'flex-grow:1;font-size:' + smartSize);
       inputContainer.append(input);
       var file = createElement('input', {
