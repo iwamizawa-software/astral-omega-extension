@@ -517,7 +517,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     if (!extensionConfig.miniPlayer)
       document.querySelector('#miniPlayer button')?.click();
     if (extensionConfig.invisibleMode) {
-      cssText += '.panel-container:first-child{height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
+      cssText += '.panel-container:first-child:has(.room){height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
       document.title = '☆';
       Object.defineProperty(document, 'title', { get: ()=>'☆', set: s => document.querySelector('title').text = s, configurable: true});
     }
