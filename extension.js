@@ -421,8 +421,9 @@ var inject = function () {
         return;
       if (extensionConfig.confirmUpload && !await asyncConfirm(await getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？'))
         return;
+      var fname = file.name.replace(/^[^\.]+/, 'file');
       var formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', file, fname);
       formData.append('username', Bot?.users?.[Bot.myId]?.fullName);
       showMessage('ファイルをアップロード中...');
       var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
@@ -1114,7 +1115,8 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     var m = document.getElementById('extensionMessage');
     if (m)
       m.textContent = s;
-    console.log(s);
+    if (s)
+      console.log(s);
   };
   var alertOnce = (msg, id) => {
     if (localStorage.getItem('extensionAlert/' + id))
