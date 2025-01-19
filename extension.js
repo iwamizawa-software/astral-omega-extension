@@ -1,5 +1,8 @@
 var inject = function () {
 
+  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
+    return;
+
   var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
   (function setCSP() {
     var removeEventHandler = () => {
@@ -25,9 +28,6 @@ var inject = function () {
       observer.observe(document.documentElement, {childList: true});
     }
   })();
-
-  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
-    return;
 
   var configInfo = [
     {
