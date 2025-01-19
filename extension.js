@@ -1,5 +1,31 @@
 var inject = function () {
 
+  var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
+  (function setCSP() {
+    var removeEventHandler = () => {
+      var link = document.querySelector('[onload]');
+      if (link?.rel === 'preload') {
+        link.removeAttribute('onload');
+        link.onload = () => link.rel = 'stylesheet';
+      }
+    };
+    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}' https://iwamizawa-software.github.io/astral-omega-extension/extension.js;worker-src 'self' blob:">`;
+    if (document.currentScript) {
+      document.currentScript.remove();
+      removeEventHandler();
+      document.write(csp);
+    } else {
+      var observer = new MutationObserver(() => {
+        if (!document.head)
+          return;
+        removeEventHandler();
+        document.head.insertAdjacentHTML('afterbegin', csp);
+        observer.disconnect();
+      });
+      observer.observe(document.documentElement, {childList: true});
+    }
+  })();
+
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
@@ -259,7 +285,14 @@ var inject = function () {
   };
 
   window.Bot = function (bot) {
+    Bot.timerIds.forEach(Bot.clearTimeout);
+    Bot.timerIds.clear();
+    Bot.listeners = {};
+    Bot.commands = {};
+    if (!bot)
+      return;
     var code = `
+      document.currentScript?.remove();
       (function () {
         var setTimeout = function () {
           var id = Bot.setTimeout.apply(window, arguments);
@@ -304,11 +337,7 @@ var inject = function () {
         ${bot}
       })();
     `;
-    Bot.timerIds.forEach(Bot.clearTimeout);
-    Bot.timerIds.clear();
-    Bot.listeners = {};
-    Bot.commands = {};
-    Function(code)();
+    querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code, nonce})));
   };
   (function () {
     var timers = {}, id = 0, w = new Worker(URL.createObjectURL(new Blob(['var ids={};onmessage=function(e){if(e.data.length===1){clearTimeout(ids[e.data[0]]);delete ids[e.data[0]]}else{ids[e.data[1]]=self[e.data[0]](function(){postMessage(e.data[1])},e.data[2])}}'])));
@@ -591,8 +620,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       sound = null;
     }
     onbeforeunload = extensionConfig.onbeforeunload ? () => 1 : null;
-    if (extensionConfig.bot)
-      Bot(extensionConfig.bot);
+    Bot(extensionConfig.bot);
   };
   applyConfig();
 
@@ -1070,9 +1098,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         }
       });
     };
-    configWindow.configInfoJSON = JSON.stringify(configInfo);
-    configWindow.extensionConfigJSON = JSON.stringify(extensionConfig);
-    configWindow.document.write(`<!doctype html>\n<head><title>☆ω拡張設定</title><meta name="viewport" content="width=device-width"></head><body><script>var configInfo = JSON.parse(configInfoJSON);(${configScript})();load(JSON.parse(extensionConfigJSON))</script></body>`);
+    var configInfoJSON = JSON.stringify(configInfo);
+    var extensionConfigJSON = JSON.stringify(extensionConfig);
+    configWindow.document.write(`<!doctype html>\n<head><title>☆ω拡張設定</title><meta name="viewport" content="width=device-width"></head><body><script nonce="${nonce}">var configInfo = ${configInfoJSON};(${configScript})();load(${extensionConfigJSON})</script></body>`);
     configWindow.document.close();
   };
   var createMenu = function (list) {
