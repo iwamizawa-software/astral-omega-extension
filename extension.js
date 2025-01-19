@@ -577,6 +577,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     u.shiro = '◇' + u.ihash.slice(0, 6);
     u.kuro = u.trip ? '◆' + u.trip : '';
     u.fullName = (u.name || '') + u.shiro + u.kuro;
+    u.ignoreHash = new Set();
     if (u.trip && extensionConfig.forcedShiro)
       u.name += u.shiro;
     Bot.users[u.id] = u;
@@ -713,14 +714,25 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           Object.assign(Bot.users[data[1].id], data[1]);
         break;
       case 'IG':
+        var u = Bot.users[data[1].id];
+        if (!u)
+          break;
+        if (data[1].stat === 'on') {
+          u.ignoreHash.add(data[1].ihash);
+          if (!u.ignoreWarning && u.ignoreHash.size / (Object.values(Bot.users).length - 1) > 0.8) {
+            showMessage(u.fullName + 'が' + (location.hash === '#/select' ? 'キャラ選択部屋' : '部屋' + location.hash.split('/').pop()) + 'にて大量無視中');
+            u.ignoreWarning = 1;
+          }
+        } else if (data[1].stat === 'off') {
+          u.ignoreHash.delete(data[1].ihash);
+        }
         if (Bot.myId === data[1].id) {
           Object.values(Bot.users).forEach(user => {
             if (user.ihash === data[1].ihash)
               ignoreInfo[user.ihash] = user.ignored = data[1].stat === 'on';
           });
         } else if (Bot.users[Bot.myId]?.ihash === data[1].ihash) {
-          if (Bot.users[data[1].id].hidden = data[1].stat === 'on')
-            showMessage(Bot.users[data[1].id]?.fullName + 'に無視されました');
+          u.hidden = data[1].stat === 'on';
         }
         break;
     }
