@@ -1,5 +1,14 @@
 var inject = function () {
 
+  var detection = window.eval = () => {
+    alert('拡張機能でエラーが発生しました。以下の情報を管理人に報告お願いします。\n原因：' + detectionIndex);
+  };
+  var detectionIndex = [window.WebSocket, window.XMLHttpRequest.prototype.open, window.crypto?.randomUUID || Math.random].findIndex(
+    f => !((a=>a).toString === f.toString && /^\s*function\s*[a-zA-Z]*\s*\([^\)]*\)\s*\{\s*\[native code\]\s*\}\s*$/.test(f + ''))
+  );
+  if (detectionIndex >= 0)
+    detection();
+
   var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
   (function setCSP() {
     var removeEventHandler = () => {
@@ -1457,5 +1466,5 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
 try {
   inject();
 } catch (err) {
-  alert('拡張機能でエラーが出ました。以下のエラーを報告してください。\n' + err);
+  alert('拡張機能でエラーが出ました。以下の情報を管理人に報告お願いします。\nエラー：' + err);
 }
