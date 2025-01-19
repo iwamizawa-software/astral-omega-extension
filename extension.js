@@ -241,53 +241,90 @@ var inject = function () {
     });
   };
 
-  var timerIds = [];
   window.Bot = function (bot) {
-    var setTimeout = function () {
-      var id = window.setTimeout.apply(window, arguments);
-      timerIds.push(id);
-      return id;
-    };
-    var setInterval = function () {
-      var id = window.setInterval.apply(window, arguments);
-      timerIds.push(id);
-      return id;
-    };
-    var on = function (type, listener, timeout) {
-      var cancel = () => {
-        listener.resolve();
-        listener.resolved = true;
-      };
-      var p = new Promise(resolve => {
-        if (typeof timeout === 'number' || timeout?.timeout)
-          timeout.timerId = setTimeout(cancel, timeout.timeout || timeout);
-        if (timeout)
-          timeout.cancel = cancel;
-        listener.resolve = resolve;
-        queueMicrotask(()=>(Bot.listeners[type] || (Bot.listeners[type] = [])).push(listener));
-      });
-      p.cancel = cancel;
-      return p;
-    };
-    var listenTo = async function (word, name = '', timeout, normalize) {
-      if (!word.test) {
-        var w = word;
-        word = {test: s => s.indexOf(w) !== -1};
-      }
-      var cmt;
-      return await on('COM', user => user.id !== Bot.myId && user.fullName.indexOf(name) !== -1 && word.test(cmt = normalize ? Bot.normalize(user.cmt): user.cmt), timeout) && cmt;
-    };
-    var sleep = t => ({then: r => setTimeout(r, t)});
-    timerIds.forEach(clearTimeout.bind(window));
-    timerIds = [];
+    var code = `
+      (function () {
+        var setTimeout = function () {
+          var id = Bot.setTimeout.apply(window, arguments);
+          Bot.timerIds.add(id + '');
+          return id;
+        };
+        var setInterval = function () {
+          var id = Bot.setInterval.apply(window, arguments);
+          Bot.timerIds.add(id + '');
+          return id;
+        };
+        var clearTimeout = function (id) {
+          Bot.clearTimeout(id);
+          Bot.timerIds.delete(id + '');
+        };
+        var clearInterval = clearTimeout;
+        var on = function (type, listener, timeout) {
+          var cancel = () => {
+            listener.resolve();
+            listener.resolved = true;
+          };
+          var p = new Promise(resolve => {
+            if (typeof timeout === 'number' || timeout?.timeout)
+              timeout.timerId = setTimeout(cancel, timeout.timeout || timeout);
+            if (timeout)
+              timeout.cancel = cancel;
+            listener.resolve = resolve;
+            queueMicrotask(()=>(Bot.listeners[type] || (Bot.listeners[type] = [])).push(listener));
+          });
+          p.cancel = cancel;
+          return p;
+        };
+        var listenTo = async function (word, name = '', timeout, normalize) {
+          if (!word.test) {
+            var w = word;
+            word = {test: s => s.indexOf(w) !== -1};
+          }
+          var cmt;
+          return await on('COM', user => user.id !== Bot.myId && user.fullName.indexOf(name) !== -1 && word.test(cmt = normalize ? Bot.normalize(user.cmt): user.cmt), timeout) && cmt;
+        };
+        var sleep = t => ({then: r => setTimeout(r, t)});
+        ${bot}
+        document.currentScript?.remove();
+      })();
+    `;
+    Bot.timerIds.forEach(Bot.clearTimeout);
+    Bot.timerIds.clear();
     Bot.listeners = {};
     Bot.commands = {};
     try {
-      Function('setTimeout', 'setInterval', 'on', 'sleep', 'listenTo', bot + '')(setTimeout, setInterval, on, sleep, listenTo);
+      document.head.append(createElement('script', {textContent: code}));
     } catch (err) {
       console.log(err);
     }
   };
+  (function () {
+    var timers = {}, id = 0, w = new Worker(URL.createObjectURL(new Blob(['var ids={};onmessage=function(e){if(e.data.length===1){clearTimeout(ids[e.data[0]]);delete ids[e.data[0]]}else{ids[e.data[1]]=self[e.data[0]](function(){postMessage(e.data[1])},e.data[2])}}'])));
+    Bot.setTimeout = function (f, delay) {
+      timers[++id] = arguments;
+      w.postMessage(['setTimeout', id, delay]);
+      return id;
+    };
+    Bot.setInterval = function (f, delay) {
+      timers[++id] = arguments;
+      w.postMessage(['setInterval', id, delay]);
+      return id;
+    };
+    Bot.clearTimeout = Bot.clearInterval = function (id) {
+      delete timers[+id];
+      w.postMessage([+id]);
+    };
+    w.onmessage = function (event) {
+      var args = timers[event.data];
+      if (!args)
+        return;
+      if (typeof args[0] === 'function')
+        args[0].apply(window, Array.prototype.slice.call(args, 2));
+      else
+        eval(args[0]);
+    };
+  })();
+  Bot.timerIds = new Set();
   Bot.normalize = s => ('' + s).replace(/([ァ-ン])|[！-～]/g, (s, katakana) => String.fromCharCode(s.charCodeAt() - (katakana ? 96 : 0xFF01 - 0x21))).toLowerCase();
   Bot.listeners = {};
   Bot.users = {};
