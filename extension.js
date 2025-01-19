@@ -330,6 +330,7 @@ var inject = function () {
   Bot.users = {};
   Bot.commands = {};
   Bot.commentQueue = [];
+  Bot.findUser = name => Object.values(Bot.users).find(u => u.fullName?.includes(name));
   Bot.dequeue = function () {
     var cmt = Bot.commentQueue[0];
     Bot.send('COM', {cmt});
