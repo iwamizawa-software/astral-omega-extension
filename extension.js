@@ -223,6 +223,23 @@ var inject = function () {
     Object.assign(element, attr);
     return element;
   };
+  var observedSelectors = [];
+  var observer = new MutationObserver(() => {
+    observedSelectors = observedSelectors.filter(obj => {
+      var element = document.querySelector(obj.selector);
+      if (element)
+        obj.resolve(element);
+      else
+        return true;
+    });
+    if (!observedSelectors.length)
+      observer.disconnect();
+  });
+  var querySelectorAsync = async selector => document.querySelector(selector) || new Promise(resolve => {
+    if (!observedSelectors.length)
+      observer.observe(document, {subtree: true, childList: true});
+    observedSelectors.push({selector, resolve});
+  });
   const yomiageReplacer = s => s.replace(/https?:\S+/g, 'URL').replace(/[wｗ]{2,}$/, 'わらわら').replace(/([\s\S])\1{2,}/g, '$1$1$1');
   const removeSpace = str => str.replace(/[\u{0009}-\u{000D}\u{0020}\u{0085}\u{00A0}\u{00AD}\u{034F}\u{061C}\u{070F}\u{115F}\u{1160}\u{1680}\u{17B4}\u{17B5}\u{180E}\u{2000}-\u{200F}\u{2028}-\u{202F}\u{205F}-\u{206F}\u{2800}\u{3000}\u{3164}\u{FEFF}\u{FFA0}\u{110B1}\u{1BCA0}-\u{1BCA3}\u{1D159}\u{1D173}-\u{1D17A}\u{E0000}-\u{E0FFF}]/gu, '');
   const match = (str, cond) => {
@@ -292,11 +309,7 @@ var inject = function () {
     Bot.timerIds.clear();
     Bot.listeners = {};
     Bot.commands = {};
-    try {
-      document.head.append(createElement('script', {textContent: code}));
-    } catch (err) {
-      console.log(err);
-    }
+    querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code})));
   };
   (function () {
     var timers = {}, id = 0, w = new Worker(URL.createObjectURL(new Blob(['var ids={};onmessage=function(e){if(e.data.length===1){clearTimeout(ids[e.data[0]]);delete ids[e.data[0]]}else{ids[e.data[1]]=self[e.data[0]](function(){postMessage(e.data[1])},e.data[2])}}'])));
@@ -1175,23 +1188,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     localStorage.setItem('extensionAlert/' + id, 'a');
     alert(msg);
   };
-  var observedSelectors = [];
-  var observer = new MutationObserver(() => {
-    observedSelectors = observedSelectors.filter(obj => {
-      var element = document.querySelector(obj.selector);
-      if (element)
-        obj.resolve(element);
-      else
-        return true;
-    });
-    if (!observedSelectors.length)
-      observer.disconnect();
-  });
-  var querySelectorAsync = async selector => document.querySelector(selector) || new Promise(resolve => {
-    if (!observedSelectors.length)
-      observer.observe(document.body, {subtree: true, childList: true});
-    observedSelectors.push({selector, resolve});
-  });
   var createController = function (settings) {
     var element = document.createElement('div');
     element.innerHTML = `
