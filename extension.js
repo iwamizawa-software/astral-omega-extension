@@ -672,10 +672,11 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         if (!Bot.users[data[1].id])
           var unknown = Bot.users[data[1].id] = {id: data[1].id, name: 'UNKNOWN BUG', type: 'unknown', stat: '通常', ihash: data[1].id.slice(-10), x: 0, y: 350, scl: 100, r: 100, g: 100, b: 100};
         var user = Bot.users[data[1].id];
-        user.cmt = data[1].cmt;
-        if (user.ignored || user.hidden)
+        if (user.ignored || user.hidden) {
+          user.cmt = data[1].cmt = '***';
           break;
-        
+        }
+        user.cmt = data[1].cmt;
         calcScore(user.id, user.cmt);
         if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyCheckbox?.checked && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
           Bot.ignore(user.ihash, true, user.fullName);
