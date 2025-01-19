@@ -799,7 +799,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         if (data[1].stat === 'on') {
           u.ignoreHash.add(data[1].ihash);
           if (!u.ignoreWarning && u.ignoreHash.size / (Object.values(Bot.users).length - 1) > 0.8) {
-            showMessage(u.fullName + 'が' + (location.hash === '#/select' ? 'キャラ選択部屋' : '部屋' + location.hash.split('/').pop()) + 'にて大量無視中');
+            showMessage((location.hash === '#/select' ? 'キャラ選択部屋' : '部屋' + location.hash.split('/').pop()) + 'にて大量無視してる人が居ます');
             u.ignoreWarning = 1;
           }
         } else if (data[1].stat === 'off') {
