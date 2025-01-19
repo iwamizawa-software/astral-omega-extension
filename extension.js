@@ -302,14 +302,13 @@ var inject = function () {
         };
         var sleep = t => ({then: r => setTimeout(r, t)});
         ${bot}
-        document.currentScript?.remove();
       })();
     `;
     Bot.timerIds.forEach(Bot.clearTimeout);
     Bot.timerIds.clear();
     Bot.listeners = {};
     Bot.commands = {};
-    querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code})));
+    Function(code)();
   };
   (function () {
     var timers = {}, id = 0, w = new Worker(URL.createObjectURL(new Blob(['var ids={};onmessage=function(e){if(e.data.length===1){clearTimeout(ids[e.data[0]]);delete ids[e.data[0]]}else{ids[e.data[1]]=self[e.data[0]](function(){postMessage(e.data[1])},e.data[2])}}'])));
@@ -1071,7 +1070,9 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         }
       });
     };
-    configWindow.document.write(`<!doctype html>\n<head><title>☆ω拡張設定</title><meta name="viewport" content="width=device-width"></head><body><script>var configInfo = ${JSON.stringify(configInfo)};(${configScript})();load(${JSON.stringify(extensionConfig)})</script></body>`);
+    configWindow.configInfoJSON = JSON.stringify(configInfo);
+    configWindow.extensionConfigJSON = JSON.stringify(extensionConfig);
+    configWindow.document.write(`<!doctype html>\n<head><title>☆ω拡張設定</title><meta name="viewport" content="width=device-width"></head><body><script>var configInfo = JSON.parse(configInfoJSON);(${configScript})();load(JSON.parse(extensionConfigJSON))</script></body>`);
     configWindow.document.close();
   };
   var createMenu = function (list) {
