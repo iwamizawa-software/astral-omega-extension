@@ -409,7 +409,7 @@ var inject = function () {
     if (!ihash || Bot.users[Bot.myId]?.ihash === ihash)
       return;
     Bot.send('IG', {ihash, stat: ignore ? 'on' : 'off'});
-    showMessage((fullName || ('◇' + ihash.slice(0, 6))) + 'を自動無視しました');
+    showMessage((fullName || ('◇' + ihash.slice(0, 6))) + 'を無視しました');
   };
   Bot.stat = function (stat) {
     Bot.set({stat});
