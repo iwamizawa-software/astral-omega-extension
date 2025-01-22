@@ -1,7 +1,7 @@
 var inject = function () {
 
   var detection = window.eval = () => {
-    alert('拡張機能でエラーが発生しました。以下の情報を管理人に報告お願いします。\n原因：' + detectionIndex);
+    alert('拡張機能でエラーが発生しました。以下の情報を管理人に報告お願いします。\n理由：' + detectionIndex);
   };
   var detectionIndex = [window.WebSocket, window.XMLHttpRequest.prototype.open, window.crypto?.randomUUID || Math.random].findIndex(
     f => !((a=>a).toString === f.toString && /^\s*function\s*[a-zA-Z]*\s*\([^\)]*\)\s*\{\s*\[native code\]\s*\}\s*$/.test(f + ''))
@@ -77,7 +77,7 @@ var inject = function () {
     {
       key: 'webhook',
       name: 'アップロード用WebHook URL',
-      description: 'DiscordのWebHookを設定すると、アップロード機能が使えるようになります。アップロードしたものは削除できないので気を付けて使ってください。',
+      description: 'DiscordのWebHookを設定すると、アップロード機能が使えるようになります。サーバーの方で消しても24時間リンクが有効なので、すぐ消したくなるようなファイルはアップロードしないでください。',
       type: 'input',
       value: ''
     },
@@ -507,7 +507,7 @@ var inject = function () {
     try {
       if (!extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/'))
         return;
-      if (extensionConfig.confirmUpload && !await asyncConfirm(await getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？'))
+      if (extensionConfig.confirmUpload && !await asyncConfirm(await getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>'))
         return;
       var fname = file.name.replace(/^[^\.]+/, 'file');
       var formData = new FormData();
