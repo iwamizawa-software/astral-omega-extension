@@ -97,7 +97,6 @@ var inject = function () {
     {
       key: 'miniPlayer',
       name: 'YouTubeとツイキャスをミニプレイヤーで表示',
-      description: 'iOSはツイキャス表示できません。',
       type: [
         'OFF',
         '右下',
@@ -1433,8 +1432,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
           return;
         var a = [e.target, e.target.parentNode].find(a => a.tagName === 'A');
         if (!(a && /^https:\/\/(?:twitcasting\.tv\/([^\/]+)|(?:www\.youtube\.com\/(?:watch.*[\?&]v=|shorts\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?)/.test(a.href)))
-          return;
-        if ((navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) && RegExp.$1)
           return;
         e.preventDefault();
         miniPlayerIFrame.src = RegExp.$1 ? 'https://twitcasting.tv/' + RegExp.$1 + '/embeddedplayer/live' : 'https://www.youtube.com/embed/' + RegExp.$2 + (RegExp.$3 ? '?start=' + RegExp.$3 : '');
