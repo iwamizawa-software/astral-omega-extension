@@ -1,25 +1,5 @@
 var inject = function () {
 
-  var detection = window.eval = () => {
-    document.open();
-    document.write(
-`<!doctype html>
-<title>エラー</title>
-<p>異常を検出しました。Tampermonkeyとeval関数は使用できません。
-<p>心当たりのない方は<a href="https://form1ssl.fc2.com/form/?id=019f176bae31cba6">こちらから連絡お願いします。</a>以下の情報をコピーして送ってください。`
-    );
-    document.close();
-    document.body.appendChild(document.createElement('p')).textContent = '理由:' + detectionIndex;
-    document.body.appendChild(document.createElement('p')).textContent = 'ブラウザ:' + navigator.userAgent;
-  };
-  var detectionIndex = [window.WebSocket, window.XMLHttpRequest.prototype.open, window.crypto?.randomUUID || Math.random].findIndex(
-    f => !((a=>a).toString === f.toString && /^\s*function\s*[a-zA-Z]*\s*\([^\)]*\)\s*\{\s*\[native code\]\s*\}\s*$/.test(f + ''))
-  );
-  if (detectionIndex >= 0) {
-    detection();
-    return;
-  }
-
   var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
   (function setCSP() {
     var removeEventHandler = () => {
@@ -29,7 +9,7 @@ var inject = function () {
         link.onload = () => link.rel = 'stylesheet';
       }
     };
-    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}'${document.currentScript ? ' ' + document.currentScript.src : ''};worker-src 'self' blob:">`;
+    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}' https://iwamizawa-software.github.io/astral-omega-extension/extension.js;worker-src 'self' blob:">`;
     if (document.currentScript) {
       document.currentScript.remove();
       removeEventHandler();
