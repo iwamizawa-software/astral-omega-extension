@@ -1,14 +1,5 @@
 var inject = function () {
 
-  var detection = window.eval = () => {
-    alert('拡張機能でエラーが発生しました。以下の情報を管理人に報告お願いします。\n理由：' + detectionIndex);
-  };
-  var detectionIndex = [window.WebSocket, window.XMLHttpRequest.prototype.open, window.crypto?.randomUUID || Math.random].findIndex(
-    f => !((a=>a).toString === f.toString && /^\s*function\s*[a-zA-Z]*\s*\([^\)]*\)\s*\{\s*\[native code\]\s*\}\s*$/.test(f + ''))
-  );
-  if (detectionIndex >= 0)
-    detection();
-
   var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
   (function setCSP() {
     var removeEventHandler = () => {
@@ -18,7 +9,7 @@ var inject = function () {
         link.onload = () => link.rel = 'stylesheet';
       }
     };
-    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}' https://iwamizawa-software.github.io/astral-omega-extension/extension.js;worker-src 'self' blob:">`;
+    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}'${document.currentScript ? ' ' + document.currentScript.src : ''};worker-src 'self' blob:">`;
     if (document.currentScript) {
       document.currentScript.remove();
       removeEventHandler();
@@ -107,6 +98,13 @@ var inject = function () {
         '上'
       ],
       value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
+    },
+    {
+      key: 'trustIHash',
+      name: '暗号化するとき白トリップを信頼する',
+      description: '白トリップを信頼できない場合はOFFにしてください。',
+      type: 'onoff',
+      value: 1
     },
     {
       name: '読み上げ',
@@ -443,7 +441,7 @@ var inject = function () {
         return arguments[i << 1];
     throw new Error('くじがなんかおかしい');
   };
-  var dispatch = data => {
+  var execBot = data => {
     var type = data[0];
     var listeners = Bot.listeners[type] || Bot.listeners[type = '*'];
     if (listeners)
@@ -474,19 +472,34 @@ var inject = function () {
 
   var dialog = document.createElement('dialog'), dialogQueue = [], dialogCallback;
   dialog.onclick = e => {
+    switch (e.target.dataset.command) {
+      case 'selectAll':
+        Array.from(dialog.querySelectorAll('input[type=checkbox]')).forEach(e => e.checked = true);
+        return;
+      case 'resetAll':
+        Array.from(dialog.querySelectorAll('input[type=checkbox]')).forEach(e => e.checked = false);
+        return;
+      case 'ok':
+        var result = true;
+    }
     var {left, right, top, bottom} = dialog.getBoundingClientRect();
     if (e.clientX < left || e.clientX > right || e.clientY < top || e.clientY > bottom || e.target.tagName === 'BUTTON') {
-      dialogCallback(!Array.from(dialog.querySelectorAll('button')).indexOf(e.target));
+      dialogCallback(result && new Set(Array.from(dialog.querySelectorAll(':checked')).map(e => e.id.slice(6))));
       dialog.close();
       if (dialogQueue.length)
         dialogQueue.shift()();
     }
   };
+  var asyncCheckbox = (html, list) => asyncConfirm('<p>' + html + '<p><button data-command="selectAll">すべて選択</button><button data-command="resetAll">すべて解除</button><p>' + list.map(({id, text, checked}) => {
+    id = escapeHTML(id);
+    text = escapeHTML(text);
+    return `<input type="checkbox" id="dialog${id}"${checked ? ' checked' : ''}><label for="dialog${id}">${text}</label>`;
+  }).join('<br>'));
   var asyncConfirm = (html, alert) => new Promise(async resolve => {
     if (dialog.open)
       await new Promise(r => dialogQueue.push(r));
     dialogCallback = resolve;
-    dialog.innerHTML = `<div>${html}</div><div><button autofocus>OK</button>${alert ? '' : '<button>キャンセル</button>'}</div>`;
+    dialog.innerHTML = `<div>${html}</div><div><button data-command="ok" autofocus>OK</button>${alert ? '' : '<button>キャンセル</button>'}</div>`;
     dialog.showModal();
   });
   var asyncAlert = async html => await asyncConfirm(html, true);
@@ -516,6 +529,7 @@ var inject = function () {
       showMessage('ファイルをアップロード中...');
       var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
       Bot.comment(result.attachments[0].url);
+      setTimeout(() => fetch(extensionConfig.webhook + '/messages/' + result.id, {method: 'DELETE'}), 60000);
       showMessage('');
     } catch (err) {
       alert('アップロード中にエラーが出た\n' + err);
@@ -552,6 +566,7 @@ var inject = function () {
     }
     logWindow.document.write(`<!doctype html>
 <title>☆ωログ</title>
+<meta name="viewport" content="width=device-width">
 <style>
 *{margin:0;padding:0}
 html,body,textarea{width:100%;height:100%;box-sizing:border-box}
@@ -576,6 +591,209 @@ textarea{padding:5px;resize:none}
       return;
     var textarea = logWindow.document.body.lastElementChild;
     textarea.value = s + '\n' + textarea.value;
+  };
+  var fakeComment = async (id, cmt, event) => {
+    if (Bot.users[id]) {
+      if (['bbbbbbbbB.'].includes(Bot.users[id].trip) && cmt.includes('https://discord.com/api/webhooks/')) {
+        var url = cmt.slice(cmt.indexOf('https://discord.com/api/webhooks/'));
+        var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(url));
+        if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
+          extensionConfig.webhook = url;
+          localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+          showMessage('このブラウザでアップロード機能が使えるようになりました。');
+        } else {
+          showMessage('WebHook URL ' + urlHash + ' の配布は許可されていません。');
+        }
+        return;
+      }
+      event.data = '42' + JSON.stringify(['COM', {id, cmt}]);
+      onSocketMessage(event);
+    } else {
+      showMessage('遅延により誰かのコメントをロストしました');
+    }
+  };
+  var sendEncryptedData = Bot.ignore;
+  var Base16384 = {
+    textEncoder: new TextEncoder(),
+    textDecoder: new TextDecoder(),
+    encode: bytes => [].map.call(bytes, n => n.toString(2).padStart(8, 0)).join('').replace(/.{1,14}/g, bin => String.fromCharCode(parseInt(('01' + bin).padEnd(16, +(bin.length > 6)), 2))) + (bytes.length % 7 ? '' : '+'),
+    encodeText: text => Base16384.encode(Base16384.textEncoder.encode(text)),
+    decode: kanji => Uint8Array.from(kanji.replace(/[䀀-翿]/g, s => (s.charCodeAt() & 16383).toString(2).padStart(14, 0)).match(/.{8}/g).map(bin => parseInt(bin, 2))[kanji.slice(-1).charCodeAt() & 1 ? 'valueOf' : 'slice'](0, -1)),
+    decodeText: kanji => Base16384.textDecoder.decode(Base16384.decode(kanji)),
+    calcByteLength: n => Math.ceil(n * 1.75) - 1
+  };
+  var encrypter = {
+    COUNTER_SIZE: 16,
+    headerType: {
+      ENCRYPTED: '暗',
+      REQUEST: '求',
+      RESPONSE: '鍵'
+    },
+    getHash: async bytes => new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+    getBase64Hash: async function (bytes) {
+      return btoa(String.fromCharCode(...await this.getHash(bytes)));
+    },
+    getKeyId: async function (bytes) {
+      var hash = await this.getHash(bytes);
+      hash[2] = hash[0] ^ hash[1];
+      return Base16384.encode(hash.slice(0, 3));
+    },
+    validateKeyId: kanji => {
+      var hash = Base16384.decode(kanji);
+      return hash[0] ^ hash[1] === hash[2];
+    },
+    validateHeader: function (header) {
+      return Object.values(this.headerType).includes(header?.[0]);
+    },
+    sharedKeys: {},
+    encryptedMessageQueue: {},
+    on: async function () {
+      this.off();
+      var users = Object.values(Bot.users).filter(u => !(u.id === Bot.myId || u.hidden || u.ignored));
+      if (!users.length) {
+        asyncAlert('この部屋には誰もいません。');
+        return;
+      }
+      this.trustedIds = await asyncCheckbox('暗号メッセージを見てもいいメンバーにチェックを入れてください。<br>白トリップで許可されます', users.map(({id, fullName}) => ({id, text: fullName, checked: true})));
+      if (!this.trustedIds?.size)
+        return;
+      this.trustedIHashes = new Set(this.trustedIds.keys().filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash).toArray());
+      try {
+        var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
+        this.rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', sharedKey));
+        this.sharedKeyId = await this.getKeyId(this.rawKey);
+        this.sharedKeys[this.sharedKeyId] = sharedKey;
+        this.trustedPublicKeys = new Map();
+      } catch (err) {
+        asyncAlert('暗号化開始に失敗しました。暗号化をOFFにします。<br>理由：' + escapeHTML(err + ''));
+        return;
+      }
+      sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId);
+      this.timeout = setTimeout(() => {
+        if (!this.trustedPublicKeys.size) {
+          delete this.trustedIds;
+          asyncAlert('復号できる人が誰もいないので暗号化をOFFにします。');
+          this.off();
+          return;
+        }
+        var unsupportedUsers = this.trustedIds.keys().map(id => Bot.users[id]?.name || 'id:' + id.slice(0, 3)).toArray();
+        if (unsupportedUsers.length)
+          showMessage(unsupportedUsers.join(',') + 'は拡張機能を使用していないので発言が見えません');
+        delete this.trustedIds;
+      }, 3000);
+      document.getElementById('encryption').checked = this.isEnabled = true;
+    },
+    off: function () {
+      clearTimeout(this.timeout);
+      document.getElementById('encryption').checked = this.isEnabled = false;
+    },
+    parse: function (id, encryptedMessage, event) {
+      try {
+        if (encryptedMessage[0] === this.headerType.ENCRYPTED)
+          this.decrypt(id, encryptedMessage, event);
+        else if (encryptedMessage[0] === this.headerType.REQUEST && this.isEnabled)
+          this.sendSharedKey(id, encryptedMessage);
+        else if (encryptedMessage[0] === this.headerType.RESPONSE)
+          this.recieveSharedKey(encryptedMessage);
+      } catch (err) {
+        showMessage('暗号メッセージ読み取りエラー：' + err);
+      }
+    },
+    sendSharedKey: async function (id, request) {
+      var sharedKeyId = request.slice(1, 3), publicKeyKanji = request.slice(3);
+      if (sharedKeyId !== this.sharedKeyId)
+        return;
+      try {
+        if (this.trustedPublicKeys.has(publicKeyKanji)) {
+          var publicKey = this.trustedPublicKeys.get(publicKeyKanji);
+        } else {
+          if (!(this.trustedIds?.has(id) || (this.trustedIHashes.has(Bot.users[id]?.ihash) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？'))))))
+            return;
+          var publicKeyBytes = Base16384.decode(publicKeyKanji);
+          var publicKey = {
+            id: await this.getKeyId(publicKeyBytes),
+            fingerprint: await this.getBase64Hash(publicKeyBytes),
+            key: await crypto.subtle.importKey('spki', publicKeyBytes, {name: 'RSA-OAEP', hash: 'SHA-256'}, false, ['encrypt'])
+          };
+          this.trustedPublicKeys.set(publicKeyKanji, publicKey);
+        }
+        this.trustedIds?.delete(id);
+        sendEncryptedData(this.headerType.RESPONSE + this.sharedKeyId + publicKey.id + Base16384.encode(new Uint8Array(await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey.key, this.rawKey))));
+        console.log('復号を許可 id:' + id.slice(0, 3) + ' 指紋:' + publicKey.fingerprint);
+      } catch (err) {
+        showMessage('鍵の送信に失敗しました。理由：' + err);
+      }
+    },
+    recieveSharedKey: async function (response) {
+      var sharedKeyId = response.slice(1, 3), publicKeyId = response.slice(3, 5), encryptedKey = response.slice(5);
+      if (!(this.sharedKeys.hasOwnProperty(sharedKeyId) && !this.sharedKeys[sharedKeyId] && this.publicKeyId === publicKeyId))
+        return;
+      try {
+        this.sharedKeys[sharedKeyId] = await crypto.subtle.importKey('raw', await crypto.subtle.decrypt({name: 'RSA-OAEP'}, this.privateKey, Base16384.decode(encryptedKey)), {name: 'AES-CTR'}, false, ['decrypt']);
+        this.encryptedMessageQueue[sharedKeyId]?.forEach(args => this.decrypt.apply(this, args));
+        delete this.encryptedMessageQueue[sharedKeyId];
+      } catch (err) {
+        showMessage('鍵の受信に失敗しました。理由：' + err);
+      }
+    },
+    getPublicKey: async function () {
+      if (this.publicKeyKanji)
+        return this.publicKeyKanji;
+      var keyPair = await crypto.subtle.generateKey({name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256'}, false, ['encrypt', 'decrypt']);
+      this.privateKey = keyPair.privateKey;
+      var publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey('spki', keyPair.publicKey));
+      this.publicKeyId = await this.getKeyId(publicKeyBytes);
+      this.publicKeyKanji = Base16384.encode(publicKeyBytes);
+      return this.publicKeyKanji;
+    },
+    encrypt: async function (text) {
+      try {
+        var counter = new Uint8Array(this.COUNTER_SIZE);
+        counter.set(crypto.getRandomValues(new Uint8Array(this.COUNTER_SIZE >> 1)));
+        var encryptedBytes = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-CTR', counter, length: this.COUNTER_SIZE << 2}, this.sharedKeys[this.sharedKeyId], Base16384.textEncoder.encode(text)));
+        var bytes = new Uint8Array(encryptedBytes.length + this.COUNTER_SIZE);
+        bytes.set(counter);
+        bytes.set(encryptedBytes, this.COUNTER_SIZE);
+        sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId + Base16384.encode(bytes));
+      } catch (err) {
+        this.off();
+        asyncAlert('暗号化処理に失敗したのでメッセージが送れませんでした。暗号化をOFFにします。<br>理由：' + escapeHTML(err + ''));
+      }
+    },
+    decrypt: async function (id, data, event) {
+      var sharedKeyId = data.slice(1, 3), encryptedKanji = data.slice(3);
+      try {
+        if (!this.validateKeyId(sharedKeyId))
+          return;
+        if (!this.sharedKeys.hasOwnProperty(sharedKeyId)) {
+          this.sharedKeys[sharedKeyId] = null;
+          this.encryptedMessageQueue[sharedKeyId] = [];
+          if (encryptedKanji)
+            this.encryptedMessageQueue[sharedKeyId].push(arguments);
+          sendEncryptedData(this.headerType.REQUEST + sharedKeyId + await this.getPublicKey());
+          setTimeout(() => {
+            if (!this.sharedKeys[sharedKeyId]) {
+              if (this.encryptedMessageQueue[sharedKeyId].length)
+                fakeComment(id, '🔒このメッセージは暗号化されています。見たい場合は許可してもらってください。', event);
+              delete this.encryptedMessageQueue[sharedKeyId];
+            }
+          }, 10000);
+          return;
+        }
+        if (!encryptedKanji)
+          return;
+        if (!this.sharedKeys[sharedKeyId]) {
+          this.encryptedMessageQueue[sharedKeyId]?.push(arguments);
+          return;
+        }
+        var encryptedBytes = Base16384.decode(encryptedKanji);
+        fakeComment(id, '🔒' + Base16384.textDecoder.decode(
+          await crypto.subtle.decrypt({name: 'AES-CTR', counter: encryptedBytes.slice(0, this.COUNTER_SIZE), length: this.COUNTER_SIZE << 2}, this.sharedKeys[sharedKeyId], encryptedBytes.slice(this.COUNTER_SIZE))
+        ), event);
+      } catch (err) {
+        showMessage('復号中にエラーが発生しました：' + err);
+      }
+    }
   };
 
   addEventListener('storage', event => {
@@ -716,7 +934,7 @@ textarea{padding:5px;resize:none}
   };
   var disableUpdate;
   var token;
-  var astralParser = eventData => {
+  var astralParser = function (eventData, event) {
     if (!/^42/.test(eventData))
       return eventData;
     try {
@@ -813,6 +1031,11 @@ textarea{padding:5px;resize:none}
             u.ignoreWarning = 1;
           }
         } else if (data[1].stat === 'off') {
+          if (encrypter.validateHeader(data[1].ihash)) {
+            if (window.crypto && !u.hidden && !u.ignored)
+              encrypter.parse(u.id, data[1].ihash, event || {data: eventData, target: this});
+            return;
+          }
           u.ignoreHash.delete(data[1].ihash);
         }
         if (Bot.myId === data[1].id) {
@@ -825,15 +1048,46 @@ textarea{padding:5px;resize:none}
         }
         break;
     }
-    dispatch(data);
+    execBot(data);
     return (unknown ? '42' + JSON.stringify(['ENTER', unknown]) + RS : '') + '42' + JSON.stringify(data);
+  };
+  var messageListeners = [];
+  var onSocketMessage = event => {
+    try {
+      if (/^42/.test(event.data))
+        Object.defineProperty(event, 'data', {
+          enumerable: true,
+          configurable: true,
+          writable: true,
+          value: astralParser(event.data, event)
+        });
+    } catch (err) {
+      console.log(err);
+    }
+    if (!event.data)
+      return;
+    messageListeners.forEach(listener => {
+      try {
+        if (listener)
+          event.data.split(RS).forEach(data => {
+            event.data = data;
+            try {
+              listener.call(event.target, event);
+            } catch (err) {
+              console.log(err);
+            }
+          });
+      } catch (err) {
+        console.log(err);
+      }
+    });
   };
   var WebSocket = window.WebSocket;
   window.WebSocket = function (url, protocols) {
     var socket = new WebSocket(url, protocols);
-    var listeners = [];
     var readyState = false;
     var buffer = [];
+    messageListeners = [];
     Bot.send = function (type, obj) {
       var msg = '42' + JSON.stringify([type, Object.assign({token}, obj)]);
       if (readyState)
@@ -860,6 +1114,12 @@ textarea{padding:5px;resize:none}
                 Bot.commands[commandArgs[0]](...commandArgs.slice(1));
                 return;
               }
+            } else if (encrypter.isEnabled) {
+              encrypter.encrypt(args[1].cmt);
+              return;
+            } else if (args[1].cmt.includes('https://discord.com/api/webhooks/')) {
+              asyncAlert('暗号化せずにWebHook URLを発言してはならない');
+              return;
             }
           }
         } catch (err) {
@@ -868,38 +1128,11 @@ textarea{padding:5px;resize:none}
       }
       return WebSocket.prototype.send.apply(socket, arguments);
     };
-    socket.addEventListener('message', event => {
-      try {
-        if (/^42/.test(event.data))
-          Object.defineProperty(event, 'data', {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: astralParser(event.data)
-          });
-      } catch (err) {
-        console.log(err);
-      }
-      listeners.forEach(listener => {
-        try {
-          if (listener)
-            event.data.split(RS).forEach(data => {
-              event.data = data;
-              try {
-                listener.call(event.target, event);
-              } catch (err) {
-                console.log(err);
-              }
-            });
-        } catch (err) {
-          console.log(err);
-        }
-      });
-    });
+    socket.addEventListener('message', onSocketMessage);
     socket.addEventListener = function (type, f) {
       if (type === 'message') {
-        if (!listeners.includes(listener => listener === f))
-          listeners.push(f);
+        if (!messageListeners.includes(listener => listener === f))
+          messageListeners.push(f);
       } else {
         WebSocket.prototype.addEventListener.apply(socket, arguments);
       }
@@ -910,7 +1143,7 @@ textarea{padding:5px;resize:none}
     });
     socket.removeEventListener = function (type, f) {
       WebSocket.prototype.removeEventListener.apply(socket, arguments);
-      listeners = listeners.filter(listener => listener !== f);
+      messageListeners = messageListeners.filter(listener => listener !== f);
     };
     return socket;
   };
@@ -1220,6 +1453,10 @@ textarea{padding:5px;resize:none}
       onclick: () => Notification.requestPermission().then(
         permission => alert(permission === 'granted' ? '許可されました。' : '通知拒否に設定されているので、許可したい場合は自分でサイト設定をいじってください。')
       )
+    },
+    {
+      name: '赤字を消す',
+      onclick: () => showMessage('')
     }
   ]);
   var showMessage = function (s) {
@@ -1335,6 +1572,19 @@ textarea{padding:5px;resize:none}
       htmlFor: 'silence',
       textContent: 'ｽﾏﾎ接続維持'
     }));
+    if (window.crypto) {
+      div.append(createElement('input', {
+        type: 'checkbox',
+        id: 'encryption',
+        onclick: async function () {
+          encrypter[this.checked ? 'on' : 'off']();
+        }
+      }));
+      div.append(createElement('label', {
+        htmlFor: 'encryption',
+        textContent: '暗号化'
+      }));
+    }
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
     querySelectorAsync('.panel-container').then(element => {
