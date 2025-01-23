@@ -555,10 +555,11 @@ var inject = function () {
 <style>
 *{margin:0;padding:0}
 html,body,textarea{width:100%;height:100%;box-sizing:border-box}
-body{overflow:hidden}
-textarea{padding:5px;resize:none;height:calc(100% - 10px)}
+body{overflow:hidden;display:flex;flex-direction:column}
+input[type=text]{box-sizing:border-box;width:100%}
+textarea{padding:5px;resize:none}
 </style>
-<input type="text" style="box-sizing:border-box;width:100%"><textarea readonly></textarea>`);
+<input type="text"><textarea readonly></textarea>`);
     logWindow.document.close();
     logWindow.document.body.firstElementChild.onkeypress = function (e) {
       if (this.value && event.key === 'Enter') {
@@ -765,7 +766,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
         }
         user.cmt = data[1].cmt;
         calcScore(user.id, user.cmt);
-        if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyCheckbox?.checked && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
+        if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyMode && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
           Bot.ignore(user.ihash, true, user.fullName);
           break;
         }
@@ -917,7 +918,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   window.WebSocket.__proto__ = WebSocket;
   var XMLHttpRequest_open = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (method, url) {
-    if (url.indexOf('monachatchat') !== -1)
+    if (url.includes('monachatchat'))
       this.addEventListener('load', () => this.responseText.split(RS).forEach(astralParser));
     return XMLHttpRequest_open.apply(this, arguments);
   };
@@ -1143,10 +1144,18 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
   var silence = new Audio();
   silence.src = 'data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxLEAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
   silence.loop = true;
-  var pauseNotification, pauseYomiage;
+  var pauseNotification, pauseYomiage, mikeyMode;
   var menu = createMenu([
     {
       name: '拡張メニュー',
+    },
+    {
+      name: '連投対策',
+      type: 'toggle',
+      onclick: checked => {
+        if (mikeyMode = checked)
+          alertOnce('連投対策は誤検出されやすいため、荒らしが来た時だけ有効にしてください。', 'mikey');
+      }
     },
     {
       name: '音声入力',
@@ -1184,7 +1193,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       }
     },
     {
-      name: '通知一時停止',
+      name: '通知停止',
       type: 'toggle',
       oninit: () => !!window.Notification,
       onclick: checked => {
@@ -1192,7 +1201,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       }
     },
     {
-      name: '読み上げ一時停止',
+      name: '読み上げ停止',
       type: 'toggle',
       oninit: () => !!window.speechSynthesis,
       onclick: checked => {
@@ -1277,7 +1286,6 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     element.addEventListener('touchstart', e => e.preventDefault());
     return element;
   };
-  var mikeyCheckbox;
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
       if (!extensionConfig.showImage)
@@ -1313,19 +1321,8 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
       onclick: openLog
     }));
     div.append(createElement('button', {
-      textContent: '拡張設定',
+      textContent: '設定',
       onclick: openConfig
-    }));
-    div.append(mikeyCheckbox = createElement('input', {
-      type: 'checkbox',
-      id: 'mikey',
-      onclick: () => {
-        alertOnce('連投対策は誤検出されやすいため、荒らしが来た時だけ有効にしてください。', 'mikey');
-      }
-    }));
-    div.append(createElement('label', {
-      htmlFor: 'mikey',
-      textContent: '連投対策'
     }));
     div.append(createElement('input', {
       type: 'checkbox',
@@ -1336,7 +1333,7 @@ textarea{padding:5px;resize:none;height:calc(100% - 10px)}
     }));
     div.append(createElement('label', {
       htmlFor: 'silence',
-      textContent: 'スマホ接続維持'
+      textContent: 'ｽﾏﾎ接続維持'
     }));
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
