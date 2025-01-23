@@ -572,7 +572,7 @@ var inject = function () {
 html,body,textarea{width:100%;height:100%;box-sizing:border-box}
 body{overflow:hidden;display:flex;flex-direction:column}
 input[type=text]{box-sizing:border-box;width:100%;font-size:16px}
-textarea{padding:5px;resize:none}
+textarea{padding:5px;resize:none;font-size:16px}
 </style>
 <input type="text"><textarea readonly></textarea>`);
     logWindow.document.close();
