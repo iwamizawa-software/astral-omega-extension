@@ -1291,7 +1291,7 @@ textarea{padding:5px;resize:none}
       if (!extensionConfig.showImage)
         return;
       Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/"]:not([data-img])')).forEach(a => {
-        if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/.test(a.href))
+        if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/i.test(a.href))
           return;
         var img = new Image();
         img.onload = function () {
