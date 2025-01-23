@@ -571,7 +571,7 @@ var inject = function () {
 *{margin:0;padding:0}
 html,body,textarea{width:100%;height:100%;box-sizing:border-box}
 body{overflow:hidden;display:flex;flex-direction:column}
-input[type=text]{box-sizing:border-box;width:100%}
+input[type=text]{box-sizing:border-box;width:100%;font-size:16px}
 textarea{padding:5px;resize:none}
 </style>
 <input type="text"><textarea readonly></textarea>`);
