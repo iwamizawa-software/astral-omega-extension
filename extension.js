@@ -609,10 +609,10 @@ textarea{padding:5px;resize:none;font-size:16px}
             showMessage('WebHook URL ' + urlHash + ' の配布は許可されていません。');
           }
           return;
-        } else if (command === '/ver') {
+        } else if (command === '#ver') {
           Bot.comment(VERSION);
           return;
-        } else if (command === '/clearWebHook') {
+        } else if (command === '#clearWebHook') {
           extensionConfig.webhook = '';
           localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
           return;
