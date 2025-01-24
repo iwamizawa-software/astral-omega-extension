@@ -873,12 +873,16 @@ textarea{padding:5px;resize:none;font-size:16px}
   addEventListener('mousemove', () => lastActive = (new Date()).getTime());
   var mention;
   var mentionNotification = async function (user, cmt, onclick) {
-    mention = new Notification(user.name, {
-      tag: 'mention',
-      body: cmt,
-      requireInteraction: true
-    });
-    mention.onclick = onclick;
+    try {
+      mention = new Notification(user.name, {
+        tag: 'mention',
+        body: cmt,
+        requireInteraction: true
+      });
+      mention.onclick = onclick;
+    } catch (err) {
+      console.log(err);
+    }
   };
   addEventListener('focus', function () {
     if (mention)
