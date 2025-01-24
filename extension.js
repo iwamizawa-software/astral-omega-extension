@@ -391,7 +391,7 @@ var inject = function () {
   };
   Bot.comment = function (cmt) {
     var run = Bot.commentQueue.length;
-    Bot.commentQueue.push(cmt);
+    Bot.commentQueue.push(cmt + '');
     if (!run)
       Bot.dequeue();
   };
