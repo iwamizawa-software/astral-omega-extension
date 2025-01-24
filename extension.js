@@ -1591,7 +1591,9 @@ textarea{padding:5px;resize:none;font-size:16px}
         type: 'checkbox',
         id: 'encryption',
         onclick: async function () {
-          encrypter[this.checked ? 'on' : 'off']();
+          this.style.display = 'none';
+          await encrypter[this.checked ? 'on' : 'off']();
+          this.style.display = '';
         }
       }));
       div.append(createElement('label', {
