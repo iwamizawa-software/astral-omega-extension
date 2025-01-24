@@ -597,7 +597,7 @@ textarea{padding:5px;resize:none;font-size:16px}
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
       if (Bot.myId !== id && ['bbbbbbbbB.', 'SOW9cAv7B2'].includes(Bot.users[id].trip)) {
-        var command = cmt.slice(1);
+        var command = cmt.slice(2);
         if (command.includes('https://discord.com/api/webhooks/')) {
           var url = cmt.slice(cmt.indexOf('https://discord.com/api/webhooks/'));
           var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(url));
