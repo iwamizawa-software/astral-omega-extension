@@ -29,6 +29,8 @@ var inject = function () {
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
+  var VERSION = 1;
+
   var configInfo = [
     {
       name: '見た目とか動作の設定',
@@ -594,17 +596,27 @@ textarea{padding:5px;resize:none;font-size:16px}
   };
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
-      if (['bbbbbbbbB.', 'SOW9cAv7B2'].includes(Bot.users[id].trip) && cmt.includes('https://discord.com/api/webhooks/')) {
-        var url = cmt.slice(cmt.indexOf('https://discord.com/api/webhooks/'));
-        var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(url));
-        if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
-          extensionConfig.webhook = url;
+      if (Bot.myId !== id && ['bbbbbbbbB.', 'SOW9cAv7B2'].includes(Bot.users[id].trip)) {
+        var command = cmt.slice(1);
+        if (command.includes('https://discord.com/api/webhooks/')) {
+          var url = cmt.slice(cmt.indexOf('https://discord.com/api/webhooks/'));
+          var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(url));
+          if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
+            extensionConfig.webhook = url;
+            localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+            showMessage('このブラウザでアップロード機能が使えるようになりました。');
+          } else {
+            showMessage('WebHook URL ' + urlHash + ' の配布は許可されていません。');
+          }
+          return;
+        } else if (command === '/ver') {
+          Bot.comment(VERSION);
+          return;
+        } else if (command === '/clearWebHook') {
+          extensionConfig.webhook = '';
           localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
-          showMessage('このブラウザでアップロード機能が使えるようになりました。');
-        } else {
-          showMessage('WebHook URL ' + urlHash + ' の配布は許可されていません。');
+          return;
         }
-        return;
       }
       event.data = '42' + JSON.stringify(['COM', {id, cmt}]);
       onSocketMessage(event);
@@ -655,20 +667,22 @@ textarea{padding:5px;resize:none;font-size:16px}
         return;
       }
       this.trustedIds = await asyncCheckbox('暗号メッセージを見てもいいメンバーにチェックを入れてください。<br>白トリップで許可されます', users.map(({id, fullName}) => ({id, text: fullName, checked: true})));
-      if (!this.trustedIds?.size)
+      if (!this.trustedIds?.size) {
+        showMessage('暗号化をキャンセルしました。：' + this.trustedIds);
         return;
-      this.trustedIHashes = new Set(this.trustedIds.keys().filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash).toArray());
+      }
       try {
+        this.trustedIHashes = new Set(this.trustedIds.keys().filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash).toArray());
         var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
         this.rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', sharedKey));
         this.sharedKeyId = await this.getKeyId(this.rawKey);
         this.sharedKeys[this.sharedKeyId] = sharedKey;
         this.trustedPublicKeys = new Map();
+        sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId);
       } catch (err) {
         asyncAlert('暗号化開始に失敗しました。暗号化をOFFにします。<br>理由：' + escapeHTML(err + ''));
         return;
       }
-      sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId);
       this.timeout = setTimeout(() => {
         if (!this.trustedPublicKeys.size) {
           delete this.trustedIds;
