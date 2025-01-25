@@ -9,7 +9,7 @@ var inject = function () {
         link.onload = () => link.rel = 'stylesheet';
       }
     };
-    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}' https://iwamizawa-software.github.io/astral-omega-extension/extension.js;worker-src 'self' blob:">`;
+    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}';worker-src 'self' blob:">`;
     if (document.currentScript) {
       document.currentScript.remove();
       removeEventHandler();
@@ -667,12 +667,10 @@ textarea{padding:5px;resize:none;font-size:16px}
         return;
       }
       this.trustedIds = await asyncCheckbox('暗号メッセージを見てもいいメンバーにチェックを入れてください。<br>白トリップで許可されます', users.map(({id, fullName}) => ({id, text: fullName, checked: true})));
-      if (!this.trustedIds?.size) {
-        showMessage('暗号化をキャンセルしました。：' + this.trustedIds);
+      if (!this.trustedIds?.size)
         return;
-      }
       try {
-        this.trustedIHashes = new Set(this.trustedIds.keys().filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash).toArray());
+        this.trustedIHashes = new Set(Array.from(this.trustedIds.keys()).filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash));
         var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
         this.rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', sharedKey));
         this.sharedKeyId = await this.getKeyId(this.rawKey);
@@ -690,7 +688,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           this.off();
           return;
         }
-        var unsupportedUsers = this.trustedIds.keys().map(id => Bot.users[id]?.name || 'id:' + id.slice(0, 3)).toArray();
+        var unsupportedUsers = Array.from(this.trustedIds.keys()).map(id => Bot.users[id]?.name || 'id:' + id.slice(0, 3));
         if (unsupportedUsers.length)
           showMessage(unsupportedUsers.join(',') + 'は拡張機能を使用していないので発言が見えません');
         delete this.trustedIds;
