@@ -719,8 +719,11 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (this.trustedPublicKeys.has(publicKeyKanji)) {
           var publicKey = this.trustedPublicKeys.get(publicKeyKanji);
         } else {
-          if (!(this.trustedIds?.has(id) || (this.trustedIHashes.has(Bot.users[id]?.ihash) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？'))))))
+          if (!(this.trustedIds?.has(id) || (this.trustedIHashes.has(Bot.users[id]?.ihash) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？')))))) {
+            if (!this.trustedIds)
+              showMessage((Bot.users[id]?.fullName || 'id:' + id.slice(0, 3)) + 'は暗号メッセージを読めません');
             return;
+          }
           var publicKeyBytes = Base16384.decode(publicKeyKanji);
           var publicKey = {
             id: await this.getKeyId(publicKeyBytes),
@@ -732,6 +735,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         this.trustedIds?.delete(id);
         sendEncryptedData(this.headerType.RESPONSE + this.sharedKeyId + publicKey.id + Base16384.encode(new Uint8Array(await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey.key, this.rawKey))));
         console.log('復号を許可 id:' + id.slice(0, 3) + ' 指紋:' + publicKey.fingerprint);
+        if (!this.trustedIds)
+          showMessage((Bot.users[id]?.fullName || 'id:' + id.slice(0, 3)) + 'は暗号メッセージを読めます');
       } catch (err) {
         showMessage('鍵の送信に失敗しました。理由：' + err);
       }
