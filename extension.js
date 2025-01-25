@@ -9,7 +9,7 @@ var inject = function () {
         link.onload = () => link.rel = 'stylesheet';
       }
     };
-    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}';worker-src 'self' blob:">`;
+    var csp = `<meta http-equiv="content-security-policy" content="script-src 'self' 'nonce-${nonce}' https://iwamizawa-software.github.io/astral-omega-extension/extension.js;worker-src 'self' blob:">`;
     if (document.currentScript) {
       document.currentScript.remove();
       removeEventHandler();
