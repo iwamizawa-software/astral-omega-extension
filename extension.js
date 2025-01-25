@@ -785,8 +785,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           sendEncryptedData(this.headerType.REQUEST + sharedKeyId + await this.getPublicKey());
           setTimeout(() => {
             if (!this.sharedKeys[sharedKeyId]) {
-              if (this.encryptedMessageQueue[sharedKeyId].length)
-                fakeComment(id, '🔒このメッセージは暗号化されています。見たい場合は許可してもらってください。', event);
+              console.log('鍵取得不許可：' + sharedKeyId);
               delete this.encryptedMessageQueue[sharedKeyId];
             }
           }, 10000);
