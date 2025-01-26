@@ -724,7 +724,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     },
     off: function () {
       if (this.isEnabled)
-        this.sendEncryptedData(this.headerType.END + this.sharedKeyId);
+        this.sendEncryptedData(this.headerType.END);
       this.completed = false;
       clearTimeout(this.timeout);
       document.getElementById('encryption').checked = this.isEnabled = false;
@@ -737,7 +737,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           this.sendSharedKey(id, encryptedMessage, event);
         else if (encryptedMessage[0] === this.headerType.RESPONSE)
           this.recieveSharedKey(encryptedMessage);
-        else if (encryptedMessage[0] === this.headerType.END && encryptedMessage.slice(1) === this.sharedKeyId)
+        else if (Bot.myId === id && encryptedMessage[0] === this.headerType.END)
           fakeUser(event);
       } catch (err) {
         showMessage('暗号メッセージ読み取りエラー：' + err);
