@@ -1016,8 +1016,7 @@ textarea{padding:5px;resize:none;font-size:16px}
             focus();
             this.close();
           });
-          if (sound)
-            sound.play();
+          sound?.play().catch(e => e);
         }
         if (data[1].cmt && data[1].cmt.length > +extensionConfig.maxComment)
           data[1].cmt = data[1].cmt.slice(0, +extensionConfig.maxComment);
@@ -1710,11 +1709,18 @@ textarea{padding:5px;resize:none;font-size:16px}
       });
     });
   });
-  document.addEventListener('click', e => speechSynthesis.speak(new SpeechSynthesisUtterance('')), {once:true});
+  document.addEventListener('click', e => {
+    speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+    if (sound) {
+      sound.volume = 0;
+      sound.play().catch(e => e);
+      sound.addEventListener('ended', e => sound.volume = extensionConfig.notifySoundVolume, {once: true});
+    }
+  }, {once: true});
   document.addEventListener('beforeunload', () => silence?.pause());
   var onerror = text => {
     if (extensionConfig.webhook)
-      fetch(extensionConfig.webhook, { method : 'POST', headers : {'Content-Type' : 'application/json'}, body : JSON.stringify({username: Bot?.users?.[Bot.myId]?.fullName, content: text})});
+      fetch(extensionConfig.webhook, { method : 'POST', headers : {'Content-Type' : 'application/json'}, body : JSON.stringify({username: Bot?.users?.[Bot.myId]?.fullName, content: text})}).catch(e => e);
   };
   addEventListener('unhandledrejection', event => {
     if (event.reason?.constructor === Event)
