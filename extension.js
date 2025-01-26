@@ -29,7 +29,7 @@ var inject = function () {
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
-  var VERSION = 1;
+  var VERSION = 2;
 
   var configInfo = [
     {
@@ -594,6 +594,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     var textarea = logWindow.document.body.lastElementChild;
     textarea.value = s + '\n' + textarea.value;
   };
+  var socketData = obj => '42' + JSON.stringify(obj);
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
       if (Bot.myId !== id && ['bbbbbbbbB.', 'SOW9cAv7B2'].includes(Bot.users[id].trip)) {
@@ -611,20 +612,37 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         } else if (command === '#ver') {
           Bot.comment(VERSION);
-          return;
         } else if (command === '#clearWebHook') {
           extensionConfig.webhook = '';
           localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
           return;
         }
       }
-      event.data = '42' + JSON.stringify(['COM', {id, cmt}]);
+      event.data = socketData(['COM', {id, cmt}]);
       onSocketMessage(event);
     } else {
       showMessage('遅延により誰かのコメントをロストしました');
     }
   };
-  var sendEncryptedData = Bot.ignore;
+  var fakeStat = (id, event) => {
+    if (!Bot.users[id] || !Bot.users[id].realStat)
+      return;
+    Bot.users[id].stat = Bot.users[id].realStat;
+    event.data = socketData(['SET', Bot.users[id]]);
+    onSocketMessage(event);
+  };
+  var fakeUser = async (event) => {
+    await 0;
+    var users = Object.values(Bot.users);
+    users.forEach(u => {
+      if (!encrypter.isEnabled && u.realStat)
+        u.stat = u.realStat;
+      if (u.name)
+        u.name = u.name.replace(/◇.{6}/g, '');
+    });
+    event.data = socketData(['USER', users]);
+    onSocketMessage(event);
+  };
   var Base16384 = {
     textEncoder: new TextEncoder(),
     textDecoder: new TextDecoder(),
@@ -636,29 +654,37 @@ textarea{padding:5px;resize:none;font-size:16px}
   };
   var encrypter = {
     COUNTER_SIZE: 16,
+    OPERATOR_SIZE: 1,
+    KEYID_SIZE: 3,
     headerType: {
       ENCRYPTED: '暗',
       REQUEST: '求',
-      RESPONSE: '鍵'
+      RESPONSE: '鍵',
+      END: '終',
     },
+    sharedKeys: {},
+    encryptedMessageQueue: {},
+    trustedIds: new Set(),
+    sendEncryptedData: Bot.ignore,
     getHash: async bytes => new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
     getBase64Hash: async function (bytes) {
       return btoa(String.fromCharCode(...await this.getHash(bytes)));
     },
     getKeyId: async function (bytes) {
       var hash = await this.getHash(bytes);
-      hash[2] = hash[0] ^ hash[1];
-      return Base16384.encode(hash.slice(0, 3));
+      hash[4] = (hash[0] + hash[1] + hash[2] + hash[3]) & 255;
+      return Base16384.encode(hash.slice(0, 5));
     },
     validateKeyId: kanji => {
       var hash = Base16384.decode(kanji);
-      return hash[0] ^ hash[1] === hash[2];
+      var result = ((hash[0] + hash[1] + hash[2] + hash[3]) & 255) === hash[4];
+      if (!result)
+        showMessage('不正な鍵IDを受信：' + kanji);
+      return result;
     },
     validateHeader: function (header) {
       return Object.values(this.headerType).includes(header?.[0]);
     },
-    sharedKeys: {},
-    encryptedMessageQueue: {},
     on: async function () {
       this.off();
       var users = Object.values(Bot.users).filter(u => !(u.id === Bot.myId || u.hidden || u.ignored));
@@ -666,36 +692,40 @@ textarea{padding:5px;resize:none;font-size:16px}
         asyncAlert('この部屋には誰もいません。');
         return;
       }
-      this.trustedIds = await asyncCheckbox('暗号メッセージを見てもいいメンバーにチェックを入れてください。<br>白トリップで許可されます', users.map(({id, fullName}) => ({id, text: fullName, checked: true})));
-      if (!this.trustedIds?.size)
+      this.candidateIds = await asyncCheckbox('暗号メッセージを見てもいいメンバーにチェックを入れてください。<br>白トリップで許可されます', users.map(({id, fullName}) => ({id, text: fullName, checked: true})));
+      if (!this.candidateIds?.size)
         return;
       try {
-        this.trustedIHashes = new Set(Array.from(this.trustedIds.keys()).filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash));
+        this.trustedIds.clear();
+        this.trustedIds.add(Bot.myId);
+        this.trustedIHashes = new Set(Array.from(this.candidateIds.keys()).filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash));
         var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
         this.rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', sharedKey));
         this.sharedKeyId = await this.getKeyId(this.rawKey);
         this.sharedKeys[this.sharedKeyId] = sharedKey;
         this.trustedPublicKeys = new Map();
-        sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId);
+        this.sendSharedKeyId();
       } catch (err) {
         asyncAlert('暗号化開始に失敗しました。暗号化をOFFにします。<br>理由：' + escapeHTML(err + ''));
         return;
       }
       this.timeout = setTimeout(() => {
         if (!this.trustedPublicKeys.size) {
-          delete this.trustedIds;
+          delete this.candidateIds;
           asyncAlert('復号できる人が誰もいないので暗号化をOFFにします。');
           this.off();
           return;
         }
-        var unsupportedUsers = Array.from(this.trustedIds.keys()).map(id => Bot.users[id]?.name || 'id:' + id.slice(0, 3));
-        if (unsupportedUsers.length)
-          showMessage(unsupportedUsers.join(',') + 'は拡張機能を使用していないので発言が見えません');
-        delete this.trustedIds;
+        if (this.candidateIds.size)
+          showMessage('許可した人の中に暗号化非対応の人がいました');
+        delete this.candidateIds;
       }, 3000);
       document.getElementById('encryption').checked = this.isEnabled = true;
     },
     off: function () {
+      if (this.isEnabled)
+        this.sendEncryptedData(this.headerType.END + this.sharedKeyId);
+      this.completed = false;
       clearTimeout(this.timeout);
       document.getElementById('encryption').checked = this.isEnabled = false;
     },
@@ -704,26 +734,28 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (encryptedMessage[0] === this.headerType.ENCRYPTED)
           this.decrypt(id, encryptedMessage, event);
         else if (encryptedMessage[0] === this.headerType.REQUEST && this.isEnabled)
-          this.sendSharedKey(id, encryptedMessage);
+          this.sendSharedKey(id, encryptedMessage, event);
         else if (encryptedMessage[0] === this.headerType.RESPONSE)
           this.recieveSharedKey(encryptedMessage);
+        else if (encryptedMessage[0] === this.headerType.END && encryptedMessage.slice(1) === this.sharedKeyId)
+          fakeUser(event);
       } catch (err) {
         showMessage('暗号メッセージ読み取りエラー：' + err);
       }
     },
-    sendSharedKey: async function (id, request) {
-      var sharedKeyId = request.slice(1, 3), publicKeyKanji = request.slice(3);
+    sendSharedKeyId: function () {
+      this.sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId);
+    },
+    sendSharedKey: async function (id, request, event) {
+      var sharedKeyId = request.slice(this.OPERATOR_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE), publicKeyKanji = request.slice(this.OPERATOR_SIZE + this.KEYID_SIZE);
       if (sharedKeyId !== this.sharedKeyId)
         return;
       try {
         if (this.trustedPublicKeys.has(publicKeyKanji)) {
           var publicKey = this.trustedPublicKeys.get(publicKeyKanji);
         } else {
-          if (!(this.trustedIds?.has(id) || (this.trustedIHashes.has(Bot.users[id]?.ihash) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？')))))) {
-            if (!this.trustedIds)
-              showMessage((Bot.users[id]?.fullName || 'id:' + id.slice(0, 3)) + 'は暗号メッセージを読めません');
+          if (!(this.candidateIds?.has(id) || (this.trustedIHashes.has(Bot.users[id]?.ihash) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？'))))))
             return;
-          }
           var publicKeyBytes = Base16384.decode(publicKeyKanji);
           var publicKey = {
             id: await this.getKeyId(publicKeyBytes),
@@ -732,17 +764,19 @@ textarea{padding:5px;resize:none;font-size:16px}
           };
           this.trustedPublicKeys.set(publicKeyKanji, publicKey);
         }
-        this.trustedIds?.delete(id);
-        sendEncryptedData(this.headerType.RESPONSE + this.sharedKeyId + publicKey.id + Base16384.encode(new Uint8Array(await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey.key, this.rawKey))));
+        this.candidateIds?.delete(id);
+        this.sendEncryptedData(this.headerType.RESPONSE + this.sharedKeyId + publicKey.id + Base16384.encode(new Uint8Array(await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey.key, this.rawKey))));
         console.log('復号を許可 id:' + id.slice(0, 3) + ' 指紋:' + publicKey.fingerprint);
-        if (!this.trustedIds)
-          showMessage((Bot.users[id]?.fullName || 'id:' + id.slice(0, 3)) + 'は暗号メッセージを読めます');
+        this.trustedIds.add(id);
+        fakeStat(id, event);
       } catch (err) {
         showMessage('鍵の送信に失敗しました。理由：' + err);
       }
     },
     recieveSharedKey: async function (response) {
-      var sharedKeyId = response.slice(1, 3), publicKeyId = response.slice(3, 5), encryptedKey = response.slice(5);
+      var sharedKeyId = response.slice(this.OPERATOR_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE);
+      var publicKeyId = response.slice(this.OPERATOR_SIZE + this.KEYID_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE * 2);
+      var encryptedKey = response.slice(this.OPERATOR_SIZE + this.KEYID_SIZE * 2);
       if (!(this.sharedKeys.hasOwnProperty(sharedKeyId) && !this.sharedKeys[sharedKeyId] && this.publicKeyId === publicKeyId))
         return;
       try {
@@ -771,15 +805,20 @@ textarea{padding:5px;resize:none;font-size:16px}
         var bytes = new Uint8Array(encryptedBytes.length + this.COUNTER_SIZE);
         bytes.set(counter);
         bytes.set(encryptedBytes, this.COUNTER_SIZE);
-        sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId + Base16384.encode(bytes));
+        this.sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId + Base16384.encode(bytes));
       } catch (err) {
         this.off();
         asyncAlert('暗号化処理に失敗したのでメッセージが送れませんでした。暗号化をOFFにします。<br>理由：' + escapeHTML(err + ''));
       }
     },
     decrypt: async function (id, data, event) {
-      var sharedKeyId = data.slice(1, 3), encryptedKanji = data.slice(3);
+      var sharedKeyId = data.slice(this.OPERATOR_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE), encryptedKanji = data.slice(this.OPERATOR_SIZE + this.KEYID_SIZE);
       try {
+        if (this.sharedKeyId === sharedKeyId && !this.completed) {
+          await fakeUser(event);
+          this.completed = true;
+          return;
+        }
         if (!this.validateKeyId(sharedKeyId))
           return;
         if (!this.sharedKeys.hasOwnProperty(sharedKeyId)) {
@@ -787,7 +826,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           this.encryptedMessageQueue[sharedKeyId] = [];
           if (encryptedKanji)
             this.encryptedMessageQueue[sharedKeyId].push(arguments);
-          sendEncryptedData(this.headerType.REQUEST + sharedKeyId + await this.getPublicKey());
+          this.sendEncryptedData(this.headerType.REQUEST + sharedKeyId + await this.getPublicKey());
           setTimeout(() => {
             if (!this.sharedKeys[sharedKeyId]) {
               console.log('鍵取得不許可：' + sharedKeyId);
@@ -898,6 +937,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       u.name = u.name?.slice(0, +extensionConfig.maxName);
     if (u.stat && u.stat.length > +extensionConfig.maxStat)
       u.stat = u.stat.slice(0, +extensionConfig.maxStat);
+    if (u.stat)
+      u.stat = u.stat.replace(/🔒/g, '');
     u.x = Math.min(+extensionConfig.maxX, u.x);
     u.y = Math.min(+extensionConfig.maxY, u.y);
     u.shiro = '◇' + u.ihash.slice(0, 6);
@@ -909,6 +950,10 @@ textarea{padding:5px;resize:none;font-size:16px}
     Bot.users[u.id] = u;
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
       ignoreInfo[u.ihash] = true;
+    if (encrypter.isEnabled && !encrypter.trustedIds.has(u.id)) {
+      u.realStat = u.stat;
+      u.stat = '🔒見えない';
+    }
   };
   try {
     var segmenter = new Intl.Segmenter('ja', {granularity: 'word'});
@@ -962,6 +1007,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     } catch (err) {
       return eventData;
     }
+    var additionalData = [];
     switch (data[0]) {
       case 'AUTH':
         token = data[1].token;
@@ -981,6 +1027,8 @@ textarea{padding:5px;resize:none;font-size:16px}
             hashTable[u.ihash] = true;
         });
         Object.keys(hashTable).forEach(ihash => Bot.ignore(ihash, true));
+        if (encrypter.completed)
+          encrypter.sendSharedKeyId();
         break;
       case 'ENTER':
         addUser(data[1]);
@@ -990,6 +1038,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (data[1].id === Bot.myId)
           setTimeout(() => writeLog('==========\nメンバー一覧\n' + Object.values(Bot.users).map(u=>u.fullName).join('\n') + '\n=========='), 0);
         calcScore(data[1].id, '');
+        if (encrypter.isEnabled && data[1].id !== Bot.myId)
+          encrypter.sendSharedKeyId();
         break;
       case 'EXIT':
         delete Bot.users[data[1].id];
@@ -1032,10 +1082,19 @@ textarea{padding:5px;resize:none;font-size:16px}
         writeLog(user.fullName + '： ' + data[1].cmt);
         break;
       case 'SET':
+        for (var key in data[key])
+          if (!['id', 'x', 'y', 'scl', 'stat'].includes(key))
+            delete data[key];
         if (data[1].stat && data[1].stat.length > +extensionConfig.maxStat)
           data[1].stat = data[1].stat.slice(0, +extensionConfig.maxStat);
+        if (data[1].stat)
+          data[1].stat = data[1].stat.replace(/🔒/g, '');
         data[1].x = Math.min(+extensionConfig.maxX, data[1].x);
         data[1].y = Math.min(+extensionConfig.maxY, data[1].y);
+        if (encrypter.isEnabled && !encrypter.trustedIds.has(data[1].id)) {
+          Bot.users[data[1].id].realStat = data[1].stat;
+          data[1].stat = '🔒見えない';
+        }
         if (Bot.users[data[1].id] && (data[1].id !== Bot.myId || !disableUpdate))
           Object.assign(Bot.users[data[1].id], data[1]);
         break;
@@ -1059,16 +1118,24 @@ textarea{padding:5px;resize:none;font-size:16px}
         }
         if (Bot.myId === data[1].id) {
           Object.values(Bot.users).forEach(user => {
-            if (user.ihash === data[1].ihash)
+            if (user.ihash === data[1].ihash) {
               ignoreInfo[user.ihash] = user.ignored = data[1].stat === 'on';
+              if (!user.ignored && encrypter.isEnabled)
+                encrypter.sendSharedKeyId();
+            }
           });
         } else if (Bot.users[Bot.myId]?.ihash === data[1].ihash) {
           u.hidden = data[1].stat === 'on';
+          if (!u.hidden && encrypter.isEnabled)
+            encrypter.sendSharedKeyId();
         }
         break;
     }
     execBot(data);
-    return (unknown ? '42' + JSON.stringify(['ENTER', unknown]) + RS : '') + '42' + JSON.stringify(data);
+    additionalData.unshift(socketData(data));
+    if (unknown)
+      additionalData.unshift(socketData(['ENTER', unknown]));
+    return additionalData.join(RS);
   };
   var messageListeners = [];
   var onSocketMessage = event => {
@@ -1108,7 +1175,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     var buffer = [];
     messageListeners = [];
     Bot.send = function (type, obj) {
-      var msg = '42' + JSON.stringify([type, Object.assign({token}, obj)]);
+      var msg = socketData([type, Object.assign({token}, obj)]);
       if (readyState)
         socket.send(msg);
       else
