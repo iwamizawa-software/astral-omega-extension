@@ -1200,7 +1200,8 @@ textarea{padding:5px;resize:none;font-size:16px}
                 Bot.commands[commandArgs[0]](...commandArgs.slice(1));
                 return;
               }
-            } else if (encrypter.isEnabled) {
+            }
+            if (encrypter.isEnabled && !['@', '＠'].includes(args[1]?.cmt?.[0])) {
               encrypter.encrypt(args[1].cmt);
               return;
             } else if (args[1].cmt.includes('https://discord.com/api/webhooks/')) {
