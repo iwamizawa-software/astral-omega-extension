@@ -692,13 +692,23 @@ textarea{padding:5px;resize:none;font-size:16px}
         asyncAlert('この部屋には誰もいません。');
         return;
       }
-      this.candidateIds = await asyncCheckbox('暗号メッセージを見てもいいメンバーにチェックを入れてください。<br>白トリップで許可されます', users.map(({id, fullName}) => ({id, text: fullName, checked: true})));
-      if (!this.candidateIds?.size)
-        return;
       try {
+        var lastTrustedHashes = new Set(JSON.parse(localStorage.getItem('extensionLastTrustedHashes')) || []);
+        this.candidateIds = await asyncCheckbox(
+          '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><a href="https://iwamizawa-software.github.io/astral-omega-extension/encryption.html" target="_blank">暗号化とは</a>',
+          users.map(({id, fullName, ihash, trip}) => ({id, text: fullName, checked: lastTrustedHashes.has(trip || ihash)}))
+        );
+        if (!this.candidateIds?.size)
+          return;
         this.trustedIds.clear();
-        this.trustedIds.add(Bot.myId);
         this.trustedIHashes = new Set(Array.from(this.candidateIds.keys()).filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash));
+        users.forEach(u => {
+          var method = this.candidateIds.has(u.id) ? 'add' : 'delete';
+          if (u.trip)
+            lastTrustedHashes[method](u.trip);
+          lastTrustedHashes[method](u.ihash);
+        });
+        localStorage.setItem('extensionLastTrustedHashes', JSON.stringify(Array.from(lastTrustedHashes)));
         var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
         this.rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', sharedKey));
         this.sharedKeyId = await this.getKeyId(this.rawKey);
@@ -950,7 +960,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     Bot.users[u.id] = u;
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
       ignoreInfo[u.ihash] = true;
-    if (encrypter.isEnabled && !encrypter.trustedIds.has(u.id)) {
+    if (encrypter.isEnabled && !encrypter.trustedIds.has(u.id) && Bot.myId !== u.id) {
       u.realStat = u.stat;
       u.stat = '🔒見えない';
     }
@@ -1091,7 +1101,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           data[1].stat = data[1].stat.replace(/🔒/g, '');
         data[1].x = Math.min(+extensionConfig.maxX, data[1].x);
         data[1].y = Math.min(+extensionConfig.maxY, data[1].y);
-        if (encrypter.isEnabled && !encrypter.trustedIds.has(data[1].id)) {
+        if (encrypter.isEnabled && !encrypter.trustedIds.has(data[1].id) && Bot.myId !== data[1].id) {
           Bot.users[data[1].id].realStat = data[1].stat;
           data[1].stat = '🔒見えない';
         }
@@ -1201,10 +1211,16 @@ textarea{padding:5px;resize:none;font-size:16px}
                 return;
               }
             }
-            if (encrypter.isEnabled && !['@', '＠'].includes(args[1]?.cmt?.[0])) {
+            if (['@', '＠'].includes(args[1]?.cmt?.[0])) {
+              if (encrypter.isEnabled) {
+                args[1].cmt = args[1].cmt.slice(1);
+                arguments[0] = socketData(args);
+              }
+            } else if (encrypter.isEnabled) {
               encrypter.encrypt(args[1].cmt);
               return;
-            } else if (args[1].cmt.includes('https://discord.com/api/webhooks/')) {
+            }
+            if (args[1].cmt.includes('https://discord.com/api/webhooks/')) {
               asyncAlert('暗号化せずにWebHook URLを発言してはならない');
               return;
             }
