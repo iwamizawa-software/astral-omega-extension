@@ -33,7 +33,7 @@ var inject = function () {
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
-  var VERSION = 2;
+  var VERSION = 3;
 
   var configInfo = [
     {
@@ -655,6 +655,20 @@ textarea{padding:5px;resize:none;font-size:16px}
     event.data = socketData(['USER', users]);
     onSocketMessage(event);
   };
+  var pendingUsers = {};
+  var addPendingUser = function (args) {
+    if (!Bot.users[args[0]])
+      return;
+    var pendingList = document.getElementById('pendingList');
+    if (!pendingList)
+      return;
+    pendingUsers[pendingList.length] = {
+      id: args[0],
+      shiro: Bot.users[args[0]].shiro,
+      args
+    };
+    pendingList.add(createElement('option', {textContent: Bot.users[args[0]].fullName}));
+  };
   var Base16384 = {
     textEncoder: new TextEncoder(),
     textDecoder: new TextDecoder(),
@@ -778,8 +792,11 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (this.trustedPublicKeys.has(publicKeyKanji)) {
           var publicKey = this.trustedPublicKeys.get(publicKeyKanji);
         } else {
-          if (!(this.candidateIds?.has(id) || (this.trustedShiros.has(Bot.users[id]?.shiro) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？'))))))
+          if (!(this.candidateIds?.has(id) || (extensionConfig.trustIHash && this.trustedShiros.has(Bot.users[id]?.shiro)))) {
+            if (!this.candidateIds)
+              addPendingUser(arguments);
             return;
+          }
           var publicKeyBytes = Base16384.decode(publicKeyKanji);
           var publicKey = {
             id: await this.getKeyId(publicKeyBytes),
@@ -900,6 +917,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       #miniPlayer[data-position="左上"]{display:flex;left:0;top:0}
       #miniPlayer[data-position="下"]{display:flex;left:0;bottom:0;width:1000px;height:526px}
       #miniPlayer[data-position="上"]{display:flex;left:0;top:0;width:1000px;height:526px}
+      #pendingList{display:none}
+      #encryption:checked~#pendingList{display:inline}
     `;
     if (!extensionConfig.miniPlayer)
       document.querySelector('#miniPlayer button')?.click();
@@ -956,6 +975,7 @@ textarea{padding:5px;resize:none;font-size:16px}
 
   const RS = '\x1e';
   var ignoreInfo = {};
+  var allowedUsers = {};
   var addUser = u => {
     if (u.name && u.name.length > +extensionConfig.maxName)
       u.name = u.name?.slice(0, +extensionConfig.maxName);
@@ -974,9 +994,15 @@ textarea{padding:5px;resize:none;font-size:16px}
     Bot.users[u.id] = u;
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
       ignoreInfo[u.ihash] = true;
-    if (encrypter.isEnabled && !encrypter.trustedIds.has(u.id) && Bot.myId !== u.id) {
-      u.realStat = u.stat;
-      u.stat = '🔒見えない';
+    if (encrypter.isEnabled) {
+      if (!encrypter.trustedIds.has(u.id) && Bot.myId !== u.id) {
+        u.realStat = u.stat;
+        u.stat = '🔒見えない';
+      }
+      if (allowedUsers[u.id]) {
+        encrypter.sendSharedKey(...allowedUsers[u.id]);
+        delete allowedUsers[u.id];
+      }
     }
   };
   try {
@@ -1702,6 +1728,30 @@ textarea{padding:5px;resize:none;font-size:16px}
       div.append(createElement('label', {
         htmlFor: 'encryption',
         textContent: '暗号化'
+      }));
+      var pendingHTML = '<option>追加許可<option>全て消す';
+      div.append(createElement('select', {
+        id: 'pendingList',
+        innerHTML: pendingHTML,
+        onchange: function () {
+          var index = pendingList.selectedIndex;
+          if (index === 1) {
+            pendingList.innerHTML = pendingHTML;
+            pendingUsers = {};
+          } else if (index > 1) {
+            var pendingUser = pendingUsers[index];
+            encrypter.trustedShiros.add(pendingUser.shiro);
+            extensionConfig.trustedShiros = Array.from(encrypter.trustedShiros);
+            localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+            if (Bot.users[pendingUser.id])
+              encrypter.sendSharedKey(...pendingUser.args);
+            else
+              allowedUsers[pendingUser.id] = pendingUser.args;
+            delete pendingUsers[index];
+            pendingList.remove(index);
+          }
+          pendingList.selectedIndex = 0;
+        }
       }));
     }
     div.append(createElement('span', {id:'extensionMessage'}));
