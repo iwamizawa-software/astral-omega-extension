@@ -669,6 +669,14 @@ textarea{padding:5px;resize:none;font-size:16px}
     };
     pendingList.add(createElement('option', {textContent: Bot.users[args[0]].fullName}));
   };
+  var clearPendingUsers = () => {
+    var pendingList = document.getElementById('pendingList');
+    if (!pendingList)
+      return;
+    pendingList.selectedIndex = 1;
+    pendingList.onchange();
+    allowedUsers = {};
+  };
   var Base16384 = {
     textEncoder: new TextEncoder(),
     textDecoder: new TextDecoder(),
@@ -763,6 +771,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     off: function () {
       if (this.isEnabled)
         this.sendEncryptedData(this.headerType.END);
+      clearPendingUsers();
       this.completed = false;
       clearTimeout(this.timeout);
       document.getElementById('encryption').checked = this.isEnabled = false;
