@@ -114,6 +114,13 @@ var inject = function () {
       value: 1
     },
     {
+      key: 'trustedShiros',
+      name: '暗号化するときに閲覧を許可する白トリップ',
+      description: '手動で指定するときは先頭に必ず◇を付けてください',
+      type: 'list',
+      value: []
+    },
+    {
       name: '読み上げ',
       type: 'separator'
     },
@@ -698,22 +705,24 @@ textarea{padding:5px;resize:none;font-size:16px}
         return;
       }
       try {
-        var lastTrustedHashes = new Set(JSON.parse(localStorage.getItem('extensionLastTrustedHashes')) || []);
+        this.trustedShiros = new Set(extensionConfig.trustedShiros || []);
+        var lastTrustedTrips = new Set(JSON.parse(localStorage.getItem('extensionLastTrustedTrips')) || []);
         this.candidateIds = await asyncCheckbox(
           '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><a href="https://iwamizawa-software.github.io/astral-omega-extension/encryption.html" target="_blank">暗号化とは</a>',
-          users.map(({id, fullName, ihash, trip}) => ({id, text: fullName, checked: lastTrustedHashes.has(trip || ihash)}))
+          users.map(({id, fullName, shiro, trip}) => ({id, text: fullName, checked: (trip && lastTrustedTrips.has(trip)) || this.trustedShiros.has(shiro)}))
         );
         if (!this.candidateIds?.size)
           return;
-        this.trustedIds.clear();
-        this.trustedIHashes = new Set(Array.from(this.candidateIds.keys()).filter(id => Bot.users[id]?.ihash).map(id => Bot.users[id].ihash));
         users.forEach(u => {
           var method = this.candidateIds.has(u.id) ? 'add' : 'delete';
           if (u.trip)
-            lastTrustedHashes[method](u.trip);
-          lastTrustedHashes[method](u.ihash);
+            lastTrustedTrips[method](u.trip);
+          this.trustedShiros[method](u.shiro);
         });
-        localStorage.setItem('extensionLastTrustedHashes', JSON.stringify(Array.from(lastTrustedHashes)));
+        extensionConfig.trustedShiros = Array.from(this.trustedShiros);
+        localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+        localStorage.setItem('extensionLastTrustedTrips', JSON.stringify(Array.from(lastTrustedTrips)));
+        this.trustedIds.clear();
         var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
         this.rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', sharedKey));
         this.sharedKeyId = await this.getKeyId(this.rawKey);
@@ -769,7 +778,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (this.trustedPublicKeys.has(publicKeyKanji)) {
           var publicKey = this.trustedPublicKeys.get(publicKeyKanji);
         } else {
-          if (!(this.candidateIds?.has(id) || (this.trustedIHashes.has(Bot.users[id]?.ihash) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？'))))))
+          if (!(this.candidateIds?.has(id) || (this.trustedShiros.has(Bot.users[id]?.shiro) && (extensionConfig.trustIHash || await asyncConfirm(escapeHTML(Bot.users[id]?.fullName + 'が暗号メッセージを読めるようにしますか？'))))))
             return;
           var publicKeyBytes = Base16384.decode(publicKeyKanji);
           var publicKey = {
