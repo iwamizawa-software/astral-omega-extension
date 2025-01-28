@@ -26,6 +26,10 @@ var inject = function () {
     }
   })();
 
+  
+  if (!localStorage.getItem('/monachatchat/extension'))
+    localStorage.setItem('/monachatchat/extension', 'true');
+
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
@@ -1824,4 +1828,6 @@ try {
   inject();
 } catch (err) {
   alert('拡張機能でエラーが出ました。以下の情報を管理人に報告お願いします。\nエラー：' + err);
+  localStorage.setItem('/monachatchat/extension', 'false');
+  location.reload();
 }
