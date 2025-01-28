@@ -33,7 +33,7 @@ var inject = function () {
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
-  var VERSION = 3;
+  var VERSION = 4;
 
   var configInfo = [
     {
