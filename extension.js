@@ -1754,9 +1754,15 @@ textarea{padding:5px;resize:none;font-size:16px}
             pendingUsers = {};
           } else if (index > 1) {
             var pendingUser = pendingUsers[pendingList.value];
-            encrypter.trustedShiros.add(pendingUser.shiro);
-            extensionConfig.trustedShiros = Array.from(encrypter.trustedShiros);
-            localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+            if (extensionConfig.trustIHash) {
+              encrypter.trustedShiros.add(pendingUser.shiro);
+              extensionConfig.trustedShiros = Array.from(encrypter.trustedShiros);
+              localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+            } else {
+              if (!encrypter.candidateIds)
+                encrypter.candidateIds = new Set();
+              encrypter.candidateIds.add(pendingList.value);
+            }
             if (Bot.users[pendingList.value])
               encrypter.sendSharedKey(...pendingUser.args);
             else
