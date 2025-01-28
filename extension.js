@@ -662,12 +662,14 @@ textarea{padding:5px;resize:none;font-size:16px}
     var pendingList = document.getElementById('pendingList');
     if (!pendingList)
       return;
-    pendingUsers[pendingList.length] = {
-      id: args[0],
+    pendingUsers[args[0]] = {
       shiro: Bot.users[args[0]].shiro,
       args
     };
-    pendingList.add(createElement('option', {textContent: Bot.users[args[0]].fullName}));
+    pendingList.add(createElement('option', {
+      value: args[0],
+      text: Bot.users[args[0]].fullName
+    }));
   };
   var clearPendingUsers = () => {
     var pendingList = document.getElementById('pendingList');
@@ -998,6 +1000,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     u.kuro = u.trip ? '◆' + u.trip : '';
     u.fullName = (u.name || '') + u.shiro + u.kuro;
     u.ignoreHash = new Set();
+    u.ignoreHash.toJSON = function () { return Array.from(this); };
     if (u.trip && extensionConfig.forcedShiro)
       u.name += u.shiro;
     Bot.users[u.id] = u;
@@ -1161,6 +1164,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         var u = Bot.users[data[1].id];
         if (!u)
           break;
+        if (u.ignoreHash?.constructor !== Set)
+          u.ignoreHash = new Set(u.ignoreHash);
         if (data[1].stat === 'on') {
           u.ignoreHash.add(data[1].ihash);
           if (!u.ignoreWarning && u.ignoreHash.size / (Object.values(Bot.users).length - 1) > 0.8) {
@@ -1748,15 +1753,15 @@ textarea{padding:5px;resize:none;font-size:16px}
             pendingList.innerHTML = pendingHTML;
             pendingUsers = {};
           } else if (index > 1) {
-            var pendingUser = pendingUsers[index];
+            var pendingUser = pendingUsers[pendingList.value];
             encrypter.trustedShiros.add(pendingUser.shiro);
             extensionConfig.trustedShiros = Array.from(encrypter.trustedShiros);
             localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
-            if (Bot.users[pendingUser.id])
+            if (Bot.users[pendingList.value])
               encrypter.sendSharedKey(...pendingUser.args);
             else
-              allowedUsers[pendingUser.id] = pendingUser.args;
-            delete pendingUsers[index];
+              allowedUsers[pendingList.value] = pendingUser.args;
+            delete pendingUsers[pendingList.value];
             pendingList.remove(index);
           }
           pendingList.selectedIndex = 0;
