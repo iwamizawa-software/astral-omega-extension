@@ -536,9 +536,8 @@ var inject = function () {
         return;
       if (extensionConfig.confirmUpload && !await asyncConfirm(await getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>'))
         return;
-      var fname = file.name.replace(/^[^\.]+/, 'file');
       var formData = new FormData();
-      formData.append('file', file, fname);
+      formData.append('file', file, file.name.replace(/^[\s\S]*?(\.[^\.]+)?$/, 'file$1'));
       formData.append('username', Bot?.users?.[Bot.myId]?.fullName);
       showMessage('ファイルをアップロード中...');
       var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
