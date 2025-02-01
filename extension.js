@@ -1030,6 +1030,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     now: () => window.performance?.now() || (new Date()).getTime()
   };
 
+  Set.prototype.toJSON = function () { return Array.from(this); };
   const RS = '\x1e';
   var ignoreInfo = {};
   var allowedUsers = {};
@@ -1046,7 +1047,6 @@ textarea{padding:5px;resize:none;font-size:16px}
     u.kuro = u.trip ? '◆' + u.trip : '';
     u.fullName = (u.name || '') + u.shiro + u.kuro;
     u.ignoreHash = new Set();
-    u.ignoreHash.toJSON = function () { return Array.from(this); };
     if (u.trip && extensionConfig.forcedShiro)
       u.name += u.shiro;
     Bot.users[u.id] = u;
