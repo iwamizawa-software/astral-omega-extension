@@ -983,53 +983,6 @@ textarea{padding:5px;resize:none;font-size:16px}
       mention.close();
   });
 
-  var benchmark = {
-    commentId: 0,
-    commentList: [],
-    sendCOM: function (cmt) {
-      try {
-        var id = this.commentId++;
-        var obj = {cmt, sendTime: this.now()};
-        this.commentList.push(obj);
-        Bot.setTimeout(() => {
-          if (!obj.receiveTime || obj.receiveTime - obj.sendTime > 1000) {
-            onerror('サーバーが重い:' + [cmt, obj.receiveTime - obj.sendTime]);
-          } else if (!obj.processedTime || obj.processedTime - obj.sendTime > 1000) {
-            onerror('処理が重い:' + [cmt, obj.processedTime - obj.receiveTime, obj.receiveTime - obj.sendTime]);
-          }
-          this.commentList.splice(this.commentList.indexOf(obj), 1);
-        }, 1000);
-      } catch (err) {
-        onerror('benchsend' + err);
-      }
-    },
-    receiveCOM: function (id, cmt) {
-      try {
-        if (id !== Bot.myId)
-          return;
-        var obj = this.commentList.find(obj => obj.cmt === cmt);
-        if (!obj)
-          return;
-        obj.receiveTime = this.now();
-      } catch (err) {
-        onerror('benchreceive' + err);
-      }
-    },
-    processedCOM: function (id, cmt) {
-      try {
-        if (id !== Bot.myId)
-          return;
-        var obj = this.commentList.find(obj => obj.cmt === cmt);
-        if (!obj)
-          return;
-        obj.processedTime = this.now();
-      } catch (err) {
-        onerror('benchprocessed' + err);
-      }
-    },
-    now: () => window.performance?.now() || (new Date()).getTime()
-  };
-
   Set.prototype.toJSON = function () { return Array.from(this); };
   const RS = '\x1e';
   var ignoreInfo = {};
@@ -1153,7 +1106,6 @@ textarea{padding:5px;resize:none;font-size:16px}
         delete Bot.users[data[1].id];
         break;
       case 'COM':
-        benchmark.receiveCOM(data[1]?.id, data[1]?.cmt);
         if (!Bot.users[data[1].id])
           var unknown = Bot.users[data[1].id] = {id: data[1].id, name: 'UNKNOWN BUG', type: 'unknown', stat: '通常', ihash: data[1].id.slice(-10), x: 0, y: 350, scl: 100, r: 100, g: 100, b: 100};
         var user = Bot.users[data[1].id];
@@ -1189,7 +1141,6 @@ textarea{padding:5px;resize:none;font-size:16px}
           user.lastComment = comment;
         }
         writeLog(user.fullName + '： ' + data[1].cmt);
-        benchmark.processedCOM(data[1].id, data[1].cmt);
         break;
       case 'SET':
         for (var key in data[key])
@@ -1326,7 +1277,6 @@ textarea{padding:5px;resize:none;font-size:16px}
               asyncAlert('暗号化せずにWebHook URLを発言してはならない');
               return;
             }
-            benchmark.sendCOM(args[1]?.cmt);
           }
         } catch (err) {
           console.log(err);
