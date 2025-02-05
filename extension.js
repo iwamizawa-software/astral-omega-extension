@@ -1090,6 +1090,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         Object.keys(hashTable).forEach(ihash => Bot.ignore(ihash, true));
         if (encrypter.completed)
           encrypter.sendSharedKeyId();
+        if (event?.constructor === Number)
+          Bot.setTimeout(() => fakeUser({}), 1000);
         break;
       case 'ENTER':
         addUser(data[1]);
