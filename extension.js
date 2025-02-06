@@ -30,15 +30,19 @@ var inject = function () {
   if (!localStorage.getItem('/monachatchat/extension'))
     localStorage.setItem('/monachatchat/extension', 'true');
 
-  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig || localStorage.getItem('forceDisable') === 'true')
+  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
-  if (/^(?:りこ|けい|あわわ)$/.test(localStorage.getItem('/monachatchat/name'))) {
-    localStorage.setItem('forceDisable', 'true');
-    return;
-  }
+  if (/^(?:りこ|けい)$/.test(localStorage.getItem('/monachatchat/name')))
+    localStorage.setItem('extensionEncryptionDisabled', 'true');
 
   var VERSION = 4;
+  setInterval(async () => {
+    var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
+      ?.match(/var VERSION = (\d+);/)?.[1];
+    if (VERSION < v)
+      location.reload();
+  }, 15 * 60000);
 
   var configInfo = [
     {
@@ -632,6 +636,15 @@ textarea{padding:5px;resize:none;font-size:16px}
           extensionConfig.webhook = '';
           localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
           return;
+        } else if (command === '#disableEncryption') {
+          localStorage.setItem('extensionEncryptionDisabled', 'true');
+          encrypter.off();
+          applyConfig();
+          return;
+        } else if (command === '#enableEncryption') {
+          localStorage.removeItem('extensionEncryptionDisabled');
+          location.reload();
+          return;
         }
       }
       event.data = socketData(['COM', {id, cmt}]);
@@ -950,6 +963,8 @@ textarea{padding:5px;resize:none;font-size:16px}
     cssText += extensionConfig.showImage
       ? '[data-img]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000}.log-row:has([data-img]){flex:none;height:fit-content;max-height:200px}[data-img] *{display:none}'
       : '[data-img]{background-image:none!important}';
+    if (localStorage.getItem('extensionEncryptionDisabled'))
+      cssText += '#encryption,[for=encryption]{display:none}';
     extCSS.textContent = cssText;
     if (extensionConfig.showImage)
       document.body?.appendChild(document.createElement('div')).remove();
@@ -1735,7 +1750,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       htmlFor: 'silence',
       textContent: 'ｽﾏﾎ接続維持'
     }));
-    if (window.crypto) {
+    if (window.crypto && !localStorage.getItem('extensionEncryptionDisabled')) {
       div.append(createElement('input', {
         type: 'checkbox',
         id: 'encryption',
