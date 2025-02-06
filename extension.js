@@ -30,8 +30,13 @@ var inject = function () {
   if (!localStorage.getItem('/monachatchat/extension'))
     localStorage.setItem('/monachatchat/extension', 'true');
 
-  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
+  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig || localStorage.getItem('forceDisable') === 'true')
     return;
+
+  if (/^(?:りこ|けい|あわわ)$/.test(localStorage.getItem('/monachatchat/name'))) {
+    localStorage.setItem('forceDisable', 'true');
+    return;
+  }
 
   var VERSION = 4;
 
