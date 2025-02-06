@@ -793,7 +793,10 @@ textarea{padding:5px;resize:none;font-size:16px}
       clearPendingUsers();
       this.completed = false;
       clearTimeout(this.timeout);
-      document.getElementById('encryption').checked = this.isEnabled = false;
+      this.isEnabled = false;
+      var checkbox = document.getElementById('encryption');
+      if (checkbox)
+        checkbox.checked = false;
     },
     parse: function (id, encryptedMessage, event) {
       try {
