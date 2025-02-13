@@ -871,8 +871,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     },
     encrypt: async function (text) {
       try {
-        var counter = new Uint8Array(this.COUNTER_SIZE);
-        counter.set(crypto.getRandomValues(new Uint8Array(this.COUNTER_SIZE >> 1)));
+        var counter = crypto.getRandomValues(new Uint8Array(this.COUNTER_SIZE));
         var encryptedBytes = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-CTR', counter, length: this.COUNTER_SIZE << 2}, this.sharedKeys[this.sharedKeyId], Base16384.textEncoder.encode(text)));
         var bytes = new Uint8Array(encryptedBytes.length + this.COUNTER_SIZE);
         bytes.set(counter);
