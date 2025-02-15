@@ -1,5 +1,5 @@
 var inject = function () {
-
+  window.gmo = window.gmo || {};
   var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
   (function setCSP() {
     var removeEventHandler = () => {
