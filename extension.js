@@ -1920,13 +1920,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       return;
     onerror('' + event.reason);
   });
-  var onerrorValue;
-  window.onerror = function () {
-    onerror('' + Array.from(arguments));
-    return onerrorValue?.apply(this, arguments);
-  };
-  Object.defineProperty(window, 'onerror', {
-    set: value => onerrorValue = value
+  addEventListener('error', event => {
+    onerror('' + event.error);
   });
 };
 try {
