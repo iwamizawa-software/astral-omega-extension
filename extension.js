@@ -1918,10 +1918,16 @@ textarea{padding:5px;resize:none;font-size:16px}
   addEventListener('unhandledrejection', event => {
     if (event.reason?.constructor === Event)
       return;
-    onerror('' + event.reason);
+    if (event.reason)
+      onerror('' + event.reason);
+    else
+      console.log(event);
   });
   addEventListener('error', event => {
-    onerror('' + event.error);
+    if (event.error)
+      onerror('' + event.error);
+    else
+      console.log(event);
   });
 };
 try {
