@@ -1288,7 +1288,7 @@ textarea{padding:5px;resize:none;font-size:16px}
                 return;
               }
             }
-            if (['@', '＠'].includes(args[1]?.cmt?.[0])) {
+            if (['￥', '\\', '¥'].includes(args[1]?.cmt?.[0])) {
               if (encrypter.isEnabled) {
                 args[1].cmt = args[1].cmt.slice(1);
                 arguments[0] = socketData(args);
