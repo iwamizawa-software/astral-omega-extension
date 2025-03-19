@@ -749,7 +749,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         this.trustedShiros = new Set(extensionConfig.trustedShiros || []);
         var lastTrustedTrips = new Set(JSON.parse(localStorage.getItem('extensionLastTrustedTrips')) || []);
         this.candidateIds = await asyncCheckbox(
-          '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><a href="https://iwamizawa-software.github.io/astral-omega-extension/encryption.html" target="_blank">暗号化とは</a>',
+          '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><strong>頭に￥付けて発言するとみんなに見える発言になります</strong><br><a href="https://iwamizawa-software.github.io/astral-omega-extension/encryption.html" target="_blank">暗号化とは</a>',
           users.map(({id, fullName, shiro, trip}) => ({id, text: fullName, checked: (trip && lastTrustedTrips.has(trip)) || this.trustedShiros.has(shiro)}))
         );
         if (!this.candidateIds?.size)
