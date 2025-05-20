@@ -130,6 +130,12 @@ var inject = function () {
       value: []
     },
     {
+      key: 'keepStat',
+      name: '状態を維持',
+      type: 'onoff',
+      value: 1
+    },
+    {
       name: '読み上げ',
       type: 'separator'
     },
@@ -1082,6 +1088,7 @@ textarea{padding:5px;resize:none;font-size:16px}
   };
   var disableUpdate;
   var token;
+  var lastStat = '通常';
   var astralParser = function (eventData, event) {
     if (!/^42/.test(eventData))
       return eventData;
@@ -1125,6 +1132,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         calcScore(data[1].id, '');
         if (encrypter.isEnabled && data[1].id !== Bot.myId)
           encrypter.sendSharedKeyId();
+        if (extensionConfig.keepStat && lastStat !== '通常')
+          Bot.stat(lastStat);
         break;
       case 'EXIT':
         delete Bot.users[data[1].id];
@@ -1182,6 +1191,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         }
         if (Bot.users[data[1].id] && (data[1].id !== Bot.myId || !disableUpdate))
           Object.assign(Bot.users[data[1].id], data[1]);
+        if (data[1].id === Bot.myId && data[1].hasOwnProperty('stat'))
+          lastStat = data[1].stat;
         break;
       case 'IG':
         var u = Bot.users[data[1].id];
