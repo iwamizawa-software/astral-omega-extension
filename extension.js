@@ -1819,8 +1819,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         placeholder: 'スマホ入力用',
         onkeydown: e => {
           if (e.target.value && e.key === 'Enter') {
-            if (/^状態[:：](.+)$/.test(e.target.value))
-              Bot.stat(RegExp.$1);
+            if (/^状態[:：](.*)$/.test(e.target.value))
+              Bot.stat(RegExp.$1 || '通常');
             else
               Bot.comment(e.target.value);
             e.target.value = '';
