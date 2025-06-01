@@ -238,16 +238,28 @@ var inject = function () {
       value: '20'
     },
     {
+      key: 'minX',
+      name: '最小のX',
+      type: 'input',
+      value: '0'
+    },
+    {
       key: 'maxX',
       name: '最大のX',
       type: 'input',
-      value: '1200'
+      value: '1000'
+    },
+    {
+      key: 'minY',
+      name: '最小のY',
+      type: 'input',
+      value: '140'
     },
     {
       key: 'maxY',
       name: '最大のY',
       type: 'input',
-      value: '400'
+      value: '390'
     },
     {
       key: 'maxComment',
@@ -431,9 +443,9 @@ var inject = function () {
   Bot.set = function (attr) {
     var {x, y, scl, stat} = Bot.users[Bot.myId];
     if ('x' in attr)
-      attr.x = Math.max(0, Math.min(900, attr.x));
+      attr.x = Math.max(+extensionConfig.minX, Math.min(+extensionConfig.maxX, attr.x));
     if ('y' in attr)
-      attr.y = Math.max(160, Math.min(370, attr.y));
+      attr.y = Math.max(+extensionConfig.minY, Math.min(+extensionConfig.maxY, attr.y));
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
     Object.assign(Bot.users[Bot.myId], attr);
   };
