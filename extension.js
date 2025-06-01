@@ -431,9 +431,9 @@ var inject = function () {
   Bot.set = function (attr) {
     var {x, y, scl, stat} = Bot.users[Bot.myId];
     if ('x' in attr)
-      attr.x = Math.max(0, Math.min(+extensionConfig.maxX, attr.x));
+      attr.x = Math.max(0, Math.min(900, attr.x));
     if ('y' in attr)
-      attr.y = Math.max(0, Math.min(+extensionConfig.maxY, attr.y));
+      attr.y = Math.max(160, Math.min(370, attr.y));
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
     Object.assign(Bot.users[Bot.myId], attr);
   };
