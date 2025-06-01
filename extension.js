@@ -1731,7 +1731,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     myself.x = Bot.users[Bot.myId].x;
     myself.y = Bot.users[Bot.myId].y;
     var move = () => {
-      var attr = {up: {y: -2}, down: {y: 2}, right: {x: 5}, left: {x: -5}}[direction];
+      var attr = {up: {y: -5}, down: {y: 5}, right: {x: 5}, left: {x: -5}}[direction];
       count++;
       Object.keys(attr).forEach(key => {
         myself[key] += attr[key] * (count < 2 ? 2 : count < 4 ? 10 : 20);
