@@ -136,6 +136,12 @@ var inject = function () {
       value: 1
     },
     {
+      key: 'keyControl',
+      name: '矢印キーで移動',
+      type: 'onoff',
+      value: 0
+    },
+    {
       name: '読み上げ',
       type: 'separator'
     },
@@ -1714,6 +1720,29 @@ textarea{padding:5px;resize:none;font-size:16px}
     element.addEventListener('touchstart', e => e.preventDefault());
     return element;
   };
+  var keyControlTimer;
+  document.addEventListener('keydown', e => {
+    if (!extensionConfig.keyControl || !Bot.users[Bot.myId] || event.target.type === 'text' || !event.key?.startsWith('Arrow'))
+      return;
+    e.preventDefault();
+    if (event.repeat)
+      return;
+    var count = 0, myself = {}, direction = event.key.slice(5).toLowerCase();
+    myself.x = Bot.users[Bot.myId].x;
+    myself.y = Bot.users[Bot.myId].y;
+    var move = () => {
+      var attr = {up: {y: -2}, down: {y: 2}, right: {x: 5}, left: {x: -5}}[direction];
+      count++;
+      Object.keys(attr).forEach(key => {
+        myself[key] += attr[key] * (count < 2 ? 2 : count < 4 ? 10 : 20);
+      });
+      Bot.set(myself);
+    };
+    clearInterval(keyControlTimer);
+    keyControlTimer = setInterval(move, 250);
+    move();
+  });
+  document.addEventListener('keyup', e => clearInterval(keyControlTimer));
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
       if (!extensionConfig.showImage)
