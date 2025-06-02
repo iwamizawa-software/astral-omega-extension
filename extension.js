@@ -1961,8 +1961,12 @@ textarea{padding:5px;resize:none;font-size:16px}
     speechSynthesis.speak(new SpeechSynthesisUtterance(''));
     if (sound) {
       sound.volume = 0;
+      sound.muted = true;
       sound.play().catch(e => e);
-      sound.addEventListener('ended', e => sound.volume = extensionConfig.notifySoundVolume, {once: true});
+      sound.addEventListener('ended', e => {
+        sound.volume = extensionConfig.notifySoundVolume;
+        sound.muted = false;
+      }, {once: true});
     }
   }, {once: true});
   document.addEventListener('beforeunload', () => silence?.pause());
