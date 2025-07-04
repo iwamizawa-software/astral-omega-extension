@@ -1858,14 +1858,13 @@ textarea{padding:5px;resize:none;font-size:16px}
       var input = createElement('input', {
         type: 'text',
         placeholder: 'スマホ入力用',
-        onkeydown: e => {
+        onkeypress: e => {
           if (e.target.value && e.key === 'Enter') {
             if (/^状態[:：](.*)$/.test(e.target.value))
               Bot.stat(RegExp.$1 || '通常');
             else
               Bot.comment(e.target.value);
             e.target.value = '';
-            e.stopImmediatePropagation();
           }
         }
       });
