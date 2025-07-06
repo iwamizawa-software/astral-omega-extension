@@ -36,7 +36,7 @@ var inject = function () {
   if (/^(?:りこ|けい)$/.test(localStorage.getItem('/monachatchat/name')))
     localStorage.setItem('extensionEncryptionDisabled', 'true');
 
-  var VERSION = 4;
+  var VERSION = 5;
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
       ?.match(/var VERSION = (\d+);/)?.[1];
@@ -1759,7 +1759,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     var observer = new MutationObserver(() => {
       if (!extensionConfig.showImage)
         return;
-      Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/"]:not([data-img])')).forEach(a => {
+      Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/1328162542463483994/"]:not([data-img])')).forEach(a => {
         if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/i.test(a.href))
           return;
         var img = new Image();
