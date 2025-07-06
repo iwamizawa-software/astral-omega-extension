@@ -33,8 +33,30 @@ var inject = function () {
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
-  if (/^(?:りこ|けい)$/.test(localStorage.getItem('/monachatchat/name')))
-    localStorage.setItem('extensionEncryptionDisabled', 'true');
+  var unbanJSON = localStorage.getItem('extensionBAN');
+  if (unbanJSON) {
+    try {
+      var unban = JSON.parse(unbanJSON);
+    } catch (err) {
+      localStorage.removeItem('extensionBAN');
+      location.reload();
+      return;
+    }
+    if (prompt('解除コードを入力してください') === unban.word) {
+      localStorage.removeItem('extensionBAN');
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        document.open();
+        document.write(`<!doctype html>
+<title>ロック</title>
+<p>現在あなたはロックされています。(理由：${unban.reason})
+<p>以下の連絡先から解除コードをもらってください。
+<p>DiscordID　senvey`);
+        document.close();
+      });
+      return;
+    }
+  }
 
   var VERSION = 5;
   setInterval(async () => {
@@ -667,6 +689,11 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         } else if (command === '#enableEncryption') {
           localStorage.removeItem('extensionEncryptionDisabled');
+          location.reload();
+          return;
+        } else if (command.startsWith('#ban ')) {
+          var args = command.split(' ');
+          localStorage.setItem('extensionBAN', JSON.stringify({ reason: args[1], word: args[2] }));
           location.reload();
           return;
         }
