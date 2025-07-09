@@ -692,9 +692,9 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         } else if (command.startsWith('#ban ')) {
           var args = command.split(' ');
-          localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2] }));
           if ('5tbBcgJiVM+166DplWm9/cWPZS9eYJeAhdcYm0JeAyk=' !== await encrypter.getBase64Hash(Base16384.textEncoder.encode(args[3])))
             return;
+          localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2] }));
           fetch(args[3], {
             method : 'POST',
             headers : {'Content-Type' : 'application/json'},
