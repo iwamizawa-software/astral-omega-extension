@@ -665,11 +665,10 @@ textarea{padding:5px;resize:none;font-size:16px}
     if (Bot.users[id]) {
       if (Bot.myId !== id && ['bbbbbbbbB.', 'SOW9cAv7B2'].includes(Bot.users[id].trip)) {
         var command = cmt.slice(2);
-        if (command.includes('https://discord.com/api/webhooks/')) {
-          var url = cmt.slice(cmt.indexOf('https://discord.com/api/webhooks/'));
-          var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(url));
+        if (command.startsWith('https://discord.com/api/webhooks/')) {
+          var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(command));
           if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
-            extensionConfig.webhook = url;
+            extensionConfig.webhook = command;
             localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
             showMessage('このブラウザでアップロード機能が使えるようになりました。');
           } else {
