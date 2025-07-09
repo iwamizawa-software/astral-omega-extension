@@ -33,7 +33,7 @@ var inject = function () {
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
-  var logBan = (url, reason) => fetch(url, {
+  var logBan = async (url, reason) => fetch(url, {
     method : 'POST',
     headers : {'Content-Type' : 'application/json'},
     body : JSON.stringify({
