@@ -148,18 +148,10 @@ var inject = function () {
       value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
     },
     {
-      key: 'trustIHash',
-      name: '暗号化するとき白トリップを信頼する',
-      description: '白トリップを信頼できない場合はOFFにしてください。',
+      key: 'announceTrustedUsers',
+      name: '暗号化するとき許可リストを自動で発言する',
       type: 'onoff',
       value: 1
-    },
-    {
-      key: 'trustedShiros',
-      name: '暗号化するときに閲覧を許可する白トリップ',
-      description: '手動で指定するときは先頭に必ず◇を付けてください',
-      type: 'list',
-      value: []
     },
     {
       key: 'keepStat',
@@ -808,22 +800,18 @@ textarea{padding:5px;resize:none;font-size:16px}
         return;
       }
       try {
-        this.trustedShiros = new Set(extensionConfig.trustedShiros || []);
         var lastTrustedTrips = new Set(JSON.parse(localStorage.getItem('extensionLastTrustedTrips')) || []);
+        this.trustedUsers = [];
         this.candidateIds = await asyncCheckbox(
           '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><strong>頭に￥付けて発言するとみんなに見える発言になります</strong><br><a href="https://iwamizawa-software.github.io/astral-omega-extension/encryption.html" target="_blank">暗号化とは</a>',
-          users.map(({id, fullName, shiro, trip}) => ({id, text: fullName, checked: (trip && lastTrustedTrips.has(trip)) || this.trustedShiros.has(shiro)}))
+          users.map(({id, fullName, shiro, trip}) => ({id, text: fullName, checked: lastTrustedTrips.has(trip || shiro)}))
         );
         if (!this.candidateIds?.size)
           return;
         users.forEach(u => {
           var method = this.candidateIds.has(u.id) ? 'add' : 'delete';
-          if (u.trip)
-            lastTrustedTrips[method](u.trip);
-          this.trustedShiros[method](u.shiro);
+          lastTrustedTrips[method](u.trip || u.shiro);
         });
-        extensionConfig.trustedShiros = Array.from(this.trustedShiros);
-        localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
         localStorage.setItem('extensionLastTrustedTrips', JSON.stringify(Array.from(lastTrustedTrips)));
         this.trustedIds.clear();
         var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
@@ -845,6 +833,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         }
         if (this.candidateIds.size)
           showMessage('許可した人の中に暗号化非対応の人がいました');
+        if (extensionConfig.announceTrustedUsers)
+          Bot.comment('暗号許可リスト：' + this.trustedUsers.join(', '));
         delete this.candidateIds;
       }, 3000);
       document.getElementById('encryption').checked = this.isEnabled = true;
@@ -885,7 +875,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (this.trustedPublicKeys.has(publicKeyKanji)) {
           var publicKey = this.trustedPublicKeys.get(publicKeyKanji);
         } else {
-          if (!(this.candidateIds?.has(id) || (extensionConfig.trustIHash && this.trustedShiros.has(Bot.users[id]?.shiro)))) {
+          if (!this.candidateIds?.has(id)) {
             if (!this.candidateIds)
               addPendingUser(arguments);
             return;
@@ -899,6 +889,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           this.trustedPublicKeys.set(publicKeyKanji, publicKey);
         }
         this.candidateIds?.delete(id);
+        this.trustedUsers.push(Bot.users[id]?.fullName || '不明');
         this.sendEncryptedData(this.headerType.RESPONSE + this.sharedKeyId + publicKey.id + Base16384.encode(new Uint8Array(await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey.key, this.rawKey))));
         console.log('復号を許可 id:' + id.slice(0, 3) + ' 指紋:' + publicKey.fingerprint);
         this.trustedIds.add(id);
@@ -1867,15 +1858,9 @@ textarea{padding:5px;resize:none;font-size:16px}
             pendingUsers = {};
           } else if (index > 1) {
             var pendingUser = pendingUsers[pendingList.value];
-            if (extensionConfig.trustIHash) {
-              encrypter.trustedShiros.add(pendingUser.shiro);
-              extensionConfig.trustedShiros = Array.from(encrypter.trustedShiros);
-              localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
-            } else {
-              if (!encrypter.candidateIds)
-                encrypter.candidateIds = new Set();
-              encrypter.candidateIds.add(pendingList.value);
-            }
+            if (!encrypter.candidateIds)
+              encrypter.candidateIds = new Set();
+            encrypter.candidateIds.add(pendingList.value);
             if (Bot.users[pendingList.value])
               encrypter.sendSharedKey(...pendingUser.args);
             else
