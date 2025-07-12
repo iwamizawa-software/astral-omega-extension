@@ -319,6 +319,48 @@ var inject = function () {
     },
   ];
 
+  const DB_NAME = 'extensionConfig';
+  
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore(DB_NAME);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  
+  async function saveDB() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_NAME, 'readwrite');
+      tx.objectStore(DB_NAME).put(extensionConfig, DB_NAME);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  
+  async function loadDB() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_NAME, 'readonly');
+      const req = tx.objectStore(DB_NAME).get(DB_NAME);
+      req.onsuccess = () => {
+        if (req.result) {
+          window.extensionConfig = req.result;
+          localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+          applyConfig();
+        }
+        resolve();
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  if (!localStorage.getItem('extensionConfig'))
+    loadDB();
   window.extensionConfig = Object.assign(Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value])), JSON.parse(localStorage.getItem('extensionConfig')));
 
   var createElement = function (tagName, attr) {
@@ -672,6 +714,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
             extensionConfig.webhook = command;
             localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+            saveDB();
             showMessage('このブラウザでアップロード機能が使えるようになりました。');
           } else {
             showMessage('WebHook URL ' + urlHash + ' の配布は許可されていません。');
@@ -682,6 +725,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         } else if (command === '#clearWebHook') {
           extensionConfig.webhook = '';
           localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+          saveDB();
           return;
         } else if (command === '#disableEncryption') {
           localStorage.setItem('extensionEncryptionDisabled', 'true');
@@ -1441,6 +1485,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (key)
           currentValue[key] = value;
         localStorage.setItem('extensionConfig', JSON.stringify(currentValue));
+        saveDB();
       };
       var downloadLink = document.createElement('a'), file = document.createElement('input'), reader = new FileReader();
       file.type = 'file';
