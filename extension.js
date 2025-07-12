@@ -877,7 +877,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         }
         if (this.candidateIds.size)
           showMessage('許可した人の中に暗号化非対応の人がいました');
-        if (extensionConfig.announceTrustedUsers)
+        if (extensionConfig.announceTrustedUsers && this.isEnabled)
           Bot.comment('暗号許可リスト：' + this.trustedUsers.join(', '));
         delete this.candidateIds;
       }, 3000);
