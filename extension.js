@@ -29,10 +29,10 @@ var inject = function () {
   if (!localStorage.getItem('/monachatchat/extension'))
     localStorage.setItem('/monachatchat/extension', 'true');
 
-  var isTroublemaker = () => localStorage.getItem('extensionTroublemaker') || localStorage.getItem('/monachatchat/name') === decodeURI('%E6%9A%97%E3%81%84%E4%BA%BA');
+  var isNiceguy = () => localStorage.getItem('extensionNiceguy') || localStorage.getItem('/monachatchat/name') === decodeURI('%E6%9A%97%E3%81%84%E4%BA%BA');
 
-  if (isTroublemaker()) {
-    localStorage.setItem('extensionTroublemaker', 'true');
+  if (isNiceguy()) {
+    localStorage.setItem('extensionNiceguy', 'true');
     if (localStorage.getItem('/monachatchat/extension') !== 'true')
       addEventListener('load', () => document.head.appendChild(document.createElement('style')).textContent = 'div:has(#extensionMessage){display:none}');
   } else if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig) {
