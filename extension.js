@@ -1024,6 +1024,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       return;
     extensionConfig = JSON.parse(event.newValue);
     applyConfig();
+    saveDB();
   });
   var extCSS = document.createElement('style');
   var metaViewport = createElement('meta', {name:'viewport'});
@@ -1485,7 +1486,6 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (key)
           currentValue[key] = value;
         localStorage.setItem('extensionConfig', JSON.stringify(currentValue));
-        saveDB();
       };
       var downloadLink = document.createElement('a'), file = document.createElement('input'), reader = new FileReader();
       file.type = 'file';
