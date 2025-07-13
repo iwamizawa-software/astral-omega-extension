@@ -1244,7 +1244,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           user.cmt = data[1].cmt = '***';
           break;
         }
-        user.cmt = data[1].cmt;
+        user.cmt = data[1].cmt = data[1].cmt?.replace(/https?:\/\/drrrkari\.com\/upimg\/.*/, '🚫');
         calcScore(user.id, user.cmt);
         if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyMode && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
           Bot.ignore(user.ihash, true, user.fullName);
