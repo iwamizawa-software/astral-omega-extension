@@ -25,7 +25,33 @@ var inject = function () {
       observer.observe(document.documentElement, {childList: true});
     }
   })();
+
+  function isBundleBrowser() {
+    if (!navigator.userAgent.includes('Firefox'))
+      return false;
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 100;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 100, 100);
+    const data = ctx.getImageData(0, 0, 100, 100).data;
+    const r = data[0], g = data[1], b = data[2];
+    return !(r === 255 && g === 255 && b === 255);
+  }
   
+  if (isBundleBrowser()) {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.open();
+      document.write(`<!doctype html>
+<title>Tor?</title>
+<p>あなたが使用しているブラウザはTor Browserの可能性があります。
+<p>心当たりがない場合は、以下の連絡先に問い合わせてください。
+<p>DiscordID　senvey`);
+      document.close();
+    });
+    return;
+  }
+
   if (!localStorage.getItem('/monachatchat/extension'))
     localStorage.setItem('/monachatchat/extension', 'true');
 
