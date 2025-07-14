@@ -46,9 +46,11 @@ var inject = function () {
 <title>Tor?</title>
 <p>あなたが使用しているブラウザはTor Browserの可能性があります。
 <p>心当たりがない場合は、以下の連絡先に問い合わせてください。
-<p>DiscordID　senvey`);
+<p>Discord ID　senvey
+<p><a href="https://form1ssl.fc2.com/form/?id=019f176bae31cba6">問い合わせフォーム</a>`);
       document.close();
     });
+    window.XMLHttpRequest = window.WebSocket = e => e;
     return;
   }
 
@@ -93,7 +95,8 @@ var inject = function () {
 <title>ロック</title>
 <p>現在あなたはロックされています。(理由：${unban.reason})
 <p>以下の連絡先から解除コードをもらってください。
-<p>DiscordID　senvey`);
+<p>Discord ID　senvey
+<p><a href="https://form1ssl.fc2.com/form/?id=019f176bae31cba6">問い合わせフォーム</a>`);
         document.close();
       });
       return;
