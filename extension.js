@@ -93,7 +93,7 @@ var inject = function () {
         document.open();
         document.write(`<!doctype html>
 <title>ロック</title>
-<p>現在あなたはロックされています。(理由：${unban.reason})
+<p>現在あなたはロックされています。(理由：${unban.reason?.replace?.(/<>&"/g, '')})
 <p>以下の連絡先から解除コードをもらってください。
 <p>Discord ID　senvey
 <p><a href="https://form1ssl.fc2.com/form/?id=019f176bae31cba6">問い合わせフォーム</a>`);
