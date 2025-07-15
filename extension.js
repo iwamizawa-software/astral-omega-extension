@@ -57,7 +57,7 @@ var inject = function () {
   if (!localStorage.getItem('/monachatchat/extension'))
     localStorage.setItem('/monachatchat/extension', 'true');
 
-  var isNiceguy = () => localStorage.getItem('extensionNiceguy') || localStorage.getItem('/monachatchat/name') === decodeURI('%E6%9A%97%E3%81%84%E4%BA%BA');
+  var isNiceguy = () => localStorage.getItem('extensionNiceguy') || localStorage.getItem('/monachatchat/name')?.includes(decodeURI('%E6%9A%97%E3%81%84%E4%BA%BA'));
 
   if (isNiceguy()) {
     localStorage.setItem('extensionNiceguy', 'true');
