@@ -84,23 +84,19 @@ var inject = function () {
       location.reload();
       return;
     }
-    if (prompt('解除コードを入力してください') === unban.word) {
-      localStorage.removeItem('extensionBAN');
-    } else {
-      logBan(unban.url, unban.reason);
-      window.XMLHttpRequest = window.WebSocket = e => e;
-      document.addEventListener("DOMContentLoaded", () => {
-        document.open();
-        document.write(`<!doctype html>
-<title>ロック</title>
-<p>現在あなたはロックされています。(理由：${unban.reason?.replace?.(/[<>&"]/g, '')})
-<p>以下の連絡先から解除コードをもらってください。
-<p>Discord ID　senvey
-<p><a href="https://form1ssl.fc2.com/form/?id=019f176bae31cba6">問い合わせフォーム</a>`);
-        document.close();
-      });
-      return;
-    }
+    logBan(unban.url, unban.reason);
+    window.XMLHttpRequest = window.WebSocket = e => e;
+    document.addEventListener("DOMContentLoaded", () => {
+      document.open();
+      document.write(`<!doctype html>
+<title>解除</title>
+<p>暗い人へ、ロックを解除しました。リロード後、通常通り入れます。
+<p>次回荒らした場合、より強力な措置を実施する場合があります。
+<p>不誠実な行動はやめましょう。`);
+      document.close();
+    });
+    localStorage.removeItem('extensionBAN');
+    return;
   }
 
   var VERSION = 5;
