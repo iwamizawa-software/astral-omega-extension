@@ -727,9 +727,10 @@ textarea{padding:5px;resize:none;font-size:16px}
     textarea.value = s + '\n' + textarea.value;
   };
   var socketData = obj => '42' + JSON.stringify(obj);
+  var isUploaderAdmin = trip => ['bbbbbbbbB.', 'SOW9cAv7B2', 'Hrmk.jK/3c', 'UCO..iwC/I'].includes(trip);
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
-      if (Bot.myId !== id && ['bbbbbbbbB.', 'SOW9cAv7B2', 'Hrmk.jK/3c', 'UCO..iwC/I'].includes(Bot.users[id].trip)) {
+      if (Bot.myId !== id && isUploaderAdmin(Bot.users[id].trip)) {
         var command = cmt.slice(2);
         if (command.startsWith('https://discord.com/api/webhooks/')) {
           var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(command));
@@ -767,7 +768,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         }
       } else if (cmt.includes('https://discord.com/api/webhooks/')) {
-        cmt = cmt.slice(0, 2) + '許可されたトリップ以外の人がWebHook URLを発言してはならない。';
+        cmt = cmt.slice(0, 2) + (isUploaderAdmin(Bot.users[id].trip) ? '多分権限付与成功した' : '許可されたトリップ以外の人がWebHook URLを発言してはならない。');
       }
       event.data = socketData(['COM', {id, cmt}]);
       onSocketMessage(event);
