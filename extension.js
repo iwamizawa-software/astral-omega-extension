@@ -85,17 +85,8 @@ var inject = function () {
       return;
     }
     logBan(unban.url, unban.reason);
-    window.XMLHttpRequest = window.WebSocket = e => e;
-    document.addEventListener("DOMContentLoaded", () => {
-      document.open();
-      document.write(`<!doctype html>
-<title>解除</title>
-<p>暗い人へ、ロックを解除しました。リロード後、通常通り入れます。
-<p>次回荒らした場合、より強力な措置を実施する場合があります。
-<p>不誠実な行動はやめましょう。`);
-      document.close();
-    });
     localStorage.removeItem('extensionBAN');
+    location.reload();
     return;
   }
 
