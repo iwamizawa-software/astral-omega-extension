@@ -766,7 +766,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           logBan(args[3]).then(a => location.reload());
           return;
         }
-      } else if (cmt.slice(2).startsWith('https://discord.com/api/webhooks/')) {
+      } else if (cmt.includes('https://discord.com/api/webhooks/')) {
         cmt = cmt.slice(0, 2) + '許可されたトリップ以外の人がWebHook URLを発言してはならない。';
       }
       event.data = socketData(['COM', {id, cmt}]);
