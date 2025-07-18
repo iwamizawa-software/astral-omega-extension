@@ -90,7 +90,7 @@ var inject = function () {
     return;
   }
 
-  var VERSION = 6;
+  var VERSION = 7;
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
       ?.match(/var VERSION = (\d+);/)?.[1];
