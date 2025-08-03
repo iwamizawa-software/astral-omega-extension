@@ -1074,7 +1074,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       #encryption:checked~#pendingList{display:inline}
     `;
     if (extensionConfig.miniPlayer)
-      cssText += '.setting-bar-center input{z-index:1}';
+      cssText += '.setting-bar-center .text-field{z-index:1}';
     else
       document.querySelector('#miniPlayer button')?.click();
     if (extensionConfig.invisibleMode) {
