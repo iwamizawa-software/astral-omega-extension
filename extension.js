@@ -2037,7 +2037,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (!extensionConfig.miniPlayer)
           return;
         var a = [e.target, e.target.parentNode].find(a => a.tagName === 'A');
-        if (!(a && /^https:\/\/(?:twitcasting\.tv\/([^\/]+)|(?:(?:www\.)?youtube\.com\/(?:watch.*[\?&]v=|shorts\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?)/.test(a.href)))
+        if (!(a && /^https:\/\/(?:twitcasting\.tv\/([^\/]+)|(?:(?:www\.)?youtube\.com\/(?:watch.*[\?&]v=|shorts\/|live\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?)/.test(a.href)))
           return;
         if (RegExp.$1 && (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')))
           return;
