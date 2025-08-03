@@ -1073,7 +1073,9 @@ textarea{padding:5px;resize:none;font-size:16px}
       #pendingList{display:none}
       #encryption:checked~#pendingList{display:inline}
     `;
-    if (!extensionConfig.miniPlayer)
+    if (extensionConfig.miniPlayer)
+      cssText += '.setting-bar-center input{z-index:1}';
+    else
       document.querySelector('#miniPlayer button')?.click();
     if (extensionConfig.invisibleMode) {
       cssText += '.panel-container:first-child:has(.room){height:50px!important;overflow:hidden}.room>:not(:last-child){display:none!important}';
