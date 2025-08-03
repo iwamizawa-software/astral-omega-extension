@@ -1068,8 +1068,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       #miniPlayer[data-position="右上"]{display:flex;right:0;top:0}
       #miniPlayer[data-position="左下"]{display:flex;left:0;bottom:0}
       #miniPlayer[data-position="左上"]{display:flex;left:0;top:0}
-      #miniPlayer[data-position="下"]{display:flex;left:0;bottom:0;width:1000px;height:526px}
-      #miniPlayer[data-position="上"]{display:flex;left:0;top:0;width:1000px;height:526px}
+      #miniPlayer[data-position="下"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));bottom:0;width:1000px;height:526px}
+      #miniPlayer[data-position="上"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));top:0;width:1000px;height:526px}
       #pendingList{display:none}
       #encryption:checked~#pendingList{display:inline}
     `;
