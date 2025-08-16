@@ -354,28 +354,28 @@ var inject = function () {
     });
   }
   
-  async function saveDB() {
+  async function saveDB(key = DB_NAME, value = window.extensionConfig) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(DB_NAME, 'readwrite');
-      tx.objectStore(DB_NAME).put(extensionConfig, DB_NAME);
+      tx.objectStore(DB_NAME).put(value, key);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
   }
   
-  async function loadDB() {
+  async function loadDB(key = DB_NAME) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(DB_NAME, 'readonly');
-      const req = tx.objectStore(DB_NAME).get(DB_NAME);
+      const req = tx.objectStore(DB_NAME).get(key);
       req.onsuccess = () => {
-        if (req.result) {
+        if (req.result && key === DB_NAME) {
           window.extensionConfig = req.result;
           localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
           applyConfig();
         }
-        resolve();
+        resolve(req.result);
       };
       req.onerror = () => reject(req.error);
     });
@@ -562,7 +562,11 @@ var inject = function () {
   };
   Bot.save = (key, value) => localStorage.setItem('extension-' + key, JSON.stringify(value));
   Bot.load = (key) => JSON.parse(localStorage.getItem('extension-' + key));
+  Bot.saveAsync = (key, value) => saveDB('extension-' + key, value);
+  Bot.loadAsync = (key) => loadDB('extension-' + key);
   Bot.kuji = function () {
+    if (arguments.length === 1)
+      return Bot.kuji.apply(Bot, Object.entries(arguments[0]).flat());
     if (arguments.length & 1)
       throw new Error('引数の数がおかしい');
     var sum = 0, points = [];
