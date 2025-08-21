@@ -425,6 +425,76 @@ var inject = function () {
     });
   };
 
+  window.Cards = function (joker = 2) {
+    return Cards.from(Array.from({length: 52}).map((_, i) => i).concat(Array(joker).fill(-1)));
+  };
+  Cards.from = array => {
+    array.__proto__ = Cards.prototype;
+    return array;
+  };
+  Cards.prototype.__proto__ = Array.prototype;
+  Object.assign(Cards.prototype, {
+    shuffle() {
+      for (var i = 0; i < this.length - 1; i++) {
+        var target = Math.floor(Math.random() * (this.length - i)) + i;
+        if (i === target)
+          continue;
+        var tmp = this[i];
+        this[i] = this[target];
+        this[target] = tmp;
+      }
+      return this;
+    },
+    draw(n) {
+      return Cards.from(this.splice(0, n));
+    },
+    append(cards) {
+      this.push.apply(this, cards);
+      return this;
+    },
+    removeAt(indices) {
+      [...new Set(indices)].sort((a, b) => b - a).forEach(i => this.splice(i, 1));
+      return this;
+    },
+    toCardStrings() {
+      return this.map(n => n < 0 ? 'Jo' : '♠♥♦♣'[Math.floor(n / 13)] + 'A23456789⒑JQK'[n % 13]);
+    },
+    sortByRank() {
+      return this.sort((a, b) => (a % 13) - (b % 13) || a - b);
+    },
+    getHandRank() {
+      if (this.length !== 5)
+        return '';
+      var hand = Cards.from(this.filter(n => n >= 0)).sortByRank();
+      var ranks = hand.map(n => n.toString(13).at(-1)).join('');
+      var royal = /^0?9?a?b?c?$/.test(ranks);
+      var flush = (new Set(hand.map(n => Math.floor(n / 13)))).size <= 1;
+      if (royal && flush)
+        return 'ロイヤルフラッシュ';
+      var dupCount = ranks.replace(/(.)\1*/g, s => s.length);
+      var dup = Math.max(...dupCount);
+      if (dup === 1)
+        var straight = (hand.at(-1) % 13) - (hand[0] % 13) < 5;
+      if (straight && flush)
+        return 'ストレートフラッシュ';
+      var dupWithJoker = dup + 5 - hand.length;
+      if (dupWithJoker >= 4)
+        return 'フォーカード';
+      if (dupCount.length === 2)
+        return 'フルハウス';
+      if (flush)
+        return 'フラッシュ';
+      if (royal || straight)
+        return 'ストレート';
+      if (dupWithJoker === 3)
+        return 'スリーカード';
+      if (dupCount.length === 3)
+        return 'ツーペア';
+      if (dupCount.length === 4)
+        return 'ワンペア';
+      return '';
+    }
+  });
   window.Bot = function (bot) {
     Bot.timerIds.forEach(Bot.clearTimeout);
     Bot.timerIds.clear();
@@ -469,10 +539,10 @@ var inject = function () {
         var listenTo = async function (word, name = '', timeout, normalize) {
           if (!word.test) {
             var w = word;
-            word = {test: s => s.indexOf(w) !== -1};
+            word = {test: s => s.includes(w)};
           }
           var cmt;
-          return await on('COM', user => user.id !== Bot.myId && user.fullName.indexOf(name) !== -1 && word.test(cmt = normalize ? Bot.normalize(user.cmt): user.cmt), timeout) && cmt;
+          return await on('COM', user => user.id !== Bot.myId && user.fullName.includes(name) && word.test(cmt = normalize ? Bot.normalize(user.cmt): user.cmt), timeout) && cmt;
         };
         var sleep = t => ({then: r => setTimeout(r, t)});
         ${bot}
