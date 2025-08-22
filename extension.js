@@ -425,7 +425,7 @@ var inject = function () {
     });
   };
 
-  window.Cards = function (joker = 2) {
+  window.Cards = function (joker = 1) {
     return Cards.from(Array.from({length: 52}).map((_, i) => i).concat(Array(joker).fill(-1)));
   };
   Cards.from = array => {
@@ -467,18 +467,20 @@ var inject = function () {
         return '';
       var hand = Cards.from(this.filter(n => n >= 0)).sortByRank();
       var ranks = hand.map(n => n.toString(13).at(-1)).join('');
+      var dupCount = ranks.replace(/(.)\1*/g, s => s.length);
+      var dup = Math.max(...dupCount);
+      var dupWithJoker = dup + 5 - hand.length;
+      if (dupWithJoker === 5)
+        return 'ファイブカード';
       var royal = /^0?9?a?b?c?$/.test(ranks);
       var flush = (new Set(hand.map(n => Math.floor(n / 13)))).size <= 1;
       if (royal && flush)
         return 'ロイヤルフラッシュ';
-      var dupCount = ranks.replace(/(.)\1*/g, s => s.length);
-      var dup = Math.max(...dupCount);
       if (dup === 1)
         var straight = (hand.at(-1) % 13) - (hand[0] % 13) < 5;
       if (straight && flush)
         return 'ストレートフラッシュ';
-      var dupWithJoker = dup + 5 - hand.length;
-      if (dupWithJoker >= 4)
+      if (dupWithJoker === 4)
         return 'フォーカード';
       if (dupCount.length === 2)
         return 'フルハウス';
