@@ -170,6 +170,17 @@ var inject = function () {
       value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
     },
     {
+      key: 'youtubeThumbnail',
+      name: 'YouTubeリンクをサムネイルで表示',
+      type: [
+        'OFF',
+        '小',
+        '中',
+        '大'
+      ],
+      value: 1
+    },
+    {
       key: 'announceTrustedUsers',
       name: '暗号化するとき許可リストを自動で発言する',
       type: 'onoff',
@@ -424,6 +435,7 @@ var inject = function () {
       }
     });
   };
+  var getYouTubeInfo = url => url?.match(/^https:\/\/(?:(?:www\.)?youtube\.com\/(?:watch.*[\?&]v=|shorts\/|live\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?/);
 
   window.Cards = function (joker = 1) {
     return Cards.from(Array.from({length: 52}).map((_, i) => i).concat(Array(joker).fill(-1)));
@@ -1164,8 +1176,12 @@ textarea{padding:5px;resize:none;font-size:16px}
     if (!extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/'))
       cssText += '#uploadButton{display:none}';
     cssText += extensionConfig.showImage
-      ? '[data-img]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000}.log-row:has([data-img]){flex:none;height:fit-content;max-height:200px}[data-img] *{display:none}'
+      ? '[data-img]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;box-sizing:content-box}.log-row:has([data-img]){flex:none;height:fit-content;max-height:200px}[data-img] *{display:none}'
       : '[data-img]{background-image:none!important}';
+    var thumbWidth = {1: 120, 2: 320, 3: 480}[extensionConfig.youtubeThumbnail], thumbHeight = {1: 90, 2: 180, 3: 360}[extensionConfig.youtubeThumbnail];
+    cssText += extensionConfig.youtubeThumbnail
+      ? `[data-youtube]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;width:${thumbWidth}px;height:${thumbHeight}px;box-sizing:content-box}.log-row:has([data-youtube]){flex:none;height:fit-content}[data-youtube] *{display:none}`
+      : '[data-youtube]{background-image:none!important}';
     if (localStorage.getItem('extensionEncryptionDisabled'))
       cssText += '#encryption,[for=encryption]{display:none}';
     extCSS.textContent = cssText;
@@ -1934,25 +1950,37 @@ textarea{padding:5px;resize:none;font-size:16px}
   document.addEventListener('keyup', e => clearInterval(keyControlTimer));
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
-      if (!extensionConfig.showImage)
-        return;
-      Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/1328162542463483994/"]:not([data-img])')).forEach(a => {
-        if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/i.test(a.href))
-          return;
-        var img = new Image();
-        img.onload = function () {
+      if (extensionConfig.showImage)
+        Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/1328162542463483994/"]:not([data-youtube],[data-img])')).forEach(a => {
+          if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/i.test(a.href))
+            return;
+          var img = new Image();
+          img.onload = function () {
+            var logContainer = document.querySelector('.log-container');
+            var isBottom = logContainer.scrollHeight !== logContainer.clientHeight && logContainer.scrollHeight - logContainer.scrollTop - logContainer.clientHeight < 2;
+            var height = Math.min(img.height, 150);
+            a.dataset.img = 'true';
+            a.style.backgroundImage = `url("${encodeURI(a.href)}")`;
+            a.style.width = Math.round(img.width * height / img.height) + 'px';
+            a.style.height = height + 'px';
+            if (isBottom)
+              logContainer.scrollTop = logContainer.scrollHeight;
+          };
+          img.src = a.href;
+        });
+      if (extensionConfig.youtubeThumbnail)
+        Array.from(document.body.querySelectorAll('a:not([data-youtube],[data-img])')).forEach(a => {
+          var yt = getYouTubeInfo(a.href);
+          if (!yt)
+            return;
           var logContainer = document.querySelector('.log-container');
           var isBottom = logContainer.scrollHeight !== logContainer.clientHeight && logContainer.scrollHeight - logContainer.scrollTop - logContainer.clientHeight < 2;
-          var height = Math.min(img.height, 150);
-          a.dataset.img = 'true';
-          a.style.backgroundImage = `url("${encodeURI(a.href)}")`;
-          a.style.width = Math.floor(img.width * height / img.height) + 'px';
-          a.style.height = height + 'px';
+          a.dataset.youtube = 'true';
+          var thumb = {1: 'default', 2: 'mqdefault', 3: 'hqdefault'}[extensionConfig.youtubeThumbnail];
+          a.style.backgroundImage = `url("https://img.youtube.com/vi/${encodeURI(yt[1])}/${thumb}.jpg")`;
           if (isBottom)
             logContainer.scrollTop = logContainer.scrollHeight;
-        };
-        img.src = a.href;
-      });
+        });
     });
     observer.observe(document.body, {subtree: true, childList: true});
     var defaultWidth = document.documentElement.clientWidth;
@@ -2115,12 +2143,16 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (!extensionConfig.miniPlayer)
           return;
         var a = [e.target, e.target.parentNode].find(a => a.tagName === 'A');
-        if (!(a && /^https:\/\/(?:twitcasting\.tv\/([^\/]+)|(?:(?:www\.)?youtube\.com\/(?:watch.*[\?&]v=|shorts\/|live\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?)/.test(a.href)))
+        if (!a)
           return;
-        if (RegExp.$1 && (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')))
+        var yt = getYouTubeInfo(a.href);
+        if (yt)
+          miniPlayerIFrame.src = 'https://www.youtube.com/embed/' + yt[1] + (yt[2] ? '?start=' + yt[2] : '');
+        else if (!/iPhone|iPad/.test(navigator.userAgent) && /^https:\/\/twitcasting\.tv\/([^\/]+)/.test(a.href))
+          miniPlayerIFrame.src = 'https://twitcasting.tv/' + RegExp.$1 + '/embeddedplayer/live';
+        else
           return;
         e.preventDefault();
-        miniPlayerIFrame.src = RegExp.$1 ? 'https://twitcasting.tv/' + RegExp.$1 + '/embeddedplayer/live' : 'https://www.youtube.com/embed/' + RegExp.$2 + (RegExp.$3 ? '?start=' + RegExp.$3 : '');
         miniPlayerPositionSelector.selectedIndex = extensionConfig.miniPlayer - 1;
         miniPlayerPositionSelector.onchange();
         miniPlayer.scrollIntoView({block: 'nearest', inline: 'nearest'});
