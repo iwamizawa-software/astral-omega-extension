@@ -1180,7 +1180,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       : '[data-img]{background-image:none!important}';
     var thumbWidth = {1: 120, 2: 320, 3: 480}[extensionConfig.youtubeThumbnail], thumbHeight = {1: 90, 2: 180, 3: 360}[extensionConfig.youtubeThumbnail];
     cssText += extensionConfig.youtubeThumbnail
-      ? `[data-youtube]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;width:${thumbWidth}px;height:${thumbHeight}px;box-sizing:content-box}.log-row:has([data-youtube]){flex:none;height:fit-content}[data-youtube] *{display:none}`
+      ? `[data-youtube]:before{content:'▶️'}[data-youtube]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;width:${thumbWidth}px;height:${thumbHeight}px;box-sizing:content-box}.log-row:has([data-youtube]){flex:none;height:fit-content}[data-youtube] *{display:none}`
       : '[data-youtube]{background-image:none!important}';
     if (localStorage.getItem('extensionEncryptionDisabled'))
       cssText += '#encryption,[for=encryption]{display:none}';
