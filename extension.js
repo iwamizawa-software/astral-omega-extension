@@ -1961,7 +1961,7 @@ textarea{padding:5px;resize:none;font-size:16px}
             var height = Math.min(img.height, 150);
             a.dataset.img = 'true';
             a.style.backgroundImage = `url("${encodeURI(a.href)}")`;
-            a.style.width = Math.round(img.width * height / img.height) + 'px';
+            a.style.width = (Math.round(10 * img.width * height / img.height) / 10) + 'px';
             a.style.height = height + 'px';
             if (isBottom)
               logContainer.scrollTop = logContainer.scrollHeight;
