@@ -1385,6 +1385,13 @@ textarea{padding:5px;resize:none;font-size:16px}
           user.lastComment = comment;
         }
         writeLog(user.fullName + '： ' + data[1].cmt);
+        var miniPlayer;
+        if (
+          data[1].id !== Bot.myId &&
+          /^同期(\d+)$/.test(user.cmt) &&
+          (miniPlayer = document.querySelector('[data-position] [src^="https://www.youtube.com/"]'))?.dataset.owner.includes(user.kuro || user.shiro)
+        )
+          miniPlayer.contentWindow.postMessage(JSON.stringify({event: 'command', func: 'seekTo', args: [+RegExp.$1, true], id: 1}), '*');
         break;
       case 'SET':
         for (var key in data[key])
@@ -1522,6 +1529,13 @@ textarea{padding:5px;resize:none;font-size:16px}
             if (args[1].cmt.includes('https://discord.com/api/webhooks/')) {
               asyncAlert('暗号化せずにWebHook URLを発言してはならない');
               return;
+            }
+            if (args[1].cmt === '同期') {
+              var user = Bot.users[Bot.myId];
+              if (document.querySelector('[data-position] [src^="https://www.youtube.com/"]')?.dataset.owner.includes(user.kuro || user.shiro)) {
+                args[1].cmt += youtubeCurrentTime || 0;
+                arguments[0] = socketData(args);
+              }
             }
           }
         } catch (err) {
@@ -2136,7 +2150,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         src: 'about:blank',
         allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
         scrolling: 'no',
-        allowFullscreen: true
+        allowFullscreen: true,
+        onload: () => miniPlayerIFrame.contentWindow.postMessage(JSON.stringify({event: 'listening', id: 1, channel: 'widget'}), '*')
       });
       miniPlayer.append(miniPlayerIFrame);
       document.body.addEventListener('click', e => {
@@ -2145,10 +2160,12 @@ textarea{padding:5px;resize:none;font-size:16px}
         var a = [e.target, e.target.parentNode].find(a => a.tagName === 'A');
         if (!a)
           return;
+        miniPlayerIFrame.dataset.owner = '';
         var yt = getYouTubeInfo(a.href);
-        if (yt)
-          miniPlayerIFrame.src = 'https://www.youtube.com/embed/' + yt[1] + (yt[2] ? '?start=' + yt[2] : '');
-        else if (!/iPhone|iPad/.test(navigator.userAgent) && /^https:\/\/twitcasting\.tv\/([^\/]+)/.test(a.href))
+        if (yt) {
+          miniPlayerIFrame.src = 'https://www.youtube.com/embed/' + yt[1] + '?enablejsapi=1' + (yt[2] ? '&start=' + yt[2] : '');
+          miniPlayerIFrame.dataset.owner = a.parentNode.firstElementChild.textContent;
+        } else if (!/iPhone|iPad/.test(navigator.userAgent) && /^https:\/\/twitcasting\.tv\/([^\/]+)/.test(a.href))
           miniPlayerIFrame.src = 'https://twitcasting.tv/' + RegExp.$1 + '/embeddedplayer/live';
         else
           return;
@@ -2158,6 +2175,14 @@ textarea{padding:5px;resize:none;font-size:16px}
         miniPlayer.scrollIntoView({block: 'nearest', inline: 'nearest'});
       });
     });
+  });
+  var youtubeCurrentTime = 0;
+  addEventListener('message', event => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data && data.event === 'infoDelivery' && typeof data.info?.currentTime === 'number')
+        youtubeCurrentTime = Math.round(data.info.currentTime);
+    } catch (e) {}
   });
   document.addEventListener('click', e => {
     speechSynthesis.speak(new SpeechSynthesisUtterance(''));
