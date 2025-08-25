@@ -1203,7 +1203,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     onbeforeunload = extensionConfig.onbeforeunload ? () => 1 : null;
     (async () => {
-      Bot(extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url).then(res => res.text()).catch(error => {
+      Bot(extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(res => res.text()).catch(error => {
         console.log(`外部BOTエラー：${url} - ${error.message}`);
         return '';
       })))).map(result => result.value).join('\n'));
