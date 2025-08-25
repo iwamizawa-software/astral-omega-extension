@@ -516,7 +516,11 @@ var inject = function () {
       return '';
     }
   });
-  window.Bot = function (bot) {
+  window.Bot = async function () {
+    var bot = extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(res => res.text()).catch(error => {
+      console.log(`外部BOTエラー：${url} - ${error.message}`);
+      return '';
+    })))).map(result => result.value).join('\n');
     Bot.timerIds.forEach(Bot.clearTimeout);
     Bot.timerIds.clear();
     Bot.listeners = {};
@@ -1202,12 +1206,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       sound = null;
     }
     onbeforeunload = extensionConfig.onbeforeunload ? () => 1 : null;
-    (async () => {
-      Bot(extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(res => res.text()).catch(error => {
-        console.log(`外部BOTエラー：${url} - ${error.message}`);
-        return '';
-      })))).map(result => result.value).join('\n'));
-    })();
+    Bot();
   };
   applyConfig();
 
