@@ -335,6 +335,13 @@ var inject = function () {
       value: ''
     },
     {
+      key: 'externalBot',
+      name: '外部スクリプト',
+      description: 'CORS対応のURLを指定 上のbotコードと結合して実行する',
+      type: 'list',
+      value: []
+    },
+    {
       name: 'その他（基本いじらなくていい）',
       type: 'separator'
     },
@@ -1195,7 +1202,12 @@ textarea{padding:5px;resize:none;font-size:16px}
       sound = null;
     }
     onbeforeunload = extensionConfig.onbeforeunload ? () => 1 : null;
-    Bot(extensionConfig.bot);
+    (async () => {
+      Bot(extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url).then(res => res.text()).catch(error => {
+        console.log(`外部BOTエラー：${url} - ${error.message}`);
+        return '';
+      })))).map(result => result.value).join('\n'));
+    })();
   };
   applyConfig();
 
@@ -1975,7 +1987,7 @@ textarea{padding:5px;resize:none;font-size:16px}
             var height = Math.min(img.height, 150);
             a.dataset.img = 'true';
             a.style.backgroundImage = `url("${encodeURI(a.href)}")`;
-            a.style.width = (Math.round(10 * img.width * height / img.height) / 10) + 'px';
+            a.style.width = Math.round(img.width * height / img.height) + 'px';
             a.style.height = height + 'px';
             if (isBottom)
               logContainer.scrollTop = logContainer.scrollHeight;
