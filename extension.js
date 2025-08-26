@@ -630,7 +630,7 @@ var inject = function () {
       attr.x = Math.max(+extensionConfig.minX, Math.min(+extensionConfig.maxX, attr.x));
     if ('y' in attr)
       attr.y = Math.max(+extensionConfig.minY, Math.min(+extensionConfig.maxY, attr.y));
-    Bot.send('SET', Object.assign({x, y, scl, '' + stat}, attr));
+    Bot.send('SET', Object.assign({x, y, scl, stat: stat + ''}, attr));
     Object.assign(Bot.users[Bot.myId], attr);
   };
   Bot.ignore = function (ihash, ignore, fullName) {
