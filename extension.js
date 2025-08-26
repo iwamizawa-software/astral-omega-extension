@@ -561,13 +561,14 @@ var inject = function () {
           p.cancel = cancel;
           return p;
         };
-        var listenTo = async function (word, name = '', timeout, normalize) {
+        var listenTo = async function (word, name = '', timeout, normalize, withUser) {
           if (!word.test) {
             var w = word;
             word = {test: s => s.includes(w)};
           }
           var cmt;
-          return await on('COM', user => user.id !== Bot.myId && user.fullName.includes(name) && word.test(cmt = normalize ? Bot.normalize(user.cmt): user.cmt), timeout) && cmt;
+          var user = await on('COM', user => user.id !== Bot.myId && user.fullName.includes(name) && word.test(cmt = normalize ? Bot.normalize(user.cmt): user.cmt), timeout);
+          return withUser || !user ? user : cmt;
         };
         var sleep = t => ({then: r => setTimeout(r, t)});
         ${bot}
