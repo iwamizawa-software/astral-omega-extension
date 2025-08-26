@@ -630,7 +630,7 @@ var inject = function () {
       attr.x = Math.max(+extensionConfig.minX, Math.min(+extensionConfig.maxX, attr.x));
     if ('y' in attr)
       attr.y = Math.max(+extensionConfig.minY, Math.min(+extensionConfig.maxY, attr.y));
-    if (attr && typeof attr.stat !== 'string')
+    if (attr?.stat !== undefined && typeof attr.stat !== 'string')
       attr.stat += '';
     Bot.send('SET', Object.assign({x, y, scl, stat}, attr));
     Object.assign(Bot.users[Bot.myId], attr);
