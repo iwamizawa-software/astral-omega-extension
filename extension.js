@@ -570,6 +570,15 @@ var inject = function () {
           var user = await on('COM', user => user.id !== Bot.myId && user.fullName.includes(name) && word.test(cmt = normalize ? Bot.normalize(user.cmt): user.cmt), timeout);
           return withUser || !user ? user : cmt;
         };
+        var waitForStat = async function (word, name = '', timeout, normalize, withUser) {
+          if (!word.test) {
+            var w = word;
+            word = {test: s => s.includes(w)};
+          }
+          var stat;
+          var user = await on('SET', user => user.id !== Bot.myId && user.fullName.includes(name) && word.test(stat = normalize ? Bot.normalize(user.stat): user.stat), timeout);
+          return withUser || !user ? user : stat;
+        };
         var sleep = t => ({then: r => setTimeout(r, t)});
         ${bot}
       })();
