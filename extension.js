@@ -1984,9 +1984,10 @@ textarea{padding:5px;resize:none;font-size:16px}
     const m = now.getMinutes() + s/60;
     const h = now.getHours() % 12 + m/60;
     clock.forEach(clock => {
-      clock.children[0].setAttribute("transform", `rotate(${h * 30}, 45, 22.5)`);
-      clock.children[1].setAttribute("transform", `rotate(${m * 6}, 45, 22.5)`);
-      clock.children[2].setAttribute("transform", `rotate(${Math.round(s * 6)}, 45, 22.5)`);
+      var direction = /scale\([^\)]*-/.test(clock.parentNode.parentNode.parentNode.getAttribute('style')) ? -1 : 1;
+      clock.children[0].setAttribute("transform", `rotate(${direction * h * 30}, 45, 22.5)`);
+      clock.children[1].setAttribute("transform", `rotate(${direction * m * 6}, 45, 22.5)`);
+      clock.children[2].setAttribute("transform", `rotate(${direction * Math.round(s * 6)}, 45, 22.5)`);
     });
   };
   setInterval(updateClock, 1000);
