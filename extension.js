@@ -1999,7 +1999,12 @@ textarea{padding:5px;resize:none;font-size:16px}
         svg.innerHTML += '<g class="clock"><line x1="45" y1="22.5" x2="45" y2="12" stroke="black" stroke-width="1.5"/><line x1="45" y1="22.5" x2="45" y2="6" stroke="black" stroke-width="1"/><line x1="45" y1="22.5" x2="45" y2="5" stroke="red" stroke-width="0.5"/></g>';
         svg.classList.add('set');
       });
-      if (noclock.length)
+      var nokbclock = Array.from(document.querySelectorAll('svg[width="70px"][height="111px"][version="1.1"]:not(.set)'));
+      nokbclock.forEach(svg => {
+        svg.innerHTML += '<g class="clock"><line x1="45" y1="22.5" x2="45" y2="12" stroke="black" stroke-width="2" stroke-linecap="round"/><line x1="45" y1="22.5" x2="45" y2="6" stroke="black" stroke-width="1.5" stroke-linecap="round"/><line x1="45" y1="22.5" x2="45" y2="5" stroke="red" stroke-width="1" stroke-linecap="round"/></g>';
+        svg.classList.add('set');
+      });
+      if (noclock.length || nokbclock.length)
         updateClock();
       if (extensionConfig.showImage)
         Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/1328162542463483994/"]:not([data-youtube],[data-img])')).forEach(a => {
