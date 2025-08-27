@@ -135,24 +135,26 @@ var inject = function () {
       value: 0
     },
     {
-      key: 'webhook',
-      name: 'アップロード用WebHook URL',
-      description: 'DiscordのWebHookを設定すると、アップロード機能が使えるようになります。サーバーの方で消しても24時間リンクが有効なので、すぐ消したくなるようなファイルはアップロードしないでください。',
-      type: 'input',
-      value: ''
-    },
-    {
-      key: 'confirmUpload',
-      name: 'アップロード時確認する',
-      description: 'OFFにすると中身を確認できずにアップロードされるので気を付けてください。',
+      key: 'announceTrustedUsers',
+      name: '暗号化するとき許可リストを自動で発言する',
       type: 'onoff',
       value: 1
     },
     {
-      key: 'showImage',
-      name: 'アップロード画像をログに表示',
+      key: 'keepStat',
+      name: '状態を維持',
       type: 'onoff',
       value: 1
+    },
+    {
+      key: 'keyControl',
+      name: '矢印キーで移動',
+      type: 'onoff',
+      value: 0
+    },
+    {
+      name: 'YouTube',
+      type: 'separator'
     },
     {
       key: 'miniPlayer',
@@ -181,22 +183,34 @@ var inject = function () {
       value: 1
     },
     {
-      key: 'announceTrustedUsers',
-      name: '暗号化するとき許可リストを自動で発言する',
-      type: 'onoff',
-      value: 1
-    },
-    {
-      key: 'keepStat',
-      name: '状態を維持',
-      type: 'onoff',
-      value: 1
-    },
-    {
-      key: 'keyControl',
-      name: '矢印キーで移動',
+      key: 'youtubeSync',
+      name: '同期と発言したら再生中の時間が自動でつく',
       type: 'onoff',
       value: 0
+    },
+    {
+      name: 'アップロード',
+      type: 'separator'
+    },
+    {
+      key: 'webhook',
+      name: 'アップロード用WebHook URL',
+      description: 'DiscordのWebHookを設定すると、アップロード機能が使えるようになります。サーバーの方で消しても24時間リンクが有効なので、すぐ消したくなるようなファイルはアップロードしないでください。',
+      type: 'input',
+      value: ''
+    },
+    {
+      key: 'confirmUpload',
+      name: 'アップロード時確認する',
+      description: 'OFFにすると中身を確認できずにアップロードされるので気を付けてください。',
+      type: 'onoff',
+      value: 1
+    },
+    {
+      key: 'showImage',
+      name: 'アップロード画像をログに表示',
+      type: 'onoff',
+      value: 1
     },
     {
       name: '読み上げ',
@@ -1553,7 +1567,7 @@ textarea{padding:5px;resize:none;font-size:16px}
               asyncAlert('暗号化せずにWebHook URLを発言してはならない');
               return;
             }
-            if (args[1].cmt === '同期') {
+            if (extensionConfig.youtubeSync && args[1].cmt === '同期') {
               var user = Bot.users[Bot.myId];
               if (document.querySelector('[data-position] [src^="https://www.youtube.com/"]')?.dataset.owner.includes(user.kuro || user.shiro)) {
                 args[1].cmt += youtubeCurrentTime || 0;
@@ -2202,7 +2216,10 @@ textarea{padding:5px;resize:none;font-size:16px}
         allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
         scrolling: 'no',
         allowFullscreen: true,
-        onload: () => miniPlayerIFrame.contentWindow.postMessage(JSON.stringify({event: 'listening', id: 1, channel: 'widget'}), '*')
+        onload: () => {
+          if (extensionConfig.youtubeSync)
+            miniPlayerIFrame.contentWindow.postMessage(JSON.stringify({event: 'listening', id: 1, channel: 'widget'}), '*');
+        }
       });
       miniPlayer.append(miniPlayerIFrame);
       document.body.addEventListener('click', e => {
