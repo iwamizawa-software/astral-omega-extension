@@ -1521,6 +1521,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       }
     });
   };
+  var statComment;
   var WebSocket = window.WebSocket;
   window.WebSocket = function (url, protocols) {
     var socket = new WebSocket(url, protocols);
@@ -1565,6 +1566,14 @@ textarea{padding:5px;resize:none;font-size:16px}
             }
             if (args[1].cmt.includes('https://discord.com/api/webhooks/')) {
               asyncAlert('暗号化せずにWebHook URLを発言してはならない');
+              return;
+            }
+            if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(args[1].cmt)) {
+              Bot.stat('状態発言' + (statComment = !statComment) ? 'ON' : 'OFF');
+              return;
+            }
+            if (statComment) {
+              Bot.stat(args[1].cmt);
               return;
             }
             if (extensionConfig.youtubeSync && args[1].cmt === '同期') {
