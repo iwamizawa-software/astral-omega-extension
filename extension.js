@@ -1975,9 +1975,31 @@ textarea{padding:5px;resize:none;font-size:16px}
     keyControlTimer = setInterval(move, 250);
     move();
   });
+  var updateClock = () => {
+    var clock = Array.from(document.querySelectorAll('.clock'));
+    if (!clock.length)
+      return;
+    const now = new Date();
+    const s = now.getSeconds();
+    const m = now.getMinutes() + s/60;
+    const h = now.getHours() % 12 + m/60;
+    clock.forEach(clock => {
+      clock.children[0].setAttribute("transform", `rotate(${h * 30}, 45, 22.5)`);
+      clock.children[1].setAttribute("transform", `rotate(${m * 6}, 45, 22.5)`);
+      clock.children[2].setAttribute("transform", `rotate(${Math.round(s * 6)}, 45, 22.5)`);
+    });
+  };
+  setInterval(updateClock, 1000);
   document.addEventListener('keyup', e => clearInterval(keyControlTimer));
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
+      var noclock = Array.from(document.querySelectorAll('svg[height="110.8px"][width="69.65px"]:not(.set)'));
+      noclock.forEach(svg => {
+        svg.innerHTML += '<g class="clock"><line x1="45" y1="22.5" x2="45" y2="12" stroke="black" stroke-width="1.5"/><line x1="45" y1="22.5" x2="45" y2="6" stroke="black" stroke-width="1"/><line x1="45" y1="22.5" x2="45" y2="5" stroke="red" stroke-width="0.5"/></g>';
+        svg.classList.add('set');
+      });
+      if (noclock.length)
+        updateClock();
       if (extensionConfig.showImage)
         Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/1328162542463483994/"]:not([data-youtube],[data-img])')).forEach(a => {
           if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/i.test(a.href))
