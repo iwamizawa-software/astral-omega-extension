@@ -1569,7 +1569,7 @@ textarea{padding:5px;resize:none;font-size:16px}
               return;
             }
             if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(args[1].cmt)) {
-              Bot.stat('状態発言' + ((statComment = !statComment) ? 'ON' : 'OFF'));
+              Bot.stat((statComment = !statComment) ? '状態発言ON' : '通常');
               return;
             }
             if (statComment) {
@@ -2150,7 +2150,7 @@ textarea{padding:5px;resize:none;font-size:16px}
             if (/^状態[:：](.*)$/.test(e.target.value))
               Bot.stat(RegExp.$1 || '通常');
             else if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(e.target.value))
-              Bot.stat('状態発言' + ((statComment = !statComment) ? 'ON' : 'OFF'));
+              Bot.stat((statComment = !statComment) ? '状態発言ON' : '通常');
             else
               Bot[statComment ? 'stat' : 'comment'](e.target.value);
             e.target.value = '';
