@@ -2149,7 +2149,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           if (e.target.value && e.key === 'Enter') {
             if (/^状態[:：](.*)$/.test(e.target.value))
               Bot.stat(RegExp.$1 || '通常');
-            else if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(args[1].cmt))
+            else if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(e.target.value))
               Bot.stat('状態発言' + ((statComment = !statComment) ? 'ON' : 'OFF'));
             else
               Bot[statComment ? 'stat' : 'comment'](e.target.value);
