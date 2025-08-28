@@ -1569,7 +1569,7 @@ textarea{padding:5px;resize:none;font-size:16px}
               return;
             }
             if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(args[1].cmt)) {
-              Bot.stat('状態発言' + (statComment = !statComment) ? 'ON' : 'OFF');
+              Bot.stat('状態発言' + ((statComment = !statComment) ? 'ON' : 'OFF'));
               return;
             }
             if (statComment) {
