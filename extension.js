@@ -1703,11 +1703,13 @@ textarea{padding:5px;resize:none;font-size:16px}
   </g>
 </svg>`;
   var XMLHttpRequest_open = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function (method, url) {
+  XMLHttpRequest.prototype.open = function (method, url, ...args) {
     if (url.includes('monachatchat'))
       this.addEventListener('load', () => this.responseText.split(RS).forEach(astralParser));
     else if (/^\/img\/svg\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.svg$/.test(url))
       this.userId = RegExp.$1;
+    else if (/^\/img\/kb\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.svg$/.test(url))
+      return XMLHttpRequest_open.apply(this, [method, url.replace(RegExp.$1, Bot.users[RegExp.$1].realType), ...args]);
     return XMLHttpRequest_open.apply(this, arguments);
   };
   var XMLHttpRequest_send = XMLHttpRequest.prototype.send;
