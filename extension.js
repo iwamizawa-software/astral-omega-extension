@@ -1588,7 +1588,7 @@ textarea{padding:5px;resize:none;font-size:16px}
               return;
             }
             if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(args[1].cmt)) {
-              Bot.stat((statComment = !statComment) ? '状態発言ON' : '通常');
+              toggleStatComment();
               return;
             }
             if (statComment) {
@@ -1917,12 +1917,18 @@ textarea{padding:5px;resize:none;font-size:16px}
     configWindow.document.write(`<!doctype html>\n<head><title>☆ω拡張設定</title><meta name="viewport" content="width=device-width"></head><body><script nonce="${nonce}">var configInfo = ${configInfoJSON};(${configScript})();load(${extensionConfigJSON})</script></body>`);
     configWindow.document.close();
   };
+  var toggleStatComment = () => {
+    document.getElementById('toggleStatComment').selected = true;
+    menu.onchange();
+  };
   var createMenu = function (list) {
     var select = document.createElement('select');
     list = list.filter(opt => {
       if (opt.oninit?.() === false)
         return false;
       opt.element = document.createElement('option');
+      if (opt.id)
+        opt.element.id = opt.id;
       if (opt.type === 'toggle') {
         opt.toggle = () => {
           opt.checked = !opt.checked;
@@ -2011,6 +2017,16 @@ textarea{padding:5px;resize:none;font-size:16px}
       onclick: checked => {
         if (pauseYomiage = checked)
           speechSynthesis.cancel();
+      }
+    },
+    {
+      name: '状態発言',
+      id: 'toggleStatComment',
+      type: 'toggle',
+      onclick: checked => {
+        statComment = checked;
+        Bot.stat(statComment ? '状態発言ON' : '通常');
+        document.getElementById('toggleStatCommentMobile').textContent = statComment ? '🔇' : '🔈';
       }
     },
     {
@@ -2304,10 +2320,8 @@ textarea{padding:5px;resize:none;font-size:16px}
           if (e.target.value && e.key === 'Enter') {
             if (/^状態[:：](.*)$/.test(e.target.value))
               Bot.stat(RegExp.$1 || '通常');
-            else if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(e.target.value))
-              Bot.stat((statComment = !statComment) ? '状態発言ON' : '通常');
             else
-              Bot[statComment ? 'stat' : 'comment'](e.target.value);
+              Bot.comment(e.target.value);
             e.target.value = '';
           }
         }
@@ -2329,6 +2343,13 @@ textarea{padding:5px;resize:none;font-size:16px}
       });
       uploadButton.setAttribute('style', 'font-size:' + smartSize);
       input.before(uploadButton);
+      var statCommandButton = createElement('button', {
+        id: 'toggleStatCommentMobile',
+        textContent: '🔈',
+        onclick: toggleStatComment
+      });
+      statCommandButton.setAttribute('style', 'font-size:' + smartSize);
+      inputContainer.append(statCommandButton);
       var button = createElement('button', {
         textContent: '🎮',
         onclick: e => {
