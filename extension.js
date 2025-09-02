@@ -1,5 +1,28 @@
 var inject = function () {
 
+  if (localStorage.getItem('extensionEmergency')) {
+    var extensionStatus = localStorage.getItem('/monachatchat/extension');
+    if (extensionStatus === 'true') {
+      localStorage.removeItem('extensionEmergency');
+    } else {
+      return;
+    }
+  }
+
+  addEventListener('load', function () {
+    var button = document.createElement('button');
+    button.textContent = 'バグったら押す';
+    button.setAttribute('style', 'position:absolute;right:0;top:0;color:red');
+    button.onclick = function () {
+      localStorage.setItem('extensionEmergency', 'true');
+      localStorage.setItem('/monachatchat/extension', 'false');
+      alert('拡張機能をOFFにしました。再びONにするには発言のOKボタンの下にある設定からONにしてください。');
+      if (confirm('適用するにはリロードが必要です。リロードしますか？'))
+        location.reload();
+    };
+    document.body.appendChild(button);
+  });
+  
   var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
   (function setCSP() {
     var removeEventHandler = () => {
