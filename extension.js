@@ -648,6 +648,8 @@ var inject = function () {
     }, 1000);
   };
   Bot.comment = function (cmt) {
+    if (location.hash === '#/select' || location.hash === '#/')
+      return;
     var run = Bot.commentQueue.length;
     Bot.commentQueue.push(cmt + '');
     if (!run)
