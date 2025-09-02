@@ -1403,7 +1403,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           var unknown = Bot.users[data[1].id] = {id: data[1].id, name: 'UNKNOWN BUG', type: 'unknown', stat: '通常', ihash: data[1].id.slice(-10), x: 0, y: 350, scl: 100, r: 100, g: 100, b: 100};
         var user = Bot.users[data[1].id];
         if (user.ignored || user.hidden) {
-          user.cmt = data[1].cmt = '***';
+          user.cmt = data[1].cmt = '***' + Math.random();
           break;
         }
         user.cmt = data[1].cmt = data[1].cmt?.replace(/https?:\/\/drrrkari\.com\/upimg\/.*|ROYnYUKA/i, '🚫');
