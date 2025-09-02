@@ -111,6 +111,12 @@ var inject = function () {
       value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
     },
     {
+      key: 'hideStatCommentButton',
+      name: 'スマホモードの状態発言ボタンを消す',
+      type: 'onoff',
+      value: 0
+    },
+    {
       key: 'invisibleMode',
       name: 'キャラ画面を隠す（外出先用）',
       type: 'onoff',
@@ -1202,6 +1208,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       [data-current-frame="0"] [data-frame="0"],[data-current-frame="1"] [data-frame="1"],[data-current-frame="2"] [data-frame="2"],
       [data-current-frame="3"] [data-frame="3"],[data-current-frame="4"] [data-frame="4"],[data-current-frame="5"] [data-frame="5"]{display:initial}
     `;
+    if (extensionConfig.hideStatCommentButton)
+      cssText += '#toggleStatCommentMobile{display:none}';
     if (extensionConfig.miniPlayer)
       cssText += '.setting-bar-center .text-field{z-index:1}';
     else
@@ -2343,13 +2351,13 @@ textarea{padding:5px;resize:none;font-size:16px}
       });
       uploadButton.setAttribute('style', 'font-size:' + smartSize);
       input.before(uploadButton);
-      var statCommandButton = createElement('button', {
+      var statCommentButton = createElement('button', {
         id: 'toggleStatCommentMobile',
         textContent: '🔈',
         onclick: toggleStatComment
       });
-      statCommandButton.setAttribute('style', 'font-size:' + smartSize);
-      inputContainer.append(statCommandButton);
+      statCommentButton.setAttribute('style', 'font-size:' + smartSize);
+      inputContainer.append(statCommentButton);
       var button = createElement('button', {
         textContent: '🎮',
         onclick: e => {
