@@ -10,5 +10,5 @@
 
 const VERSION = 24;
 addEventListener('load', () => {
-  document.body.insertAdjacentHTML('afterbegin', `<p><a href="https://iwamizawa-software.github.io/astral-omega-extension/uninstall.html" target="_blank">拡張は必要なくなったのでこちらから削除してください</a>`);
+  document.body.insertAdjacentHTML('afterbegin', `<p><a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/uninstall.html" target="_blank">拡張は必要なくなったのでこちらから削除してください</a>`);
 });

@@ -10,9 +10,14 @@ var inject = function () {
   }
 
   addEventListener('load', function () {
+    if (localStorage.getItem('/monachatchat/extension') === 'false')
+      return;
+    var div = document.createElement('div');
+    div.setAttribute('style', 'position:absolute;right:0;top:0');
+    div.innerHTML = '<a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/" style="text-decoration:none" target="_blank">ℹ️</a>';
     var button = document.createElement('button');
-    button.textContent = 'バグったら押す';
-    button.setAttribute('style', 'position:absolute;right:0;top:0;color:red');
+    button.textContent = 'バグ時押す';
+    button.style.color = 'red';
     button.onclick = function () {
       localStorage.setItem('extensionEmergency', 'true');
       localStorage.setItem('/monachatchat/extension', 'false');
@@ -20,7 +25,8 @@ var inject = function () {
       if (confirm('適用するにはリロードが必要です。リロードしますか？'))
         location.reload();
     };
-    document.body.appendChild(button);
+    div.appendChild(button);
+    document.body.appendChild(div);
   });
   
   var nonce = window.crypto?.randomUUID?.() || Math.random() + '';
@@ -1030,7 +1036,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         var lastTrustedTrips = new Set(JSON.parse(localStorage.getItem('extensionLastTrustedTrips')) || []);
         this.trustedUsers = [];
         this.candidateIds = await asyncCheckbox(
-          '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><strong>頭に￥付けて発言するとみんなに見える発言になります</strong><br><a href="https://iwamizawa-software.github.io/astral-omega-extension/encryption.html" target="_blank">暗号化とは</a>',
+          '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><strong>頭に￥付けて発言するとみんなに見える発言になります</strong><br><a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/encryption.html" target="_blank">暗号化とは</a>',
           users.map(({id, fullName, shiro, trip}) => ({id, text: fullName, checked: lastTrustedTrips.has(trip || shiro)}))
         );
         if (!this.candidateIds?.size)
@@ -2275,7 +2281,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     var div = document.createElement('div');
     div.append(menu);
     div.append(createElement('button', {
-      textContent: 'ログ窓',
+      textContent: 'ログ',
       onclick: openLog
     }));
     div.append(createElement('button', {
