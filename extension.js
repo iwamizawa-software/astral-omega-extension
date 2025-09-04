@@ -1431,12 +1431,12 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (data[1].id === Bot.myId) {
           setTimeout(() => writeLog('==========\nメンバー一覧\n' + Object.values(Bot.users).map(u=>u.fullName).join('\n') + '\n=========='), 0);
           document.body.dataset.ev = animationSVGs.hasOwnProperty(data[1].realType) ? {sii2: 'patan', tuu: 'patan', welneco2: 'chika2'}[data[1].realType] : '';
+          if (extensionConfig.keepStat && lastStat !== '通常')
+            Bot.stat(lastStat);
         }
         calcScore(data[1].id, '');
         if (encrypter.isEnabled && data[1].id !== Bot.myId)
           encrypter.sendSharedKeyId();
-        if (extensionConfig.keepStat && lastStat !== '通常')
-          Bot.stat(lastStat);
         sendCurrentPatan();
         break;
       case 'EXIT':
