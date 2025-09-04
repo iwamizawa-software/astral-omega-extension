@@ -740,9 +740,8 @@ var inject = function () {
         return arguments[i << 1];
     throw new Error('くじがなんかおかしい');
   };
-  var execBot = data => {
-    var type = data[0];
-    var listeners = Bot.listeners[type] || Bot.listeners[type = '*'];
+  var _execBot = (type, data) => {
+    var listeners = Bot.listeners[type];
     if (listeners)
       Bot.listeners[type] = listeners.filter(listener => {
         if (listener.resolved)
@@ -766,6 +765,10 @@ var inject = function () {
         }
         return true;
       });
+  };
+  var execBot = data => {
+    _execBot(data[0], data);
+    _execBot('*', data);
   };
 
 
