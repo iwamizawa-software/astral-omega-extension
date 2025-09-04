@@ -491,7 +491,7 @@ var inject = function () {
       }
     });
   };
-  var getYouTubeInfo = url => url?.match(/^https:\/\/(?:(?:www\.)?youtube\.com\/(?:watch.*[\?&]v=|shorts\/|live\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?/);
+  var getYouTubeInfo = url => url?.match(/^https:\/\/(?:(?:www\.)?youtube\.com\/(?:watch.*[\?&]v=|shorts\/|live\/|embed\/)|youtu\.be\/)([^\?&#]+)(?:\?t=(\d+))?/);
 
   window.Cards = function (joker = 1) {
     return Cards.from(Array.from({length: 52}).map((_, i) => i).concat(Array(joker).fill(-1)));
