@@ -88,6 +88,18 @@ figure img {
   box-sizing: border-box;
 }
 
+figure img.bot { border: 0; }
+
 img[alt="🤖"] { max-height: 3em; }
 
 :target{ border-color: red; }
+
+table {
+  border: 1px solid var(--text-color); /* 表全体の外枠 */
+  border-collapse: collapse; /* 枠線を重ねて1本にする */
+}
+
+th, td {
+  border: 1px solid var(--text-color); /* セルごとの枠線 */
+  padding: 2px;
+}
