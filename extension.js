@@ -1759,7 +1759,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (animationCharacter) {
           svg = animationCharacter.cache;
           if (!svg)
-            animationCharacter.cache = svg = (await (await fetch(`https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/svg/${type}.svg`)).text()).replace('$id', id);
+            animationCharacter.cache = await (await fetch(`https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/svg/${type}.svg`)).text();
+          svg = svg.replace('$id', id);
         } else {
           svg = await (await fetch(`https://monachat.tech/img/svg/charhan.svg`)).text();
         }
