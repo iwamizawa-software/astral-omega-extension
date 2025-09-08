@@ -1757,10 +1757,9 @@ textarea{padding:5px;resize:none;font-size:16px}
         var animationCharacter = animationCharacterMap.get(type);
         var svg;
         if (animationCharacter) {
-          svg = animationCharacter.cache;
-          if (!svg)
+          if (!animationCharacter.cache)
             animationCharacter.cache = await (await fetch(`https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/svg/${type}.svg`)).text();
-          svg = svg.replace('$id', id);
+          svg = animationCharacter.cache.replace('$id', id);
         } else {
           svg = await (await fetch(`https://monachat.tech/img/svg/charhan.svg`)).text();
         }
