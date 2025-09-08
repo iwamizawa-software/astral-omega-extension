@@ -1688,7 +1688,7 @@ textarea{padding:5px;resize:none;font-size:16px}
   };
   var receiveEV = (id, json) => {
     try {
-      animationCharacterMap.get(Bot.users[Bot.myId].realType)?.receive(id, JSON.parse(json));
+      animationCharacterMap.get(Bot.users[id].realType)?.receive(id, JSON.parse(json));
     } catch (err) {
       console.log(err);
     }
