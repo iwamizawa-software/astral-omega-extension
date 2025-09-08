@@ -1694,8 +1694,8 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
   };
   var animationTimer = {};
-  var playAnimation = ({id, frames, frameInterval, repeat, force}) => {
-    var svg = document.querySelector(`svg[data-user-id="${id}"]`);
+  var playAnimation = async ({id, frames, frameInterval, repeat, force}) => {
+    var svg = await querySelectorAsync(`svg[data-user-id="${id}"]`);
     if (!svg || (!force && svg.dataset.currentFrame === frames[frames.length - 1] + ''))
       return;
     clearInterval(animationTimer[id]);
