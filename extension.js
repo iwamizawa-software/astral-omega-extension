@@ -1242,8 +1242,9 @@ textarea{padding:5px;resize:none;font-size:16px}
       .sendEV,[data-frame]{display:none}
       .sendEV:before{content: attr(data-label)}
       .sendEV[data-label]:not([data-label=""]),
-      [data-current-frame="0"] [data-frame="0"],[data-current-frame="1"] [data-frame="1"],[data-current-frame="2"] [data-frame="2"],
-      [data-current-frame="3"] [data-frame="3"],[data-current-frame="4"] [data-frame="4"],[data-current-frame="5"] [data-frame="5"]{display:initial}
+      [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
+      [data-current-frame*="3"] [data-frame="3"],[data-current-frame*="4"] [data-frame="4"],[data-current-frame*="5"] [data-frame="5"],
+      [data-current-frame*="6"] [data-frame="6"]{display:initial}
     `;
     if (extensionConfig.hideStatCommentButton)
       cssText += '#toggleStatCommentMobile{display:none}';
@@ -1694,9 +1695,9 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
   };
   var animationTimer = {};
-  var playAnimation = async ({id, frames, frameInterval, repeat, force}) => {
+  var playAnimation = async ({id, frames, frameInterval, repeat, forcePlay, ignoreWhileAnimation}) => {
     var svg = await querySelectorAsync(`svg[data-user-id="${id}"]`);
-    if (!svg || (!force && svg.dataset.currentFrame === frames[frames.length - 1] + ''))
+    if (!svg || (!forcePlay && svg.dataset.currentFrame === frames[frames.length - 1] + '') || (ignoreWhileAnimation && animationTimer[id] !== undefined))
       return;
     clearInterval(animationTimer[id]);
     var index = 0;
@@ -1706,6 +1707,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           index = 0;
         } else {
           clearInterval(animationTimer[id]);
+          delete animationTimer[id];
           return;
         }
       }
@@ -1714,6 +1716,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     next();
     animationTimer[id] = setInterval(next, frameInterval || 1000 / 12);
   };
+  var receiveBeam = id => playAnimation({id, frames: [1, 12, 13, 134, 13, 135, 13, 134, 13, 16, 1, 1, 0], frameInterval: 1000 / 6, forcePlay: true, ignoreWhileAnimation: true});
   var receivePatan = (id, evStat) => playAnimation({id, frames: evStat ? [1, 2, 3] : [4, 5, 0]});
   var animationCharacterMap = new Map([
     ['sii2', {
@@ -1726,16 +1729,35 @@ textarea{padding:5px;resize:none;font-size:16px}
     }],
     ['welneco2', {
       buttonText: 'ﾁｶﾁｶ',
-      receive: id => playAnimation({id, frames: [1, 0], frameInterval: 250, force: true}),
+      receive: id => playAnimation({id, frames: [1, 0], frameInterval: 250, forcePlay: true}),
+      getNextEVStat: () => false
+    }],
+    ['tibifusa2', {
+      buttonText: 'ふりふり',
+      receive: id => playAnimation({id, frames: [1, 0, 1, 0], frameInterval: 1000 / 6, forcePlay: true, ignoreWhileAnimation: true}),
+      getNextEVStat: () => false
+    }],
+    ['sumaso2', {
+      buttonText: 'ﾋﾞｰﾑ',
+      receive: receiveBeam,
+      getNextEVStat: () => false
+    }],
+    ['kikko2', {
+      buttonText: 'ﾋﾞｰﾑ',
+      receive: receiveBeam,
       getNextEVStat: () => false
     }],
     ['kabin', {
       buttonText: '変身',
       receive: (id, evStat) => playAnimation({id, frames: evStat ? [1, 2] : [1, 0]})
     }],
+    ['joruju', {
+      buttonText: 'おっぱい',
+      receive: (id, evStat) => playAnimation(evStat ? {id, frames: [1, 2, 2, 3, 4, 4], frameInterval: 1000 / 7, forcePlay: true, repeat: true} : {id, frames: [0]})
+    }],
     ['joruju2', {
       buttonText: 'おっぱい',
-      receive: (id, evStat) => playAnimation(evStat ? {id, frames: [1, 2], frameInterval: 3000 / 7, force: true, repeat: true} : {id, frames: [0]})
+      receive: (id, evStat) => playAnimation(evStat ? {id, frames: [1, 2], frameInterval: 3000 / 7, forcePlay: true, repeat: true} : {id, frames: [0]})
     }],
   ]);
   var XMLHttpRequest_open = XMLHttpRequest.prototype.open;
@@ -1759,7 +1781,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (animationCharacter) {
           if (!animationCharacter.cache)
             animationCharacter.cache = await (await fetch(`https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/svg/${type}.svg`)).text();
-          svg = animationCharacter.cache.replace('$id', id);
+          svg = animationCharacter.cache.replace(/\$id/g, id);
         } else {
           svg = await (await fetch(`https://monachat.tech/img/svg/charhan.svg`)).text();
         }
