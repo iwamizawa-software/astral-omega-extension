@@ -701,7 +701,7 @@ var inject = function () {
     if (!ihash || Bot.users[Bot.myId]?.ihash === ihash)
       return;
     Bot.send('IG', {ihash, stat: ignore ? 'on' : 'off'});
-    if (fullName)
+    if (fullName && ignore)
       showMessage(fullName + 'を自動無視しました');
   };
   Bot.stat = function (stat) {
@@ -2037,14 +2037,6 @@ textarea{padding:5px;resize:none;font-size:16px}
   var menu = createMenu([
     {
       name: '拡張メニュー',
-    },
-    {
-      name: '連投対策',
-      type: 'toggle',
-      onclick: checked => {
-        if (mikeyMode = checked)
-          alertOnce('連投対策は誤検出されやすいため、荒らしが来た時だけ有効にしてください。', 'mikey');
-      }
     },
     {
       name: '音声入力',
