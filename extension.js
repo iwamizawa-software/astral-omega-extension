@@ -1239,7 +1239,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       #miniPlayer[data-position="上"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));top:0;width:1000px;height:526px}
       #pendingList{display:none}
       #encryption:checked~#pendingList{display:inline}
-      .sendEV,[data-frame]{display:none}
+      .sendEV,[data-frame],[data-current-frame=""]{display:none}
       .sendEV:before{content: attr(data-label)}
       .sendEV[data-label]:not([data-label=""]),
       [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
@@ -1680,13 +1680,10 @@ textarea{padding:5px;resize:none;font-size:16px}
   var initEV = type => {
     var evButtonText = animationCharacterMap.get(type)?.buttonText || '';
     Array.from(document.getElementsByClassName('sendEV')).forEach(button => button.dataset.label = evButtonText);
-    evStat = 0;
+    evStat = false;
   };
   var sendEV = () => Bot.ignore('!' + JSON.stringify((animationCharacterMap.get(Bot.users[Bot.myId].realType)?.getNextEVStat || getNextEVStat)()));
-  var sendCurrentEV = () => {
-    if (evStat)
-      Bot.ignore('!' + JSON.stringify(evStat));
-  };
+  var sendCurrentEV = () => Bot.ignore('!' + JSON.stringify(evStat));
   var receiveEV = (id, json) => {
     try {
       animationCharacterMap.get(Bot.users[id].realType)?.receive(id, JSON.parse(json));
@@ -1697,7 +1694,13 @@ textarea{padding:5px;resize:none;font-size:16px}
   var animationTimer = {};
   var playAnimation = async ({id, frames, frameInterval, repeat, forcePlay, ignoreWhileAnimation}) => {
     var svg = await querySelectorAsync(`svg[data-user-id="${id}"]`);
-    if (!svg || (!forcePlay && svg.dataset.currentFrame === frames[frames.length - 1] + '') || (ignoreWhileAnimation && animationTimer[id] !== undefined))
+    if (!svg)
+      return;
+    if (!svg.dataset.currentFrame && !repeat) {
+      svg.dataset.currentFrame = frames[frames.length - 1];
+      return;
+    }
+    if ((!forcePlay && svg.dataset.currentFrame === frames[frames.length - 1] + '') || (ignoreWhileAnimation && animationTimer[id] !== undefined))
       return;
     clearInterval(animationTimer[id]);
     var index = 0;
