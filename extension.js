@@ -1791,6 +1791,12 @@ textarea{padding:5px;resize:none;font-size:16px}
         Object.defineProperty(this, 'responseText', {value: svg, enumerable: true, configurable: true});
         this.onloadend();
         this.abort();
+        setTimeout(() => {
+          var svg = document.querySelector(`svg[data-user-id="${id}"]`);
+          if (!svg || svg.dataset.currentFrame)
+            return;
+          receiveEV(id, 'false');
+        }, 5000);
       })();
       return;
     }
