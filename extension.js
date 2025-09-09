@@ -1675,26 +1675,29 @@ textarea{padding:5px;resize:none;font-size:16px}
   };
   window.WebSocket.prototype = WebSocket.prototype;
   window.WebSocket.__proto__ = WebSocket;
-  var evStat;
-  var getNextEVStat = () => evStat = !evStat;
+  var ev = {};
+  var getNextEv = () => {
+    ev.stat = !ev.stat;
+    return ev;
+  };
   var initEV = type => {
     var evButtonText = animationCharacterMap.get(type)?.buttonText || '';
     Array.from(document.getElementsByClassName('sendEV')).forEach(button => button.dataset.label = evButtonText);
-    evStat = false;
+    ev.stat = false;
   };
-  var sendEV = () => Bot.ignore('!' + JSON.stringify((animationCharacterMap.get(Bot.users[Bot.myId].realType)?.getNextEVStat || getNextEVStat)()));
-  var sendCurrentEV = () => Bot.ignore('!' + JSON.stringify(evStat));
+  var sendEV = () => Bot.ignore('!' + JSON.stringify((animationCharacterMap.get(Bot.users[Bot.myId].realType)?.getNextEv || getNextEv)()));
+  var sendCurrentEV = () => Bot.ignore('!' + JSON.stringify(Object.assign({init: true}, ev)));
   var receiveEV = (id, json) => {
     try {
-      animationCharacterMap.get(Bot.users[id].realType)?.receive(id, JSON.parse(json));
+      animationCharacterMap.get(Bot.users[id].realType)?.receive(id, JSON.parse(json) || {});
     } catch (err) {
       console.log(err);
     }
   };
   var animationTimer = {};
-  var playAnimation = async ({id, frames, frameInterval, repeat, forcePlay, ignoreWhileAnimation}) => {
+  var playAnimation = async ({id, frames, frameInterval, repeat, forcePlay, ignoreWhileAnimation, init}) => {
     var svg = await querySelectorAsync(`svg[data-user-id="${id}"]`);
-    if (!svg)
+    if (!svg || (init && svg.dataset.currentFrame))
       return;
     if (!svg.dataset.currentFrame && !repeat) {
       svg.dataset.currentFrame = frames[frames.length - 1];
@@ -1719,8 +1722,8 @@ textarea{padding:5px;resize:none;font-size:16px}
     next();
     animationTimer[id] = setInterval(next, frameInterval || 1000 / 12);
   };
-  var receiveBeam = id => playAnimation({id, frames: [1, 12, 13, 134, 13, 135, 13, 134, 13, 16, 1, 1, 0], frameInterval: 1000 / 6, forcePlay: true, ignoreWhileAnimation: true});
-  var receivePatan = (id, evStat) => playAnimation({id, frames: evStat ? [1, 2, 3] : [4, 5, 0]});
+  var receiveBeam = (id, {init}) => playAnimation({id, init, frames: [1, 12, 13, 134, 13, 135, 13, 134, 13, 16, 1, 1, 0], frameInterval: 1000 / 6, forcePlay: true, ignoreWhileAnimation: true});
+  var receivePatan = (id, {init, stat}) => playAnimation({id, init, frames: stat ? [1, 2, 3] : [4, 5, 0]});
   var animationCharacterMap = new Map([
     ['sii2', {
       buttonText: 'ﾊﾟﾀﾝ',
@@ -1732,35 +1735,35 @@ textarea{padding:5px;resize:none;font-size:16px}
     }],
     ['welneco2', {
       buttonText: 'ﾁｶﾁｶ',
-      receive: id => playAnimation({id, frames: [1, 0], frameInterval: 250, forcePlay: true}),
-      getNextEVStat: () => false
+      receive: (id, {init}) => playAnimation({id, init, frames: [1, 0], frameInterval: 250, forcePlay: true}),
+      getNextEv: () => ev
     }],
     ['tibifusa2', {
       buttonText: 'ふりふり',
-      receive: id => playAnimation({id, frames: [1, 0, 1, 0], frameInterval: 1000 / 6, forcePlay: true, ignoreWhileAnimation: true}),
-      getNextEVStat: () => false
+      receive: (id, {init}) => playAnimation({id, init, frames: [1, 0, 1, 0], frameInterval: 1000 / 6, forcePlay: true, ignoreWhileAnimation: true}),
+      getNextEv: () => ev
     }],
     ['sumaso2', {
       buttonText: 'ﾋﾞｰﾑ',
       receive: receiveBeam,
-      getNextEVStat: () => false
+      getNextEv: () => ev
     }],
     ['kikko2', {
       buttonText: 'ﾋﾞｰﾑ',
       receive: receiveBeam,
-      getNextEVStat: () => false
+      getNextEv: () => ev
     }],
     ['kabin', {
       buttonText: '変身',
-      receive: (id, evStat) => playAnimation({id, frames: evStat ? [1, 2] : [1, 0]})
+      receive: (id, {stat, init}) => playAnimation({id, init, frames: stat ? [1, 2] : [1, 0]})
     }],
     ['joruju', {
       buttonText: 'おっぱい',
-      receive: (id, evStat) => playAnimation(evStat ? {id, frames: [1, 2, 2, 3, 4, 4], frameInterval: 1000 / 7, forcePlay: true, repeat: true} : {id, frames: [0]})
+      receive: (id, {stat, init}) => playAnimation(stat ? {id, init, frames: [1, 2, 2, 3, 4, 4], frameInterval: 1000 / 7, forcePlay: true, repeat: true} : {id, init, frames: [0]})
     }],
     ['joruju2', {
       buttonText: 'おっぱい',
-      receive: (id, evStat) => playAnimation(evStat ? {id, frames: [1, 2], frameInterval: 3000 / 7, forcePlay: true, repeat: true} : {id, frames: [0]})
+      receive: (id, {stat, init}) => playAnimation(stat ? {id, init, frames: [1, 2], frameInterval: 3000 / 7, forcePlay: true, repeat: true} : {id, init, frames: [0]})
     }],
   ]);
   var XMLHttpRequest_open = XMLHttpRequest.prototype.open;
@@ -1795,7 +1798,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           var svg = document.querySelector(`svg[data-user-id="${id}"]`);
           if (!svg || svg.dataset.currentFrame)
             return;
-          receiveEV(id, 'false');
+          receiveEV(id, '{"stat":false}');
         }, 5000);
       })();
       return;
