@@ -1245,7 +1245,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       .sendEV[data-label]:not([data-label=""]),
       [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
       [data-current-frame*="3"] [data-frame="3"],[data-current-frame*="4"] [data-frame="4"],[data-current-frame*="5"] [data-frame="5"],
-      [data-current-frame*="6"] [data-frame="6"]{display:initial}
+      [data-current-frame*="6"] [data-frame="6"],[data-current-frame*="7"] [data-frame="7"],[data-current-frame*="8"] [data-frame="8"]{display:initial}
     `;
     if (extensionConfig.hideStatCommentButton)
       cssText += '#toggleStatCommentMobile{display:none}';
@@ -1676,7 +1676,7 @@ textarea{padding:5px;resize:none;font-size:16px}
   };
   window.WebSocket.prototype = WebSocket.prototype;
   window.WebSocket.__proto__ = WebSocket;
-  var ev = {};
+  var ev = {stat: false};
   var getNextEv = () => {
     ev.stat = !ev.stat;
     return ev;
@@ -1733,6 +1733,46 @@ textarea{padding:5px;resize:none;font-size:16px}
     ['tuu', {
       buttonText: 'ﾊﾟﾀﾝ',
       receive: receivePatan
+    }],
+    ['anamona', {
+      buttonText: 'ｻｯ',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: [1, stat ? 2 : 0]}),
+    }],
+    ['kappappa', {
+      buttonText: 'いないいない',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: stat ? [12] : [13, 0], frameInterval: 500}),
+    }],
+    ['moudamepo', {
+      buttonText: 'もうだめぽ',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: [stat ? 1 : 0]}),
+    }],
+    ['nin3', {
+      buttonText: '変わり身',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: stat ? [1, 2, 3] : [1, 2, 0]}),
+    }],
+    ['niraneko', {
+      buttonText: 'ﾆﾗ茶飲め',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: [stat ? 1 : 0]}),
+    }],
+    ['ppa2', {
+      buttonText: 'ｯﾊﾟ',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: [1, 2, 1, 2, 1, [30, 40, 50, 60, 70, 80][stat] || 0], frameInterval: 1000 / 6}),
+      getNextEv: () => {
+        ev.stat = Math.floor(Math.random() * 6);
+        return ev;
+      }
+    }],
+    ['sugoi3', {
+      buttonText: 'ﾋﾞｸｯ',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: [[3, 0], [1, 2], [3, 0], [1, 4]][+stat], frameInterval: 1000 / 6}),
+      getNextEv: () => {
+        ev.stat = ((ev.stat || 0) + 1) % 4;
+        return ev;
+      }
+    }],
+    ['unknown2', {
+      buttonText: 'ﾛﾑ',
+      receive: (id, {init, stat}) => playAnimation({id, init, frames: stat ? [2, 3, 4, 15] : [4, 3, 2, 10]}),
     }],
     ['welneco2', {
       buttonText: 'ﾁｶﾁｶ',
