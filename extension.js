@@ -1239,7 +1239,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       #miniPlayer[data-position="上"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));top:0;width:1000px;height:526px}
       #pendingList{display:none}
       #encryption:checked~#pendingList{display:inline}
-      .sendEV,[data-frame],[data-current-frame=""]{display:none}
+      .sendEV,[data-frame]{display:none}
+      [data-current-frame=""]{visibility: hidden}
       .sendEV:before{content: attr(data-label)}
       .sendEV[data-label]:not([data-label=""]),
       [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
