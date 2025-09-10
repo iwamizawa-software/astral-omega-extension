@@ -188,6 +188,12 @@ var inject = function () {
       value: 0
     },
     {
+      key: 'enableAnimation',
+      name: '動くキャラを有効 (要再入室)',
+      type: 'onoff',
+      value: 1
+    },
+    {
       name: 'YouTube',
       type: 'separator'
     },
@@ -1341,7 +1347,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     if (u.trip && extensionConfig.forcedShiro)
       u.name += u.shiro;
     delete u.realType;
-    if (animationCharacterMap.has(u.type)) {
+    if (extensionConfig.enableAnimation && animationCharacterMap.has(u.type)) {
       u.realType = u.type;
       u.type = u.id;
     } else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(u.type) && u.id !== u.type) {
