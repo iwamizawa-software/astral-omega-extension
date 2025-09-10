@@ -817,7 +817,7 @@ var inject = function () {
     else if (mimeType === 'audio')
       return `<audio src="${URL.createObjectURL(file)}" controls></audio><br>`;
     else if (mimeType === 'video')
-      return `<video src="${URL.createObjectURL(file)}" controls></video><br>`;
+      return `<video src="${URL.createObjectURL(file)}" controls playsinline></video><br>`;
     else
       return `<iframe src="${URL.createObjectURL(new Blob([file], {type: 'text/plain;charset=utf-8'}))}" sandbox></iframe><br>`;
   };
