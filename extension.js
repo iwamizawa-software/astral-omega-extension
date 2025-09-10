@@ -748,7 +748,9 @@ var inject = function () {
           return false;
         if (!listener.run) {
           try {
+            var startTime = performance.now();
             var value = listener.apply(this, type === '*' ? data : [Bot.users[data[1].id]]);
+            listener.maxExecutionTime = Math.max(performance.now() - startTime, listener.maxExecutionTime || 0);
           } catch (err) {
             console.log(err);
             return true;
@@ -787,6 +789,8 @@ var inject = function () {
     var {left, right, top, bottom} = dialog.getBoundingClientRect();
     if (e.clientX < left || e.clientX > right || e.clientY < top || e.clientY > bottom || e.target.tagName === 'BUTTON') {
       dialogCallback(result && new Set(Array.from(dialog.querySelectorAll(':checked')).map(e => e.id.slice(6))));
+      Array.from(dialog.querySelectorAll('[src]')).forEach(media => URL.revokeObjectURL(media.src));
+      dialog.innerHTML = '';
       dialog.close();
       if (dialogQueue.length)
         dialogQueue.shift()();
@@ -806,23 +810,30 @@ var inject = function () {
   });
   var asyncAlert = async html => await asyncConfirm(html, true);
   var escapeHTML = s => s.replace(/[<>&"]/g, s => '&#' + s.charCodeAt(0) + ';');
-  var getDetailHTML = async file => new Promise(resolve => {
-    var isImage = file.type.startsWith('image/')
-    if (!isImage && !file.type.startsWith('text/'))
-      resolve('');
-    var r = new FileReader();
-    r.onload = e => resolve(isImage ? `<img src="${e.target.result}"><br>` : `<pre>${escapeHTML(e.target.result)}</pre><br>`);
-    r.onerror = e => {
-      console.log(e);
-      resolve('');
-    };
-    r[isImage ? 'readAsDataURL' : 'readAsText'](file);
-  });
+  var getDetailHTML = file => {
+    var mimeType = file.type.split('/')[0];
+    if (mimeType === 'image')
+      return `<img src="${URL.createObjectURL(file)}"><br>`;
+    else if (mimeType === 'audio')
+      return `<audio src="${URL.createObjectURL(file)}" controls></audio><br>`;
+    else if (mimeType === 'video')
+      return `<video src="${URL.createObjectURL(file)}" controls></video><br>`;
+    else
+      return `<iframe src="${URL.createObjectURL(new Blob([file], {type: 'text/plain;charset=utf-8'}))}" sandbox></iframe><br>`;
+  };
   var upload = async file => {
     try {
+      if (!/^(?:image|video|audio|text)\//.test(file.type)) {
+        showMessage('画像と動画と音声とテキストファイル以外アップロードできません');
+        return;
+      }
+      if (!file.size) {
+        showMessage('ファイルの中身がない');
+        return;
+      }
       if (!extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/'))
         return;
-      if (extensionConfig.confirmUpload && !await asyncConfirm(await getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>'))
+      if (extensionConfig.confirmUpload && !await asyncConfirm(getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>'))
         return;
       var formData = new FormData();
       formData.append('file', file, file.name.replace(/^[\s\S]*?(\.[^\.]+)?$/, 'file$1'));
@@ -1227,7 +1238,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       .body{row-gap:5px !important}
       ::backdrop{background-color:#000;opacity: 0.5}
       dialog button{margin:10px;line-height:1.5}
-      dialog img,dialog pre{max-height:60vh;max-width:80vw;overflow:auto}
+      dialog img,dialog video,dialog audio,dialog iframe{max-height:60vh;max-width:80vw}
       #miniPlayer{display: none;flex-direction:column;position:fixed;background-color:#000;width:500px;height:310px}
       #miniPlayer button{float:right}
       #miniPlayer iframe{display:block;border:0;width:100%;height:100%}
@@ -1547,6 +1558,9 @@ textarea{padding:5px;resize:none;font-size:16px}
           if (!u.hidden && encrypter.isEnabled)
             encrypter.sendSharedKeyId();
         }
+        break;
+      case 'AWAKE':
+        setTimeout(sendCurrentEV, 2000);
         break;
     }
     execBot(data);
