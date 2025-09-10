@@ -397,6 +397,12 @@ var inject = function () {
       value: []
     },
     {
+      key: 'passwordForBot',
+      name: '暗号化用パスワード',
+      type: 'input',
+      value: ''
+    },
+    {
       name: 'その他（基本いじらなくていい）',
       type: 'separator'
     },
