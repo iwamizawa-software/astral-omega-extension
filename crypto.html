@@ -1,0 +1,104 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>BOT暗号化用</title>
+<body>
+<p>このページに1つのファイルをドロップ
+<p>モード<select id="mode"><option>暗号化<option>復号<option>署名<option>検証</select>
+<p>パスワード<input type="text" id="password" value="test">
+<script>
+var arrayBufferToBase64 = buffer => btoa(String.fromCharCode(...new Uint8Array(buffer)));
+var base64ToArrayBuffer = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
+var textEncoder = new TextEncoder();
+var textDecoder = new TextDecoder();
+var sign = async (code, password) => {
+  code = code.replace(/\r\n/g, '\n').replace(/\/\/ signature:[a-zA-Z0-9\+\/=]+\n$/, '');
+  return code + '// signature:' + await encrypt(await crypto.subtle.digest('SHA-256', textEncoder.encode(code)), password) + '\n';
+};
+var verify = async (code, password) => {
+  var code = code.replace(/\r\n/g, '\n').replace(/\/\/ signature:([a-zA-Z0-9\+\/=]+)\n$/, '');
+  var signature = RegExp.$1;
+  return arrayBufferToBase64(await decrypt(signature, password)) === arrayBufferToBase64(await crypto.subtle.digest('SHA-256', textEncoder.encode(code)));
+};
+var encrypt = async (buffer, password) => {
+  var salt = crypto.getRandomValues(new Uint8Array(18));
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  return arrayBufferToBase64(salt) + arrayBufferToBase64(iv) + arrayBufferToBase64(await crypto.subtle.encrypt(
+    {name: 'AES-GCM', iv},
+    await crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt,
+        iterations: 1000000,
+        hash: 'SHA-256'
+      },
+      await crypto.subtle.importKey(
+        'raw',
+        textEncoder.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+      ),
+      {name: 'AES-GCM', length: 256},
+      true,
+      ['encrypt']
+    ),
+    buffer
+  ));
+};
+var decrypt = async (base64, password) => {
+  var salt = base64ToArrayBuffer(base64.slice(0, 24));
+  var iv = base64ToArrayBuffer(base64.slice(24, 40));
+  return await crypto.subtle.decrypt(
+    {name: 'AES-GCM', iv},
+    await crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt,
+        iterations: 1000000,
+        hash: 'SHA-256'
+      },
+      await crypto.subtle.importKey(
+        'raw',
+        textEncoder.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+      ),
+      {name: 'AES-GCM', length: 256},
+      true,
+      ['decrypt']
+    ),
+    base64ToArrayBuffer(base64.slice(40))
+  );
+};
+document.documentElement.ondragover = event => event.preventDefault();
+document.documentElement.ondrop =  event => {
+  event.preventDefault();
+  var file = event.dataTransfer.files[0];
+  var reader = new FileReader();
+  reader.onload = async () => {
+    var mode = document.getElementById('mode').selectedIndex;
+    if (mode === 3) {
+      try {
+        alert((await verify(reader.result, document.getElementById('password').value)) ? 'ok' : 'fail');
+      } catch (err) {
+        alert(err);
+      }
+      return;
+    }
+    try {
+      var data = await [encrypt, decrypt, sign][mode](reader.result, document.getElementById('password').value);
+    } catch (err) {
+      alert(err);
+      return;
+    }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([data], {type: 'text/plain'}));
+    a.download = file.name + '.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  reader[document.getElementById('mode').selectedIndex === 0 ? 'readAsArrayBuffer' : 'readAsText'](file);
+};
+</script>
+</body>

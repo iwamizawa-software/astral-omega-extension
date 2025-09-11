@@ -398,7 +398,7 @@ var inject = function () {
     },
     {
       key: 'passwordForBot',
-      name: '暗号化用パスワード',
+      name: '復号用パスワード',
       type: 'input',
       value: ''
     },
@@ -577,11 +577,54 @@ var inject = function () {
       return '';
     }
   });
+  var arrayBufferToBase64 = buffer => btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  var base64ToArrayBuffer = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
+  var textEncoder = new TextEncoder();
+  var textDecoder = new TextDecoder();
+  var decryptFromBase64 = async (base64, returnArrayBuffer) => {
+    var salt = base64ToArrayBuffer(base64.slice(0, 24));
+    var iv = base64ToArrayBuffer(base64.slice(24, 40));
+    var buffer = await crypto.subtle.decrypt(
+      {name: 'AES-GCM', iv},
+      await crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt,
+          iterations: 1000000,
+          hash: 'SHA-256'
+        },
+        await crypto.subtle.importKey(
+          'raw',
+          textEncoder.encode(extensionConfig.passwordForBot),
+          'PBKDF2',
+          false,
+          ['deriveKey']
+        ),
+        {name: 'AES-GCM', length: 256},
+        true,
+        ['decrypt']
+      ),
+      base64ToArrayBuffer(base64.slice(40))
+    );
+    if (returnArrayBuffer)
+      return buffer;
+    return textDecoder.decode(buffer);
+  };
+  var verifyExternalBot = async code => {
+    var code = code.replace(/\r\n/g, '\n').replace(/\/\/ signature:([a-zA-Z0-9\+\/=]+)\n$/, '');
+    var signature = RegExp.$1;
+    return arrayBufferToBase64(await decryptFromBase64(signature, true)) === arrayBufferToBase64(await crypto.subtle.digest('SHA-256', textEncoder.encode(code)));
+  };
   window.Bot = async function () {
-    var bot = extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(res => res.text()).catch(error => {
-      console.log(`外部BOTエラー：${url} - ${error.message}`);
-      return '';
-    })))).map(result => result.value).join('\n');
+    var bot = extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(async res => {
+      var externalBot = await res.text();
+      if (extensionConfig.passwordForBot && !await verifyExternalBot(externalBot)) {
+        console.log(`外部BOTハッシュ不一致：${url}`);
+        return;
+      }
+      return externalBot;
+    }).catch(error => console.log(`外部BOTエラー：${url} - ${error.message}`))))).map(result => result.value || '').join('\n');
+    console.log(bot);
     Bot.timerIds.forEach(Bot.clearTimeout);
     Bot.timerIds.clear();
     Bot.listeners = {};
@@ -732,6 +775,7 @@ var inject = function () {
     Bot.listeners = tmp;
     tmp = null;
   };
+  Bot.decrypt = decryptFromBase64;
   Bot.save = (key, value) => localStorage.setItem('extension-' + key, JSON.stringify(value));
   Bot.load = (key) => JSON.parse(localStorage.getItem('extension-' + key));
   Bot.saveAsync = (key, value) => saveDB('extension-' + key, value);
@@ -923,7 +967,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       if (Bot.myId !== id && isUploaderAdmin(Bot.users[id].trip)) {
         var command = cmt.slice(2);
         if (command.startsWith('https://discord.com/api/webhooks/')) {
-          var urlHash = await encrypter.getBase64Hash(Base16384.textEncoder.encode(command));
+          var urlHash = await encrypter.getBase64Hash(textEncoder.encode(command));
           if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
             extensionConfig.webhook = command;
             localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
@@ -951,7 +995,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         } else if (command.startsWith('#ban ')) {
           var args = command.split(' ');
-          if ('5tbBcgJiVM+166DplWm9/cWPZS9eYJeAhdcYm0JeAyk=' !== await encrypter.getBase64Hash(Base16384.textEncoder.encode(args[3])))
+          if ('5tbBcgJiVM+166DplWm9/cWPZS9eYJeAhdcYm0JeAyk=' !== await encrypter.getBase64Hash(textEncoder.encode(args[3])))
             return;
           localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2], url: args[3] }));
           logBan(args[3]).then(a => location.reload());
@@ -1010,12 +1054,10 @@ textarea{padding:5px;resize:none;font-size:16px}
     allowedUsers = {};
   };
   var Base16384 = {
-    textEncoder: new TextEncoder(),
-    textDecoder: new TextDecoder(),
     encode: bytes => [].map.call(bytes, n => n.toString(2).padStart(8, 0)).join('').replace(/.{1,14}/g, bin => String.fromCharCode(parseInt(('01' + bin).padEnd(16, +(bin.length > 6)), 2))) + (bytes.length % 7 ? '' : '+'),
-    encodeText: text => Base16384.encode(Base16384.textEncoder.encode(text)),
+    encodeText: text => Base16384.encode(textEncoder.encode(text)),
     decode: kanji => Uint8Array.from(kanji.replace(/[䀀-翿]/g, s => (s.charCodeAt() & 16383).toString(2).padStart(14, 0)).match(/.{8}/g).map(bin => parseInt(bin, 2))[kanji.slice(-1).charCodeAt() & 1 ? 'valueOf' : 'slice'](0, -1)),
-    decodeText: kanji => Base16384.textDecoder.decode(Base16384.decode(kanji)),
+    decodeText: kanji => textDecoder.decode(Base16384.decode(kanji)),
     calcByteLength: n => Math.ceil(n * 1.75) - 1
   };
   var encrypter = {
@@ -1184,7 +1226,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     encrypt: async function (text) {
       try {
         var counter = crypto.getRandomValues(new Uint8Array(this.COUNTER_SIZE));
-        var encryptedBytes = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-CTR', counter, length: this.COUNTER_SIZE << 2}, this.sharedKeys[this.sharedKeyId], Base16384.textEncoder.encode(text)));
+        var encryptedBytes = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-CTR', counter, length: this.COUNTER_SIZE << 2}, this.sharedKeys[this.sharedKeyId], textEncoder.encode(text)));
         var bytes = new Uint8Array(encryptedBytes.length + this.COUNTER_SIZE);
         bytes.set(counter);
         bytes.set(encryptedBytes, this.COUNTER_SIZE);
@@ -1225,7 +1267,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         }
         var encryptedBytes = Base16384.decode(encryptedKanji);
-        fakeComment(id, '🔒' + Base16384.textDecoder.decode(
+        fakeComment(id, '🔒' + textDecoder.decode(
           await crypto.subtle.decrypt({name: 'AES-CTR', counter: encryptedBytes.slice(0, this.COUNTER_SIZE), length: this.COUNTER_SIZE << 2}, this.sharedKeys[sharedKeyId], encryptedBytes.slice(this.COUNTER_SIZE))
         ), event);
       } catch (err) {
