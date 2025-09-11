@@ -1312,6 +1312,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
       [data-current-frame*="3"] [data-frame="3"],[data-current-frame*="4"] [data-frame="4"],[data-current-frame*="5"] [data-frame="5"],
       [data-current-frame*="6"] [data-frame="6"],[data-current-frame*="7"] [data-frame="7"],[data-current-frame*="8"] [data-frame="8"]{display:initial}
+      .character-image[style*="scale(-"]:has([data-reversible]){transform:scaleX(-1);--scl:-1}
     `;
     if (extensionConfig.hideStatCommentButton)
       cssText += '#toggleStatCommentMobile{display:none}';
@@ -2332,6 +2333,16 @@ textarea{padding:5px;resize:none;font-size:16px}
   document.addEventListener('keyup', e => clearInterval(keyControlTimer));
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
+      Array.from(document.getElementsByTagName('svg')).forEach(svg => {
+        if (svg.getAttribute('version') || svg.dataset.reversible)
+          return;
+        var g = svg.querySelector('g[transform^="matrix"]');
+        if (!g)
+          return;
+        var center = +g.getAttribute('transform').split(',')[4];
+        svg.setAttribute('style', `transform-origin:${center}px;transform:translateX(${+svg.getAttribute('width').replace(/px$/i, '') / 2 - center}px) scaleX(var(--scl, 1))`);
+        svg.dataset.reversible = 'true';
+      });
       var noclock = Array.from(document.querySelectorAll('svg[height="110.8px"][width="69.65px"]:not(.set)'));
       noclock.forEach(svg => {
         svg.innerHTML += '<g class="clock"><line x1="45" y1="22.5" x2="45" y2="12" stroke="black" stroke-width="1.5"/><line x1="45" y1="22.5" x2="45" y2="6" stroke="black" stroke-width="1"/><line x1="45" y1="22.5" x2="45" y2="5" stroke="red" stroke-width="0.5"/></g>';
