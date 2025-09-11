@@ -1760,6 +1760,10 @@ textarea{padding:5px;resize:none;font-size:16px}
   var sendCurrentEV = () => Bot.ignore('!' + JSON.stringify(Object.assign({init: true}, ev)));
   var receiveEV = (id, json) => {
     try {
+      if (!Bot.users[id]) {
+        console.log('receiveEV idからキャラコが取れなかった:' + id);
+        return;
+      }
       animationCharacterMap.get(Bot.users[id].realType)?.receive(id, JSON.parse(json) || {});
     } catch (err) {
       console.log(err);
