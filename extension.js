@@ -617,6 +617,8 @@ var inject = function () {
   };
   window.Bot = async function () {
     var bot = extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(async res => {
+      if (!res.ok)
+        return;
       var externalBot = await res.text();
       if (extensionConfig.passwordForBot && !await verifyExternalBot(externalBot)) {
         console.log(`外部BOTハッシュ不一致：${url}`);
@@ -624,7 +626,6 @@ var inject = function () {
       }
       return externalBot;
     }).catch(error => console.log(`外部BOTエラー：${url} - ${error.message}`))))).map(result => result.value || '').join('\n');
-    console.log(bot);
     Bot.timerIds.forEach(Bot.clearTimeout);
     Bot.timerIds.clear();
     Bot.listeners = {};
