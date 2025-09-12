@@ -450,7 +450,7 @@ var inject = function () {
       const req = tx.objectStore(DB_NAME).get(key);
       req.onsuccess = () => {
         if (req.result && key === DB_NAME) {
-          window.extensionConfig = req.result;
+          extensionConfig = Object.assign(extensionConfig, req.result);
           localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
           applyConfig();
         }
