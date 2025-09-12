@@ -1473,6 +1473,8 @@ textarea{padding:5px;resize:none;font-size:16px}
     var additionalData = [];
     switch (data[0]) {
       case 'AUTH':
+        if (token)
+          onerror('AUTHが2回来た');
         token = data[1].token;
         Bot.myId = data[1].id;
         break;
@@ -1757,13 +1759,14 @@ textarea{padding:5px;resize:none;font-size:16px}
     ev.stat = false;
   };
   var sendEV = () => Bot.ignore('!' + JSON.stringify((animationCharacterMap.get(Bot.users[Bot.myId].realType)?.getNextEv || getNextEv)()));
-  var sendCurrentEV = () => Bot.ignore('!' + JSON.stringify(Object.assign({init: true}, ev)));
+  var sendCurrentEV = () => {
+    if (animationCharacterMap.get(Bot.users[Bot.myId]?.realType))
+      Bot.ignore('!' + JSON.stringify(Object.assign({init: true}, ev)));
+  };
   var receiveEV = (id, json) => {
     try {
-      if (!Bot.users[id]) {
-        console.log('receiveEV idからキャラコが取れなかった:' + id);
+      if (!Bot.users[id])
         return;
-      }
       animationCharacterMap.get(Bot.users[id].realType)?.receive(id, JSON.parse(json) || {});
     } catch (err) {
       console.log(err);
