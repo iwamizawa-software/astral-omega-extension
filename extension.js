@@ -236,6 +236,7 @@ var inject = function () {
     {
       key: 'webhook',
       name: 'アップロード用WebHook URL',
+      hidden: true,
       description: 'DiscordのWebHookを設定すると、アップロード機能が使えるようになります。サーバーの方で消しても24時間リンクが有効なので、すぐ消したくなるようなファイルはアップロードしないでください。',
       type: 'input',
       value: ''
@@ -2015,6 +2016,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         }
       }).style.marginLeft = '5em';
       configInfo.forEach(item => {
+        if (item.hidden)
+          return;
         switch (item.type) {
           case 'separator':
             append('hr');
