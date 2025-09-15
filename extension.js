@@ -1949,7 +1949,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           alert(err);
         }
         configInfo.forEach(item => {
-          if (item.type === 'separator' || !obj.hasOwnProperty(item.key))
+          if (item.type === 'separator' || !obj.hasOwnProperty(item.key) || item.hidden)
             return;
           var element = document.getElementById(item.key), value = obj[item.key];
           switch (item.type) {
