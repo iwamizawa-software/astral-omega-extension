@@ -1313,7 +1313,6 @@ textarea{padding:5px;resize:none;font-size:16px}
       [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
       [data-current-frame*="3"] [data-frame="3"],[data-current-frame*="4"] [data-frame="4"],[data-current-frame*="5"] [data-frame="5"],
       [data-current-frame*="6"] [data-frame="6"],[data-current-frame*="7"] [data-frame="7"],[data-current-frame*="8"] [data-frame="8"]{display:initial}
-      .character-image[style*="scale(-"]:has([data-reversible]){transform:scaleX(-1);--scl:-1}
     `;
     if (extensionConfig.hideStatCommentButton)
       cssText += '#toggleStatCommentMobile{display:none}';
@@ -2350,7 +2349,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (!g)
           return;
         var center = +g.getAttribute('transform').split(',')[4];
-        svg.setAttribute('style', `transform-origin:${center}px;transform:translateX(${+svg.getAttribute('width').replace(/px$/i, '') / 2 - center}px) scaleX(var(--scl, 1))`);
+        svg.setAttribute('style', `transform-origin:${center}px;transform:translateX(${+svg.getAttribute('width').replace(/px$/i, '') / 2 - center}px)`);
         svg.dataset.reversible = 'true';
       });
       var noclock = Array.from(document.querySelectorAll('svg[height="110.8px"][width="69.65px"]:not(.set)'));
