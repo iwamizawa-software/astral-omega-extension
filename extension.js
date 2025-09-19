@@ -21,9 +21,8 @@ var inject = function () {
     button.onclick = function () {
       localStorage.setItem('extensionEmergency', 'true');
       localStorage.setItem('/monachatchat/extension', 'false');
-      alert('拡張機能をOFFにしました。再びONにするには発言のOKボタンの下にある設定からONにしてください。');
-      if (confirm('適用するにはリロードが必要です。リロードしますか？'))
-        location.reload();
+      open('https://iwamizawa-software.github.io/astral-omega-extension/docs/bug.html');
+      location.reload();
     };
     div.appendChild(button);
     document.body.appendChild(div);
