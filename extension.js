@@ -1354,7 +1354,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     } else {
       sound = null;
     }
-    onbeforeunload = extensionConfig.onbeforeunload && !forceReload ? () => 1 : null;
+    onbeforeunload = extensionConfig.onbeforeunload ? () => forceReload ? null : 1 : null;
     Bot();
   };
   applyConfig();
