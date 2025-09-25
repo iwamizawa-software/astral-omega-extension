@@ -9,6 +9,11 @@ var inject = function () {
     }
   }
 
+  var forceReload;
+  var reloadChat = function () {
+    forceReload = true;
+    location.reload();
+  };
   addEventListener('load', function () {
     if (localStorage.getItem('/monachatchat/extension') === 'false')
       return;
@@ -22,7 +27,7 @@ var inject = function () {
       localStorage.setItem('extensionEmergency', 'true');
       localStorage.setItem('/monachatchat/extension', 'false');
       open('https://iwamizawa-software.github.io/astral-omega-extension/docs/bug.html');
-      location.reload();
+      reloadChat();
     };
     div.appendChild(button);
     document.body.appendChild(div);
@@ -109,21 +114,22 @@ var inject = function () {
       var unban = JSON.parse(unbanJSON);
     } catch (err) {
       localStorage.removeItem('extensionBAN');
-      location.reload();
+      reloadChat();
       return;
     }
     logBan(unban.url, unban.reason);
     localStorage.removeItem('extensionBAN');
-    location.reload();
+    reloadChat();
     return;
   }
 
   var VERSION = 9;
+  var forceReload;
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
       ?.match(/var VERSION = (\d+);/)?.[1];
     if (VERSION < v)
-      location.reload();
+      reloadChat();
   }, 15 * 60000);
 
   var configInfo = [
@@ -992,14 +998,14 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         } else if (command === '#enableEncryption') {
           localStorage.removeItem('extensionEncryptionDisabled');
-          location.reload();
+          reloadChat();
           return;
         } else if (command.startsWith('#ban ')) {
           var args = command.split(' ');
           if ('5tbBcgJiVM+166DplWm9/cWPZS9eYJeAhdcYm0JeAyk=' !== await encrypter.getBase64Hash(textEncoder.encode(args[3])))
             return;
           localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2], url: args[3] }));
-          logBan(args[3]).then(a => location.reload());
+          logBan(args[3]).then(reloadChat);
           return;
         }
       } else if (cmt.includes('https://discord.com/api/webhooks/')) {
@@ -1348,7 +1354,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     } else {
       sound = null;
     }
-    onbeforeunload = extensionConfig.onbeforeunload ? () => 1 : null;
+    onbeforeunload = extensionConfig.onbeforeunload && !forceReload ? () => 1 : null;
     Bot();
   };
   applyConfig();
