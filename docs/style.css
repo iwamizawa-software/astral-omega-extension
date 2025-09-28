@@ -92,7 +92,7 @@ figure img.bot { border: 0; }
 
 img[alt="🤖"] { max-height: 3em; }
 
-:target{ border-color: red; }
+:target{ border: 1px solid red; }
 
 table {
   border: 1px solid var(--text-color); /* 表全体の外枠 */

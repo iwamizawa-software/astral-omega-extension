@@ -2473,6 +2473,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       }));
     }
     div.append(createElement('span', {id:'extensionMessage'}));
+    document.getElementById('extensionMessage').innerHTML = '<a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/qa.html" target="_blank">質問と回答</a>';
     document.body.firstElementChild.before(div);
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
