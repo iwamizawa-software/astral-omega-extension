@@ -1,14 +1,5 @@
 var inject = function () {
 
-  if (localStorage.getItem('extensionEmergency')) {
-    var extensionStatus = localStorage.getItem('/monachatchat/extension');
-    if (extensionStatus === 'true') {
-      localStorage.removeItem('extensionEmergency');
-    } else {
-      return;
-    }
-  }
-
   var forceReload;
   var reloadChat = function () {
     forceReload = true;
@@ -24,7 +15,6 @@ var inject = function () {
     button.textContent = 'バグ時押す';
     button.style.color = 'red';
     button.onclick = function () {
-      localStorage.setItem('extensionEmergency', 'true');
       localStorage.setItem('/monachatchat/extension', 'false');
       open('https://iwamizawa-software.github.io/astral-omega-extension/docs/bug.html');
       reloadChat();
@@ -79,8 +69,7 @@ var inject = function () {
 <title>Tor?</title>
 <p>あなたが使用しているブラウザはTor Browserの可能性があります。
 <p>心当たりがない場合は、以下の連絡先に問い合わせてください。
-<p>Discord ID　senvey
-<p><a href="https://form1ssl.fc2.com/form/?id=019f176bae31cba6">問い合わせフォーム</a>`);
+<p><a href="https://form1ssl.fc2.com/form/?id=d541ae59d35ee868">問い合わせフォーム</a>`);
       document.close();
     });
     window.XMLHttpRequest = window.WebSocket = e => e;
@@ -90,12 +79,10 @@ var inject = function () {
   if (!localStorage.getItem('/monachatchat/extension'))
     localStorage.setItem('/monachatchat/extension', 'true');
 
-  var isNiceguy = () => localStorage.getItem('extensionNiceguy') || localStorage.getItem('/monachatchat/name')?.includes(decodeURI('%E6%9A%97%E3%81%84%E4%BA%BA'));
+  var isNiceguy = () => localStorage.getItem('extensionNiceguy');
 
   if (isNiceguy()) {
     localStorage.setItem('extensionNiceguy', 'true');
-    if (localStorage.getItem('/monachatchat/extension') !== 'true')
-      addEventListener('load', () => document.head.appendChild(document.createElement('style')).textContent = 'div:has(#extensionMessage){display:none}');
   } else if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig) {
     return;
   }
@@ -118,13 +105,27 @@ var inject = function () {
       return;
     }
     logBan(unban.url, unban.reason);
-    localStorage.removeItem('extensionBAN');
+    if (prompt('解除コードを入力してください') === unban.word) {
+      localStorage.removeItem('extensionBAN');
+    } else {
+      logBan(unban.url, unban.reason);
+      window.XMLHttpRequest = window.WebSocket = e => e;
+      document.addEventListener("DOMContentLoaded", () => {
+        document.open();
+        document.write(`<!doctype html>
+<title>ロック</title>
+<p>現在あなたはロックされています。(理由：${unban.reason?.replace?.(/[<>&"]/g, '')})
+<p>以下のフォームから解除コードをもらってください。
+<p><a href="https://form1ssl.fc2.com/form/?id=d541ae59d35ee868">問い合わせフォーム</a>`);
+        document.close();
+      });
+      return;
+    }
     reloadChat();
     return;
   }
 
   var VERSION = 9;
-  var forceReload;
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
       ?.match(/var VERSION = (\d+);/)?.[1];
