@@ -408,22 +408,6 @@ var inject = function () {
       type: 'input',
       value: ''
     },
-    {
-      name: 'その他（基本いじらなくていい）',
-      type: 'separator'
-    },
-    {
-      key: 'monitorScore',
-      name: 'monitorScore',
-      type: 'onoff',
-      value: 0
-    },
-    {
-      key: 'killScore',
-      name: 'killScore',
-      type: 'input',
-      value: '10'
-    },
   ];
 
   const DB_NAME = 'extensionConfig';
@@ -1422,48 +1406,6 @@ textarea{padding:5px;resize:none;font-size:16px}
       }
     }
   };
-  try {
-    var segmenter = new Intl.Segmenter('ja', {granularity: 'word'});
-  } catch (err) {}
-  var calcRedundancy = function (msg) {
-    msg = msg?.replace(/[wWｗＷ]+/g, 'ｗ').replace(/[！!]+/g, '!').replace(/[ー～]+/g, 'ー') || '';
-    if (segmenter) {
-      var words = new Set();
-      var list = [...segmenter.segment(msg)];
-      list.forEach(value => words.add(value.segment));
-      return list.length / words.size;
-    } else {
-      var tmp = msg, compressedMsg;
-      while ((compressedMsg = tmp.replace(/([\s\S]+)\1+/g, '')).length !== tmp.length)
-        tmp = compressedMsg;
-      return msg.length / compressedMsg.length;
-    }
-  };
-  const MAX_LOGSIZE = 4;
-  window.scoreLog = [];
-  var calcScore = (id, msg) => {
-    var user = Bot.users[id];
-    if (!user)
-      return;
-    var messageLog = user.messageLog = user.messageLog || [];
-    messageLog.unshift(msg);
-    if (messageLog.length > MAX_LOGSIZE)
-      messageLog.length = MAX_LOGSIZE;
-    var timeLog = user.timeLog = user.timeLog || [];
-    timeLog.unshift((new Date()).getTime());
-    if (timeLog.length > MAX_LOGSIZE)
-      timeLog.length = MAX_LOGSIZE;
-    user.score = user.redundancy = 0;
-    var msgs = '';
-    if (messageLog.length > 1) {
-      var duration = timeLog[0] - timeLog[timeLog.length - 1];
-      msgs = messageLog.slice(0, -1).join('\n');
-      user.redundancy = calcRedundancy(msgs);
-      user.score = 1000 * user.redundancy * msgs.length / duration || 0;
-    }
-    if (extensionConfig.monitorScore)
-      scoreLog.push([user.score, user.redundancy, msgs.length, user.fullName, msg]);
-  };
   var disableUpdate;
   var token;
   var lastStat = '通常';
@@ -1513,7 +1455,6 @@ textarea{padding:5px;resize:none;font-size:16px}
             Bot.stat(lastStat);
           initEV(data[1].realType);
         }
-        calcScore(data[1].id, '');
         if (encrypter.isEnabled && data[1].id !== Bot.myId)
           encrypter.sendSharedKeyId();
         sendCurrentEV();
@@ -1530,8 +1471,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           break;
         }
         user.cmt = data[1].cmt = data[1].cmt?.replace(/https?:\/\/drrrkari\.com\/upimg\/.*|ROYnYUKA/i, '🚫');
-        calcScore(user.id, user.cmt);
-        if (match(user.cmt, extensionConfig.ignoreWord) || (mikeyMode && (match(user.cmt, ['/[マﾏま][イｲい][キｷき].+https://discord\\.gg/']) || user.score > +extensionConfig.killScore))) {
+        if (match(user.cmt, extensionConfig.ignoreWord)) {
           Bot.ignore(user.ihash, true, user.fullName);
           break;
         }
@@ -2158,7 +2098,7 @@ textarea{padding:5px;resize:none;font-size:16px}
   var silence = new Audio();
   silence.src = 'data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxLEAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
   silence.loop = true;
-  var pauseNotification, pauseYomiage, mikeyMode;
+  var pauseNotification, pauseYomiage;
   var menu = createMenu([
     {
       name: '拡張メニュー',
