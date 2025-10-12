@@ -104,7 +104,6 @@ var inject = function () {
       reloadChat();
       return;
     }
-    logBan(unban.url, unban.reason);
     if (prompt('解除コードを入力してください') === unban.word) {
       localStorage.removeItem('extensionBAN');
     } else {
@@ -115,7 +114,7 @@ var inject = function () {
         document.write(`<!doctype html>
 <title>ロック</title>
 <p>現在あなたはロックされています。(理由：${unban.reason?.replace?.(/[<>&"]/g, '')})
-<p>以下のフォームから解除コードをもらってください。
+<p>以下のフォームから解除コードをもらってください。解除コードを受け取るために連絡先は必ず入力してください。
 <p><a href="https://form1ssl.fc2.com/form/?id=d541ae59d35ee868">問い合わせフォーム</a>`);
         document.close();
       });
