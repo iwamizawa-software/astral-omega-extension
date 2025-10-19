@@ -204,7 +204,7 @@ var inject = function () {
     },
     {
       key: 'miniPlayer',
-      name: 'YouTubeとツイキャスをミニプレイヤーで表示',
+      name: 'YouTubeとツイキャスとTwitchをミニプレイヤーで表示',
       description: 'iOSはツイキャス表示できません。',
       type: [
         'OFF',
@@ -2534,6 +2534,8 @@ textarea{padding:5px;resize:none;font-size:16px}
           miniPlayerIFrame.dataset.owner = a.parentNode.firstElementChild.textContent;
         } else if (!/iPhone|iPad/.test(navigator.userAgent) && /^https:\/\/twitcasting\.tv\/([^\/]+)/.test(a.href))
           miniPlayerIFrame.src = 'https://twitcasting.tv/' + RegExp.$1 + '/embeddedplayer/live';
+        else if (/^https:\/\/(?:www\.|m\.)?twitch\.tv\/([^\/\?]+)/.test(a.href))
+          miniPlayerIFrame.src = 'https://player.twitch.tv/?channel=' + RegExp.$1 + '&parent=monachat.tech';
         else
           return;
         e.preventDefault();
