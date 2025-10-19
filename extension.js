@@ -2414,7 +2414,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
-    document.getElementById('extensionMessage').innerHTML = '<a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/trip.html" target="_blank">トリップ作成サービス</a>';
+    document.getElementById('extensionMessage').innerHTML = '<a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/trip.html" target="_blank">トリップ作成26日締切</a>';
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
       inputContainer.setAttribute('style', 'width:1000px');
