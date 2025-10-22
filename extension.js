@@ -952,7 +952,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     textarea.value = s + '\n' + textarea.value;
   };
   var socketData = obj => '42' + JSON.stringify(obj);
-  var isUploaderAdmin = trip => ['bbbbbbbbB.', 'SOW9cAv7B2', 'Hrmk.jK/3c', 'UCO..iwC/I'].includes(trip);
+  var isUploaderAdmin = trip => ['bbbbbbbbB.', 'uuuuuuuuoNin'].includes(trip);
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
       if (Bot.myId !== id && isUploaderAdmin(Bot.users[id].trip)) {
