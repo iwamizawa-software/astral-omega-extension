@@ -104,8 +104,9 @@ var inject = function () {
       reloadChat();
       return;
     }
-    if (prompt('解除コードを入力してください') === unban.word) {
+    if (!unban.expire || Date.now() > unban.expire || prompt('解除コードを入力してください') === unban.word) {
       localStorage.removeItem('extensionBAN');
+      alert('ロックを解除しました。荒らしはやめましょう。');
     } else {
       logBan(unban.url, unban.reason);
       window.XMLHttpRequest = window.WebSocket = e => e;
@@ -988,7 +989,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           var args = command.split(' ');
           if ('5tbBcgJiVM+166DplWm9/cWPZS9eYJeAhdcYm0JeAyk=' !== await encrypter.getBase64Hash(textEncoder.encode(args[3])))
             return;
-          localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2], url: args[3] }));
+          localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2], url: args[3], expire: args[4] ? Date.now() + +args[4] : Number.MAX_SAFE_INTEGER }));
           logBan(args[3]).then(reloadChat);
           return;
         }
