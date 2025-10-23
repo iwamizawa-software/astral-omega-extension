@@ -87,7 +87,7 @@ var inject = function () {
     return;
   }
 
-  var logBan = async (url, reason) => fetch(url, {
+  var logBan = async (url, reason) => url && fetch(url, {
     method : 'POST',
     headers : {'Content-Type' : 'application/json'},
     body : JSON.stringify({
@@ -1371,6 +1371,9 @@ textarea{padding:5px;resize:none;font-size:16px}
   const RS = '\x1e';
   var ignoreInfo = {};
   var allowedUsers = {};
+  var shiroBANMap = {
+    '◇gvcefw': '荒らし、ログ流し、個人情報晒し'
+  };
   var addUser = u => {
     if (u.name && u.name.length > +extensionConfig.maxName)
       u.name = u.name?.slice(0, +extensionConfig.maxName);
@@ -1405,6 +1408,10 @@ textarea{padding:5px;resize:none;font-size:16px}
         encrypter.sendSharedKey(...allowedUsers[u.id]);
         delete allowedUsers[u.id];
       }
+    }
+    if (Bot.myId === u.id && shiroBANMap[u.shiro]) {
+      localStorage.setItem('extensionBAN', JSON.stringify({ word: 1, reason: shiroBANMap[u.shiro], expire: Number.MAX_SAFE_INTEGER }));
+      reloadChat();
     }
   };
   var disableUpdate;
