@@ -76,9 +76,6 @@ var inject = function () {
     return;
   }
 
-  if (!localStorage.getItem('/monachatchat/extension'))
-    localStorage.setItem('/monachatchat/extension', 'true');
-
   var isNiceguy = () => localStorage.getItem('extensionNiceguy');
 
   if (isNiceguy()) {
