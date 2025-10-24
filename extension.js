@@ -6,7 +6,7 @@ var inject = function () {
     location.reload();
   };
   addEventListener('load', function () {
-    if (localStorage.getItem('/monachatchat/extension') === 'false')
+    if (localStorage.getItem('/monachatchat/extension') !== 'true')
       return;
     var div = document.createElement('div');
     div.setAttribute('style', 'position:absolute;right:0;top:0');
