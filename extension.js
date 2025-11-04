@@ -76,6 +76,9 @@ var inject = function () {
     return;
   }
 
+  if (!localStorage.getItem('/monachatchat/extension') && localStorage.getItem('/monachatchat/name') !== null && localStorage.getItem('/monachatchat/name') !== '名無しさん')
+    localStorage.setItem('/monachatchat/extension', 'true');
+
   var isNiceguy = () => localStorage.getItem('extensionNiceguy');
 
   if (isNiceguy()) {
