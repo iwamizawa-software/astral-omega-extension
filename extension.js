@@ -880,7 +880,7 @@ var inject = function () {
         showMessage('ファイルの中身がない');
         return;
       }
-      if (!extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/'))
+      if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
         return;
       if (extensionConfig.confirmUpload && !await asyncConfirm(getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>'))
         return;
@@ -898,19 +898,19 @@ var inject = function () {
     }
   };
   addEventListener('dragover', e => {
-    if (!(extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.dataTransfer.types.includes('Files')))
+    if (!(/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook) && e.dataTransfer.types.includes('Files')))
       return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
   });
   addEventListener('drop', e => {
-    if (!(extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.dataTransfer.types.includes('Files')))
+    if (!(/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook) && e.dataTransfer.types.includes('Files')))
       return;
     e.preventDefault();
     upload(e.dataTransfer.files[0]);
   });
   addEventListener('paste', e => {
-    if (!(extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/') && e.clipboardData.types.includes('Files')))
+    if (!(/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook) && e.clipboardData.types.includes('Files')))
       return;
     e.preventDefault();
     upload(e.clipboardData.files[0]);
@@ -959,9 +959,9 @@ textarea{padding:5px;resize:none;font-size:16px}
     if (Bot.users[id]) {
       if (Bot.myId !== id && isUploaderAdmin(Bot.users[id].trip)) {
         var command = cmt.slice(2);
-        if (command.startsWith('https://discord.com/api/webhooks/')) {
+        if (/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(command)) {
           var urlHash = await encrypter.getBase64Hash(textEncoder.encode(command));
-          if ('YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=' === urlHash) {
+          if (['YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=', '41UmFCohbA+dukvXKnB0a/bBJHOnwTR5dNIlsijM6F0='].includes(urlHash)) {
             extensionConfig.webhook = command;
             localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
             saveDB();
@@ -994,7 +994,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           logBan(args[3]).then(reloadChat);
           return;
         }
-      } else if (cmt.includes('https://discord.com/api/webhooks/')) {
+      } else if (/https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(cmt)) {
         cmt = cmt.slice(0, 2) + (isUploaderAdmin(Bot.users[id].trip) ? '多分権限付与成功した' : '許可されたトリップ以外の人がWebHook URLを発言してはならない。');
       }
       event.data = socketData(['COM', {id, cmt}]);
@@ -1319,7 +1319,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
     cssText += extensionConfig.smartMode ? '.setting-bar-center,#extensionBar .sendEV{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
-    if (!extensionConfig.webhook?.startsWith('https://discord.com/api/webhooks/'))
+    if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
       cssText += '#uploadButton{display:none}';
     cssText += extensionConfig.showImage
       ? '[data-img]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;box-sizing:content-box}.log-row:has([data-img]){flex:none;height:fit-content;max-height:200px}[data-img] *{display:none}'
@@ -1655,7 +1655,7 @@ textarea{padding:5px;resize:none;font-size:16px}
               encrypter.encrypt(args[1].cmt);
               return;
             }
-            if (args[1].cmt.includes('https://discord.com/api/webhooks/')) {
+            if (/https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(args[1].cmt)) {
               asyncAlert('暗号化せずにWebHook URLを発言してはならない');
               return;
             }
@@ -2423,7 +2423,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
-    document.getElementById('extensionMessage').innerHTML = '';
+    document.getElementById('extensionMessage').innerHTML = '<a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/uploader.html" target="_blank">画像アップロード権限配布担当者募集</a>';
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
       inputContainer.setAttribute('style', 'width:1000px');
