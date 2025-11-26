@@ -75,9 +75,9 @@ var inject = function () {
     window.XMLHttpRequest = window.WebSocket = e => e;
     return;
   }
-
+/*
   if (!localStorage.getItem('/monachatchat/extension') && localStorage.getItem('/monachatchat/name') !== null && localStorage.getItem('/monachatchat/name') !== '名無しさん')
-    localStorage.setItem('/monachatchat/extension', 'true');
+    localStorage.setItem('/monachatchat/extension', 'true');*/
 
   var isNiceguy = () => localStorage.getItem('extensionNiceguy');
 
@@ -2423,7 +2423,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
-    document.getElementById('extensionMessage').innerHTML = '<a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/uploader.html" target="_blank">画像アップロード権限配布担当者募集</a>';
+    document.getElementById('extensionMessage').innerHTML = '';
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
       inputContainer.setAttribute('style', 'width:1000px');
