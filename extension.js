@@ -1429,8 +1429,6 @@ textarea{padding:5px;resize:none;font-size:16px}
     var additionalData = [];
     switch (data[0]) {
       case 'AUTH':
-        if (token)
-          onerror('AUTHが2回来た');
         token = data[1].token;
         Bot.myId = data[1].id;
         break;
