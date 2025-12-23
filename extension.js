@@ -421,7 +421,11 @@ var inject = function () {
         req.result.createObjectStore(DB_NAME);
       };
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => {
+        reject(req.error);
+        onerror('openDB失敗のためDBを削除:' + req.error);
+        indexedDB.deleteDatabase(DB_NAME);
+      };
     });
   }
   
