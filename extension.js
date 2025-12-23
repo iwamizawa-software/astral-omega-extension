@@ -2421,7 +2421,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
-    document.getElementById('extensionMessage').innerHTML = '祭りBOTを流石兄弟に移動';
+    document.getElementById('extensionMessage').innerHTML = '流石兄弟BOTポーカー得点2倍キャンペーン中';
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
       inputContainer.setAttribute('style', 'width:1000px');
