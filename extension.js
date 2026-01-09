@@ -1940,24 +1940,17 @@ textarea{padding:5px;resize:none;font-size:16px}
         Object.assign(element, attr);
         return element;
       };
-      var fileMenu = append('select');
-      fileMenu.appendChild(document.createElement('option')).text = '設定ファイル';
-      fileMenu.appendChild(document.createElement('option')).text = '開く...';
-      fileMenu.appendChild(document.createElement('option')).text = '保存...';
-      fileMenu.selectedIndex = 0;
-      fileMenu.onchange = function () {
-        switch (fileMenu.selectedIndex) {
-          case 1:
-            file.click();
-            break;
-          case 2:
-            URL.revokeObjectURL(downloadLink.href);
-            downloadLink.href = URL.createObjectURL(new Blob([JSON.stringify(currentValue, null, 2) + '\n'], {type: 'application/octet-stream'}));
-            downloadLink.download = 'astral-omega-extension-config.json';
-            downloadLink.click();
-            break;
-        }
-        fileMenu.selectedIndex = 0;
+      var fileMenu = append('div');
+      var loadConfigButton = fileMenu.appendChild(document.createElement('button'));
+      loadConfigButton.textContent = '開く';
+      loadConfigButton.onclick = () => file.click();
+      var saveConfigButton = fileMenu.appendChild(document.createElement('button'));
+      saveConfigButton.textContent = '保存';
+      saveConfigButton.onclick = () => {
+        URL.revokeObjectURL(downloadLink.href);
+        downloadLink.href = URL.createObjectURL(new Blob([JSON.stringify(currentValue, null, 2) + '\n'], {type: 'application/octet-stream'}));
+        downloadLink.download = 'astral-omega-extension-config.json';
+        downloadLink.click();
       };
       append('input', {
         type: 'button',
