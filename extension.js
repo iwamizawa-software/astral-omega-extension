@@ -1940,7 +1940,9 @@ textarea{padding:5px;resize:none;font-size:16px}
         Object.assign(element, attr);
         return element;
       };
-      var fileMenu = append('div');
+      var fileMenu = append('span', {
+        textContent: '設定ファイル'
+      });
       var loadConfigButton = fileMenu.appendChild(document.createElement('button'));
       loadConfigButton.textContent = '開く';
       loadConfigButton.onclick = () => file.click();
