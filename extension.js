@@ -126,7 +126,7 @@ var inject = function () {
     return;
   }
 
-  var VERSION = 9;
+  var VERSION = 10;
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
       ?.match(/var VERSION = (\d+);/)?.[1];
@@ -308,6 +308,13 @@ var inject = function () {
       key: 'ignoreWord',
       name: 'NGワード',
       description: '指定した言葉が含まれた場合無視します。',
+      type: 'list',
+      value: []
+    },
+    {
+      key: 'replaceWord',
+      name: '検閲ワード',
+      description: '指定した言葉が含まれた発言を非表示にします。',
       type: 'list',
       value: []
     },
@@ -1482,6 +1489,8 @@ textarea{padding:5px;resize:none;font-size:16px}
           Bot.ignore(user.ihash, true, user.fullName);
           break;
         }
+        if (match(user.cmt, extensionConfig.replaceWord))
+          data[1].cmt = user.cmt = '（非表示）';
         if (data[1].id !== Bot.myId && !isActive() && !pauseNotification && match(data[1].cmt, extensionConfig.mentionList)) {
           mentionNotification(user, data[1].cmt, function () {
             if (extensionConfig.replyMsg)
