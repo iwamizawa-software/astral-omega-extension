@@ -1489,8 +1489,10 @@ textarea{padding:5px;resize:none;font-size:16px}
           Bot.ignore(user.ihash, true, user.fullName);
           break;
         }
-        if (match(user.cmt, extensionConfig.replaceWord))
+        if (match(user.cmt, extensionConfig.replaceWord)) {
           data[1].cmt = user.cmt = '（非表示）';
+          return;
+        }
         if (data[1].id !== Bot.myId && !isActive() && !pauseNotification && match(data[1].cmt, extensionConfig.mentionList)) {
           mentionNotification(user, data[1].cmt, function () {
             if (extensionConfig.replyMsg)
