@@ -201,6 +201,13 @@ var inject = function () {
       value: 1
     },
     {
+      key: 'showEncryption',
+      name: '暗号化チェックボックスを表示',
+      description: 'この機能は安全ではありません。',
+      type: 'onoff',
+      value: 0
+    },
+    {
       name: 'YouTube',
       type: 'separator'
     },
@@ -1311,7 +1318,6 @@ textarea{padding:5px;resize:none;font-size:16px}
       [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
       [data-current-frame*="3"] [data-frame="3"],[data-current-frame*="4"] [data-frame="4"],[data-current-frame*="5"] [data-frame="5"],
       [data-current-frame*="6"] [data-frame="6"],[data-current-frame*="7"] [data-frame="7"],[data-current-frame*="8"] [data-frame="8"]{display:initial}
-      #encryption,[for=encryption]{display:none}
     `;
     if (extensionConfig.hideStatCommentButton)
       cssText += '#toggleStatCommentMobile{display:none}';
@@ -1336,7 +1342,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     cssText += extensionConfig.youtubeThumbnail
       ? `[data-youtube]:before{content:'▶️'}[data-youtube]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;width:${thumbWidth}px;height:${thumbHeight}px;box-sizing:content-box}.log-row:has([data-youtube]){flex:none;height:fit-content}[data-youtube] *{display:none}`
       : '[data-youtube]{background-image:none!important}';
-    if (localStorage.getItem('extensionEncryptionDisabled'))
+    if (localStorage.getItem('extensionEncryptionDisabled') || !extensionConfig.showEncryption)
       cssText += '#encryption,[for=encryption]{display:none}';
     extCSS.textContent = cssText;
     if (extensionConfig.showImage)
