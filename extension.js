@@ -1311,6 +1311,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       [data-current-frame*="0"] [data-frame="0"],[data-current-frame*="1"] [data-frame="1"],[data-current-frame*="2"] [data-frame="2"],
       [data-current-frame*="3"] [data-frame="3"],[data-current-frame*="4"] [data-frame="4"],[data-current-frame*="5"] [data-frame="5"],
       [data-current-frame*="6"] [data-frame="6"],[data-current-frame*="7"] [data-frame="7"],[data-current-frame*="8"] [data-frame="8"]{display:initial}
+      #encryption,[for=encryption]{display:none}
     `;
     if (extensionConfig.hideStatCommentButton)
       cssText += '#toggleStatCommentMobile{display:none}';
