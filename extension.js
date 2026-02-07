@@ -659,10 +659,10 @@ var inject = function () {
           styles.push(style);
           styles.push('');
         }
-        styles.push('font-weight:bold;background-color:white;color:black');
+        styles.push('font-size:16px;font-weight:bold;background-color:white;color:black');
         buf += '\n%c' + user.stat.replace(/[♠♥♣♦][A23456789⒑JQK](?:　|$)/g, card => {
           if (currentNumber < 0 || card[0] === currentCard[0] || card[1] === currentCard[1]) {
-            styles.push('font-weight:bold;background-color:white;color:darkorange', 'font-weight:bold;background-color:white;color:black');
+            styles.push('font-size:16px;font-weight:bold;background-color:white;color:darkorange', 'font-weight:bold;background-color:white;color:black');
             card = '%c' + card + '%c';
           }
           return card;
@@ -670,7 +670,7 @@ var inject = function () {
         styles.unshift(toColorEmoji(buf));
         console.log.apply(console, styles);
       } else if (/[♠♥♣♦]/.test(user.stat)) {
-        console.log(toColorEmoji(user.stat));
+        console.log(toColorEmoji(user.stat), 'font-size:16px;font-weight:bold;background-color:white;color:black');
       }
     });
   };
