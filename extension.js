@@ -1102,7 +1102,6 @@ textarea{padding:5px;resize:none;font-size:16px}
     },
     on: async function () {
       this.off();
-      document.getElementById('smartInput').style.display = 'flex';
       var users = Object.values(Bot.users).filter(u => !(u.id === Bot.myId || u.hidden || u.ignored));
       if (!users.length) {
         asyncAlert('この部屋には誰もいません。');
@@ -1147,6 +1146,8 @@ textarea{padding:5px;resize:none;font-size:16px}
         delete this.candidateIds;
       }, 3000);
       document.getElementById('encryption').checked = this.isEnabled = true;
+      document.getElementById('smartInput').style.display = 'flex';
+      document.querySelector('.setting-bar-center').style.display = 'none';
     },
     off: function () {
       if (this.isEnabled)
@@ -1158,7 +1159,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       var checkbox = document.getElementById('encryption');
       if (checkbox)
         checkbox.checked = false;
-      document.getElementById('smartInput').style.display = '';
+      document.querySelector('.setting-bar-center').style.display = document.getElementById('smartInput').style.display = '';
     },
     parse: function (id, encryptedMessage, event) {
       try {
