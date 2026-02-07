@@ -659,10 +659,10 @@ var inject = function () {
           styles.push(style);
           styles.push('');
         }
-        styles.push('background-color:white;color:black');
+        styles.push('font-weight:bold;background-color:white;color:black');
         buf += '\n%c' + user.stat.replace(/[♠♥♣♦][A23456789⒑JQK](?:　|$)/g, card => {
           if (currentNumber < 0 || card[0] === currentCard[0] || card[1] === currentCard[1]) {
-            styles.push('background-color:white;color:yellow', 'background-color:white;color:black');
+            styles.push('font-weight:bold;background-color:white;color:darkorange', 'font-weight:bold;background-color:white;color:black');
             card = '%c' + card + '%c';
           }
           return card;
