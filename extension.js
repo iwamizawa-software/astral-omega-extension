@@ -724,7 +724,14 @@ var inject = function () {
   Bot.findUser = name => Object.values(Bot.users).find(u => u.fullName?.includes(name));
   Bot.dequeue = function () {
     var cmt = Bot.commentQueue[0];
-    Bot.send('COM', {cmt});
+    if (encrypter.isEnabled) {
+      if (['￥', '\\', '¥'].includes(cmt?.[0]))
+        Bot.send('COM', {cmt: cmt.slice(1)});
+      else
+        encrypter.encrypt(cmt);
+    } else {
+      Bot.send('COM', {cmt});
+    }
     setTimeout(() => {
       Bot.commentQueue.shift();
       if (Bot.commentQueue.length)
@@ -1095,6 +1102,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     },
     on: async function () {
       this.off();
+      document.getElementById('smartInput').style.display = 'flex';
       var users = Object.values(Bot.users).filter(u => !(u.id === Bot.myId || u.hidden || u.ignored));
       if (!users.length) {
         asyncAlert('この部屋には誰もいません。');
@@ -1150,6 +1158,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       var checkbox = document.getElementById('encryption');
       if (checkbox)
         checkbox.checked = false;
+      document.getElementById('smartInput').style.display = '';
     },
     parse: function (id, encryptedMessage, event) {
       try {
@@ -1654,15 +1663,6 @@ textarea{padding:5px;resize:none;font-size:16px}
                 Bot.commands[commandArgs[0]](...commandArgs.slice(1));
                 return;
               }
-            }
-            if (['￥', '\\', '¥'].includes(args[1]?.cmt?.[0])) {
-              if (encrypter.isEnabled) {
-                args[1].cmt = args[1].cmt.slice(1);
-                arguments[0] = socketData(args);
-              }
-            } else if (encrypter.isEnabled) {
-              encrypter.encrypt(args[1].cmt);
-              return;
             }
             if (/https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(args[1].cmt)) {
               asyncAlert('暗号化せずにWebHook URLを発言してはならない');
