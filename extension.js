@@ -670,7 +670,7 @@ var inject = function () {
         styles.unshift(toColorEmoji(buf));
         console.log.apply(console, styles);
       } else if (/[♠♥♣♦]/.test(user.stat)) {
-        console.log(toColorEmoji(user.stat), 'font-size:16px;font-weight:bold;background-color:white;color:black');
+        console.log('%c' + toColorEmoji(user.stat), 'font-size:16px;font-weight:bold;background-color:white;color:black');
       }
     });
   };
