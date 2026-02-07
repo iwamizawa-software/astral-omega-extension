@@ -201,6 +201,13 @@ var inject = function () {
       value: 1
     },
     {
+      key: 'whatifConsole',
+      name: 'PC向けwhatifジャンキー用コンソール',
+      description: 'ONにするとCtrl + Shift + Iで出てくるコンソールで補助画面が出ます',
+      type: 'onoff',
+      value: 0
+    },
+    {
       name: 'YouTube',
       type: 'separator'
     },
@@ -614,8 +621,61 @@ var inject = function () {
     var signature = RegExp.$1;
     return arrayBufferToBase64(await decryptFromBase64(signature, true)) === arrayBufferToBase64(await crypto.subtle.digest('SHA-256', textEncoder.encode(code)));
   };
+  var whatifConsole = function () {
+    var toColorEmoji = s => s.replace(/[♠♥♣♦]|Jo/g, s => ({'♣': '♣️', '♠': '♠️', '♥': '♥️', '♦': '♦️', 'Jo': '🃏'}[s]));
+    var toNumber = s => '♠♥♣♦'.indexOf(s[0]) * 13 + 'A23456789⒑JQK'.indexOf(s[1]);
+    var generateStyle = option => 'color:' + (option.type === 2 ? 'mediumblue' : option.type === 1 ? 'gold' : 'white') +
+      ';padding:3px;font-weight:bold;background-color:mediumblue;border:2px solid mediumblue;' +
+      (option.sameSuit && !option.sameRank ? 'border-top-color:deepskyblue;border-bottom-color:deepskyblue' : '') +
+      (option.sameRank && !option.sameSuit ? 'border-left-color:deepskyblue;border-right-color:deepskyblue' : '');
+    var cards = Array(52);
+    on('SET', async user => {
+      if (user.kuro !== '◆bbbbbbbbB.')
+        return;
+      if (/^(\d+)｜([^｜]+)｜(.+)$/.test(user.stat)) {
+        var currentCard = RegExp.$2;
+        var currentNumber = toNumber(currentCard);
+        var currentSuit = Math.floor(currentNumber / 13);
+        var buf = '', styles = [];
+        if (RegExp.$1 === '0')
+          cards = Array(52);
+        else
+          cards[currentNumber] = 2;
+        RegExp.$3.split('　').map(c => toNumber(c)).forEach(n => {
+          if (n >= 0)
+            cards[n] = 1;
+        });
+        for (var i = 0; i < 4; i++) {
+          var suit = '♠♥♣♦'[i];
+          var sameSuit = i === currentSuit;
+          var style = generateStyle({sameSuit});
+          buf += '%c' + suit;
+          styles.push(style);
+          for (var j = 0; j < 13; j++) {
+            buf += '%c' + 'A23456789⒑JQK'[j];
+            styles.push(generateStyle({sameSuit, sameRank: j === currentNumber % 13, type: cards[i * 13 + j]}));
+          }
+          buf += '%c' + suit + '%c\n';
+          styles.push(style);
+          styles.push('');
+        }
+        buf += '\n' + user.stat.replace(/[♠♥♣♦][A23456789⒑JQK](?:　|$)/g, card => {
+          if (currentNumber < 0 || card[0] === currentCard[0] || card[1] === currentCard[1]) {
+            styles.push('color:yellow', '');
+            card = '%c' + card + '%c';
+          }
+          return card;
+        });
+        styles.unshift(toColorEmoji(buf));
+        console.log.apply(console, styles);
+      } else if (/[♠♥♣♦]/.test(user.stat)) {
+        console.log(toColorEmoji(user.stat));
+      }
+    });
+  };
   window.Bot = async function () {
-    var bot = extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(async res => {
+    var bot = (extensionConfig.whatifConsole ? '(' + whatifConsole + ')();\n' : '') +
+      extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(async res => {
       if (!res.ok)
         return;
       var externalBot = await res.text();
