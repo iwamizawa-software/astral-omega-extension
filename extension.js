@@ -205,8 +205,8 @@ var inject = function () {
     },
     {
       key: 'whatifConsole',
-      name: 'PC向けwhatifジャンキー用コンソール',
-      description: 'ONにするとCtrl + Shift + Iで出てくるコンソールで補助画面が出ます',
+      name: 'whatifジャンキー用画面',
+      description: 'ONにするとwhatif補助画面を出せるボタンが出ます',
       type: 'onoff',
       value: 0
     },
@@ -627,10 +627,6 @@ var inject = function () {
   var whatifConsole = function () {
     var toColorEmoji = s => s.replace(/[♠♥♣♦]|Jo/g, s => ({'♣': '♣️', '♠': '♠️', '♥': '♥️', '♦': '♦️', 'Jo': '🃏'}[s]));
     var toNumber = s => '♠♥♣♦'.indexOf(s[0]) * 13 + 'A23456789⒑JQK'.indexOf(s[1]);
-    var generateStyle = option => 'color:' + (option.type === 2 ? 'mediumblue' : option.type === 1 ? 'gold' : 'white') +
-      ';padding:3px;font-weight:bold;background-color:mediumblue;border:2px solid mediumblue;' +
-      (option.sameSuit && !option.sameRank ? 'border-top-color:deepskyblue;border-bottom-color:deepskyblue' : '') +
-      (option.sameRank && !option.sameSuit ? 'border-left-color:deepskyblue;border-right-color:deepskyblue' : '');
     var cards = Array(52);
     on('SET', async user => {
       if (user.kuro !== '◆bbbbbbbbB.')
@@ -638,44 +634,66 @@ var inject = function () {
       if (/^(\d+)｜([^｜]+)｜(.+)$/.test(user.stat)) {
         var currentCard = RegExp.$2;
         var currentNumber = toNumber(currentCard);
-        var currentSuit = Math.floor(currentNumber / 13);
-        var buf = '', styles = [];
-        if (RegExp.$1 === '0')
-          cards = Array(52);
-        else
-          cards[currentNumber] = 2;
+        if (RegExp.$1 === '0') {
+          Array.from(document.querySelectorAll('#gameWindow td')).forEach(td => td.className = '');
+        } else {
+          var currentCell = document.getElementById('playingcard' + currentNumber);
+          currentCell.classList.remove('hands');
+          currentCell.classList.add('removed');
+        }
         RegExp.$3.split('　').map(c => toNumber(c)).forEach(n => {
           if (n >= 0)
-            cards[n] = 1;
+            document.getElementById('playingcard' + n).classList.add('hands');
         });
-        for (var i = 0; i < 4; i++) {
-          var suit = '♠♥♣♦'[i];
-          var sameSuit = i === currentSuit;
-          var style = generateStyle({sameSuit});
-          buf += '%c' + suit;
-          styles.push(style);
-          for (var j = 0; j < 13; j++) {
-            buf += '%c' + 'A23456789⒑JQK'[j];
-            styles.push(generateStyle({sameSuit, sameRank: j === currentNumber % 13, type: cards[i * 13 + j]}));
-          }
-          buf += '%c' + suit + '%c\n';
-          styles.push(style);
-          styles.push('');
-        }
-        styles.push('font-size:16px;font-weight:bold;background-color:white;color:black');
-        buf += '\n%c' + user.stat.replace(/[♠♥♣♦][A23456789⒑JQK](?:　|$)/g, card => {
-          if (currentNumber < 0 || card[0] === currentCard[0] || card[1] === currentCard[1]) {
-            styles.push('font-size:16px;font-weight:bold;background-color:white;color:darkorange', 'font-size:16px;font-weight:bold;background-color:white;color:black');
-            card = '%c' + card + '%c';
-          }
-          return card;
+        Array.from(document.querySelectorAll('.currentSuit,.currentRank')).forEach(td => {
+          td.classList.remove('currentSuit');
+          td.classList.remove('currentRank');
         });
-        styles.unshift(toColorEmoji(buf));
-        console.log.apply(console, styles);
+        Array.from(document.querySelectorAll(`[data-suit="${Math.floor(currentNumber / 13)}"] td`)).forEach(td => td.classList.add('currentSuit'));
+        Array.from(document.querySelectorAll(`[data-rank="${currentNumber % 13}"]`)).forEach(td => td.classList.add('currentRank'));
+        document.getElementById('gameMessage').innerHTML = toColorEmoji(user.stat.replace(/[<>]/g, '')
+          .replace(/[♠♥♣♦][A23456789⒑JQK](?:　|$)/g, card => currentNumber < 0 || card[0] === currentCard[0] || card[1] === currentCard[1] ? `<span class="selectable">${card}</span>` : card)
+        );
       } else if (/[♠♥♣♦]/.test(user.stat)) {
-        console.log('%c' + toColorEmoji(user.stat), 'font-size:16px;font-weight:bold;background-color:white;color:black');
+        document.getElementById('gameMessage').textContent = toColorEmoji(user.stat);
       }
     });
+    if (document.getElementById('gameWindow'))
+      return;
+    document.head.appendChild(document.createElement('style')).textContent = `
+#gameWindow {font-size:max(16px,2vw);position:absolute;z-index:10000}
+#gameWindow table{border-spacing:0}
+#gameWindow td{color:white;padding:3px;font-weight:bold;background-color:mediumblue;border:2px solid mediumblue}
+#gameWindow td.removed{color:mediumblue}
+#gameWindow td.hands{color:gold}
+#gameWindow td.currentSuit{border-top-color:deepskyblue;border-bottom-color:deepskyblue}
+#gameWindow td.currentRank{border-left-color:deepskyblue;border-right-color:deepskyblue}
+#gameWindow td.currentSuit.currentRank{border-color:mediumblue}
+#gameWindow p{margin:0;font-weight:bold;background-color:white;color:black}
+#gameWindow .selectable{color:darkorange}
+`;
+    var gameWindow = document.createElement('div');
+    gameWindow.id = 'gameWindow';
+    if (document.body)
+      document.body.append(gameWindow);
+    else
+      addEventListener('load', () => document.body.append(gameWindow));
+    var table = gameWindow.appendChild(document.createElement('table'));
+    for (var i = 0; i < 4; i++) {
+      var tr = table.insertRow();
+      tr.dataset.suit = i;
+      var td = tr.insertCell();
+      td.textContent = toColorEmoji('♠♥♣♦'[i]);
+      for (var j = 0; j < 13; j++) {
+        td = tr.insertCell();
+        td.dataset.rank = j;
+        td.id = 'playingcard' + (i * 13 + j);
+        td.textContent = 'A23456789⒑JQK'[j];
+      }
+      td = tr.insertCell();
+      td.textContent = toColorEmoji('♠♥♣♦'[i]);
+    }
+    gameWindow.appendChild(document.createElement('p')).id = 'gameMessage';
   };
   window.Bot = async function () {
     var bot = (extensionConfig.whatifConsole ? '(' + whatifConsole + ')();\n' : '') +
@@ -1386,6 +1404,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       [data-current-frame*="3"] [data-frame="3"],[data-current-frame*="4"] [data-frame="4"],[data-current-frame*="5"] [data-frame="5"],
       [data-current-frame*="6"] [data-frame="6"],[data-current-frame*="7"] [data-frame="7"],[data-current-frame*="8"] [data-frame="8"]{display:initial}
     `;
+    if (!extensionConfig.whatifConsole)
+      cssText += '#whatifConsoleButton{display:none}';
     if (extensionConfig.hideStatCommentButton)
       cssText += '#toggleStatCommentMobile{display:none}';
     if (extensionConfig.miniPlayer)
@@ -2439,6 +2459,19 @@ textarea{padding:5px;resize:none;font-size:16px}
     div.append(createElement('button', {
       className: 'sendEV',
       onclick: sendEV
+    }));
+    div.append(createElement('button', {
+      id: 'whatifConsoleButton',
+      textContent: 'whatif',
+      onclick: () => {
+        var gameWindow = document.getElementById('gameWindow');
+        if (!gameWindow) {
+          alert('なんか変');
+          return;
+        }
+        document.getElementById('extensionBar').after(gameWindow);
+        gameWindow.style.display = gameWindow.style.display ? '' : 'block';
+      }
     }));
     div.append(createElement('input', {
       type: 'checkbox',
