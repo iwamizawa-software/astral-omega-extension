@@ -1,5 +1,8 @@
 var inject = function () {
 
+  if (location.host !== 'monachat.tech')
+    return;
+
   var forceReload;
   var reloadChat = function () {
     forceReload = true;
