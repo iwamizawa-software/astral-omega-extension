@@ -661,7 +661,7 @@ var inject = function () {
     if (document.getElementById('gameWindow'))
       return;
     document.head.appendChild(document.createElement('style')).textContent = `
-#gameWindow {font-size:max(16px,2vw);position:absolute;z-index:10000}
+#gameWindow {display:none;font-size:max(16px,2vw);position:absolute;z-index:10000}
 #gameWindow table{border-spacing:0}
 #gameWindow td{color:white;padding:3px;font-weight:bold;background-color:mediumblue;border:2px solid mediumblue}
 #gameWindow td.removed{color:mediumblue}
@@ -2462,7 +2462,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }));
     div.append(createElement('button', {
       id: 'whatifConsoleButton',
-      textContent: 'whatif',
+      textContent: 'Ｗ',
       onclick: () => {
         var gameWindow = document.getElementById('gameWindow');
         if (!gameWindow) {
