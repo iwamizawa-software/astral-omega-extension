@@ -2525,7 +2525,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
-    document.getElementById('extensionMessage').innerHTML = '';
+    document.getElementById('extensionMessage').innerHTML = '入室したら0人になるバグはその場でリロードしてください1～2日後管理人対応予定';
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
       inputContainer.setAttribute('style', 'width:1000px');
