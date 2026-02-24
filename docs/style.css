@@ -1,0 +1,105 @@
+:root {
+  --bg-color: #d9d5da;
+  --frame-color: #ffffff;
+  --text-color: #000000;
+  --link-color: #0b57d0;       /* 普通モードのリンク */
+  --link-hover: #0842a0;       /* 普通モードのホバー */
+  --link-visited: #6b2fb6;     /* 普通モードの既読 */
+  --focus-ring: #22d3ee;       /* 共通フォーカス輪郭（見やすいシアン） */
+}
+
+body.dark {
+  --bg-color: #000000;
+  --frame-color: #121212;
+  --text-color: #ffffff;
+  --link-color: #8ab4f8;       /* ダークのリンク（高コントラスト） */
+  --link-hover: #a8c7fa;       /* ダークのホバー */
+  --link-visited: #c58af9;     /* ダークの既読（紫寄りで区別） */
+}
+
+body {
+  margin: 1em;
+  font-family: sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* 章の枠 */
+.frame {
+  background-color: var(--frame-color);
+  border-radius: 10px;
+  border: 0px;
+  margin: 1em auto;
+  padding: 1em;
+  max-width: 1000px;
+}
+
+.subframe {
+  background-color: var(--frame-color);
+  border-radius: 10px;
+  border: 1px solid var(--text-color);
+  margin: 1em 0;
+  padding: 1em;
+}
+
+/* 切り替えボタン */
+#theme-toggle {
+  position: fixed;
+  top: 0.5em;
+  right: 0.5em;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #888;
+  color: white;
+  font-size: 16px;
+}
+
+/* ==== 追加：リンクの見た目 ==== */
+a {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;        /* 下線を少し離して読みやすく */
+  text-decoration-thickness: 1.5px;
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+a:visited {
+  color: var(--link-visited);
+}
+
+/* キーボード操作でも見やすく */
+a:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* iOS/Androidのネイティブ部品もダーク対応しやすく */
+html { color-scheme: light dark; }
+
+figure img {
+  max-width: 100%;
+  border: 1px solid var(--text-color);
+  box-sizing: border-box;
+}
+
+figure img.bot { border: 0; }
+
+img[alt="🤖"] { max-height: 3em; }
+
+:target{ border: 1px solid red; }
+
+table {
+  border: 1px solid var(--text-color); /* 表全体の外枠 */
+  border-collapse: collapse; /* 枠線を重ねて1本にする */
+}
+
+th, td {
+  border: 1px solid var(--text-color); /* セルごとの枠線 */
+  padding: 2px;
+}

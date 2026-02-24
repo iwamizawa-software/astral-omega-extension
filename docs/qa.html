@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>質問と回答</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <section class="frame">
+    <h1>質問と回答</h1>
+    <ul id="toc"></ul>
+  </section>
+
+  <section class="frame">
+    <h1>しゃべれなくなった、動けなくなった</h1>
+    <p>リロード（更新）してください。
+  </section>
+  
+  <section class="frame">
+    <h1>無視されたわけでもないのに退室のログも音も出ないことがある</h1>
+    <p>これはバグではなく、スマホがスリープしたりネットワークが切断されたときに消える仕様です。逆に音もなく復帰することもあります。
+    <p>仕様というのは意図してそういうふうに作られたということです。
+    <p>わかりづらいとか何か変えてほしいと思う人は管理人に要望を出してください。
+    <p>管理人の連絡先は<a href="https://x.com/monachatReborn">@monachatReborn</a>です。管理人は多忙なので返答に時間がかかる場合があります。
+    <p>ちなみにこの文書を書いているのは管理人ではなく拡張機能作者です。
+  </section>
+  
+  <section class="frame">
+    <h1>切断になって入れないことがある</h1>
+    <p>切断になるのは主に複数入室の制限によるものですが、複数入室していないのに切断になるのはバグです。
+    <p>これは拡張機能をOFFにしても直りません。
+    <p>こうなった場合、今のところは管理人にサーバーを再起動してもらうか、自分のIPアドレスを変えるしかありません。
+    <p>管理人の連絡先は<a href="https://x.com/monachatReborn">@monachatReborn</a>です。管理人は多忙なので返答に時間がかかる場合があります。
+  </section>
+  
+  <section class="frame">
+    <h1>バグ時押すボタンを押すとどうなるのか</h1>
+    <p>このボタンを押すと拡張機能がOFFになります。
+    <p>拡張機能によりチャットが出来なくなる等の致命的なバグが発生したときに使います。
+    <p>拡張機能が原因ではないバグの場合は押しても直りません。
+    <p>拡張機能については右上のℹ️を押してください。
+  </section>
+
+  <section class="frame">
+    <h1>説明とか書いてあるページは無いのか</h1>
+    <p>右上のℹ️を押してください。質問と回答のページもそこからたどれます。
+  </section>
+
+  <section class="frame">
+    <h1>キャラの下の文字はどうやるのか</h1>
+    <p>「状態：文字」あるいは「stat:文字」と発言してください。これは公式の機能なので拡張機能がOFFでも出来ます。
+  </section>
+
+  <button id="theme-toggle">🌙</button>
+
+  <script src="script.js"></script>
+  <script>
+    Array.from(document.getElementsByTagName('section')).slice(1).forEach((section, i) => {
+      const li = document.getElementById('toc').appendChild(document.createElement('li'));
+      const a = li.appendChild(document.createElement('a'));
+      section.id = 'section' + i;
+      a.href = '#' + section.id;
+      a.textContent = section.getElementsByTagName('h1')[0]?.textContent;
+    });
+  </script>
+
+</body>
+</html>

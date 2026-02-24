@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拡張機能説明書</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section class="frame">
+    <h1>拡張機能説明書</h1>
+    <p><a href="https://mojachat.web.fc2.com/bot.html"><img src="bot.png" alt="🤖">BOTのページはこちら</a>
+    <p><a href="qa.html">よくある質問と回答はこちら</a>
+    <h2>拡張機能とは</h2>
+    <p>拡張機能は部外者が非公式に機能を追加したものです。
+    <p><a href="settings.png">公式の設定からONOFF切り替え出来ます。</a>
+  </section>
+
+  <section class="frame">
+    <h2>更新履歴</h2>
+    <ul>
+      <li>2026/1/16 拡張設定に検閲ワード機能追加
+      <li>2025/9/19 ミニプレイヤーがTwitchに対応
+      <li>2025/9/10 アップロード機能と暗号化機能の注意書きを追加　動くキャラを設定から無効化できるようにした
+    </ul>
+  </section>
+
+  <section class="frame">
+    <h2>機能一覧</h2>
+    <p>ここに書いてない機能もありますが、基本的には設定ページを見て、わからないことがあったら人の多い部屋に行って誰かに聞いてください。
+    <section class="subframe">
+      <h3>上のバー</h3>
+      <figure><img src="bar.png"></figure>
+      <p>拡張をONにすると上にバーが出ます。拡張独自の設定は上の設定ボタンを押してください。
+      <p>バグったら押すボタンを押すと拡張がOFFになります。またONにしたいときは公式の設定からONにしてください。
+      <p><a href="encryption.html">暗号化についてはこっちに書いてあります。</a>
+    </section>
+    <section class="subframe">
+      <h3>スマホモード</h3>
+      <figure><img src="sp.png"></figure>
+      <p>スマホモードをONにするとボタンが増えます。白い丸はキャラを動かすボタンで、🎮ボタンでそれを隠したり出したり出来ます。
+      <p>🔈ボタンで<a href="#stat">状態発言モード</a>の切り替えが出来ます。このボタンは設定で消せます。
+      <p>上のバーには接続維持チェックボックスが出ます。これをONにするとスリープとか他の事しても接続を維持できる可能性があります。絶対じゃないので普通に切断することもあります。
+    </section>
+    <section class="subframe">
+      <h3>アップロード機能</h3>
+      <p>アップロード機能をONにすると画像やファイルをアップロード出来るようになります。
+      <p>発言を入力するところに貼り付けするか、チャット画面にファイルをドラッグアンドドロップするとアップロードできます。
+      <p>スマホモードでは＋ボタンを押してもアップロードできます。
+      <p><strong>公になっても問題のないデータのみアップロードしてください。</strong>この機能は管理人と拡張作者だけが居るDiscordサーバーにアップロードされます。1分で削除する仕組みになっていますが、URL自体は24時間有効になります。
+      <p>法律に違反する恐れのあるデータはアップロードしないでください。
+      <p>現在この機能は悪用防止で常連しか使えないようにしています。使いたい人は以下のトリップの人を探して言ってください。このメンバーは今後増える可能性があります。
+      <ul>
+        <li>◆bbbbbbbbB.
+        <li>◆uuuuuuuuoNin
+        <li>◆RUKA.XRpN.
+        <li>◆Tiribo.xQs
+      </ul>
+    </section>
+    <section class="subframe" id="stat">
+      <h3>状態発言モード</h3>
+      <figure><img src="stat.png"></figure>
+      <p>状態発言モードをONにすると発言が状態に反映されます。状態は２０文字までなのでそれ以上の文字は切られます。
+      <p>切り替えるには上のバーの拡張メニューを使うか、「状態発言」または「scom」と発言してください。
+      <p>スマホモードでは🔈ボタンでも切り替えられます。
+      <p>状態はログに残りませんが、油断して秘密の会話をしないようにしてください。技術的に状態の履歴を取ることは出来ますし、画面を録画する人もいないとは言い切れません。
+    </section>
+  </section>
+
+  <button id="theme-toggle">🌙</button>
+
+  <script src="script.js"></script>
+</body>
+</html>

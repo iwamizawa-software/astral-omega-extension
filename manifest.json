@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "☆ω",
+  "version": "0",
+  "author": "iwamizawa-software",
+  "content_scripts": [
+    {
+      "js": [
+        "extension.js"
+      ],
+      "matches": [
+        "https://monachat.tech/*"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    }
+  ]
+}
