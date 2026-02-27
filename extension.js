@@ -970,7 +970,7 @@ var inject = function () {
   var processImage = async function (file) {
     const isImage = file.type.startsWith("image/");
     const isHeic = file.type === "image/heic" || file.type === "image/heif";
-    const LIMIT = 3.5 * 1024 * 1024;
+    const LIMIT = 10 * 1024 * 1024;
   
     if (!isImage || (!isHeic && file.size < LIMIT)) {
       return file;
