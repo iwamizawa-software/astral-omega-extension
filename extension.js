@@ -1021,13 +1021,15 @@ var inject = function () {
       }
       if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
         return;
+      displayUploading(true);
       file = await processImage(file);
-      if (extensionConfig.confirmUpload && !await asyncConfirm(getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>'))
+      if (extensionConfig.confirmUpload && !await asyncConfirm(getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>')) {
+        displayUploading(false);
         return;
+      }
       var formData = new FormData();
       formData.append('file', file, file.name.replace(/^[\s\S]*?(\.[^\.]+)?$/, 'file$1'));
       formData.append('username', Bot?.users?.[Bot.myId]?.fullName);
-      displayUploading(true);
       var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
       Bot.comment(result.attachments[0].url);
       setTimeout(() => fetch(extensionConfig.webhook + '/messages/' + result.id, {method: 'DELETE'}), 60000);
