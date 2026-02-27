@@ -1051,11 +1051,20 @@ var inject = function () {
     e.preventDefault();
     upload(e.dataTransfer.files[0]);
   });
-  addEventListener('paste', e => {
-    if (!(/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook) && e.clipboardData.types.includes('Files')))
+  addEventListener('paste', async e => {
+    if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
       return;
-    e.preventDefault();
-    upload(e.clipboardData.files[0]);
+    if (e.clipboardData.types.includes('Files')) {
+      e.preventDefault();
+      upload(e.clipboardData.files[0]);
+      return;
+    }
+    var text = e.clipboardData.getData('text/plain');
+    if (text.startsWith('data:image/jpeg') || text.startsWith('data:image/png') || text.startsWith('data:image/gif')) {
+      e.preventDefault();
+      var blob = await (await fetch(text)).blob();
+      upload(new File([blob], blob.type.replace('/', '.'), { type: blob.type }));
+    }
   });
   var logWindow, openLog = function () {
     if (logWindow && !logWindow.closed) {
