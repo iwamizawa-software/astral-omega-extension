@@ -967,6 +967,48 @@ var inject = function () {
       return;
     smartInputBox.placeholder = inputBox.placeholder = (smartInputBox.disabled = inputBox.disabled = uploading) ? 'ファイルをアップロード中...' : '';
   };
+  var processImage = async function (file) {
+    const isImage = file.type.startsWith("image/");
+    const isHeic = file.type === "image/heic" || file.type === "image/heif";
+    const LIMIT = 3.5 * 1024 * 1024;
+  
+    if (!isImage || (!isHeic && file.size < LIMIT)) {
+      return file;
+    }
+  
+    const bitmap = await createImageBitmap(file);
+    let { width, height } = bitmap;
+  
+    let canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+  
+    let blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.9)
+    );
+  
+    if (blob.size >= LIMIT) {
+      const ratio = Math.sqrt(LIMIT / blob.size) * 0.9;
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+  
+      canvas.width = width;
+      canvas.height = height;
+      ctx = canvas.getContext("2d");
+      const img = await createImageBitmap(blob);
+      ctx.drawImage(img, 0, 0, width, height);
+      img.close();
+  
+      blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.9)
+      );
+    }
+  
+    return new File([blob], "file.jpg", { type: "image/jpeg" });
+  };
   var upload = async file => {
     try {
       if (!/^(?:image|video|audio|text)\//.test(file.type)) {
@@ -979,6 +1021,7 @@ var inject = function () {
       }
       if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
         return;
+      file = await processImage(file);
       if (extensionConfig.confirmUpload && !await asyncConfirm(getDetailHTML(file) + escapeHTML(file.name) + 'をアップロードしますか？<br><strong style="color:red">アップロードしたファイルは24時間消えないので注意してください</strong>'))
         return;
       var formData = new FormData();
