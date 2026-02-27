@@ -998,7 +998,7 @@ var inject = function () {
       canvas.width = width;
       canvas.height = height;
       ctx = canvas.getContext("2d");
-      const img = await createImageBitmap(blob);
+      const img = await createImageBitmap(file);
       ctx.drawImage(img, 0, 0, width, height);
       img.close();
   
