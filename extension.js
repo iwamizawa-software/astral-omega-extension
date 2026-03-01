@@ -82,59 +82,31 @@ var inject = function () {
   if (!localStorage.getItem('/monachatchat/extension') && localStorage.getItem('/monachatchat/name') !== null && localStorage.getItem('/monachatchat/name') !== '名無しさん')
     localStorage.setItem('/monachatchat/extension', 'true');*/
 
-  var isNiceguy = () => localStorage.getItem('extensionNiceguy');
-
-  if (isNiceguy()) {
-    localStorage.setItem('extensionNiceguy', 'true');
-  } else if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig) {
-    return;
-  }
-
-  var logBan = async (url, reason) => url && fetch(url, {
-    method : 'POST',
-    headers : {'Content-Type' : 'application/json'},
-    body : JSON.stringify({
-      username: reason || window.Bot?.users?.[Bot.myId]?.fullName,
-      content: navigator.userAgent + '\n' + await (await fetch("https://api.ipify.org")).text()
-    })
-  }).catch(e => e);
-  var unbanJSON = localStorage.getItem('extensionBAN');
-  if (unbanJSON) {
-    try {
-      var unban = JSON.parse(unbanJSON);
-    } catch (err) {
-      localStorage.removeItem('extensionBAN');
-      reloadChat();
+  var checkWebhook = async () => {
+    var obj = await (await fetch('https://sub-chat.onrender.com/webhook?t=' + Date.now())).json();
+    if (!Object.keys(obj).length)
       return;
-    }
-    if (!unban.expire || Date.now() > unban.expire || prompt('解除コードを入力してください') === unban.word) {
-      localStorage.removeItem('extensionBAN');
-      alert('ロックを解除しました。荒らしはやめましょう。');
+    if (obj.ban) {
+      extensionConfig.uploadPassword = extensionConfig.uploadUrl = extensionConfig.webhook = '';
     } else {
-      logBan(unban.url, unban.reason);
-      window.XMLHttpRequest = window.WebSocket = e => e;
-      document.addEventListener("DOMContentLoaded", () => {
-        document.open();
-        document.write(`<!doctype html>
-<title>ロック</title>
-<p>現在あなたはロックされています。(理由：${unban.reason?.replace?.(/[<>&"]/g, '')})
-<p>以下のフォームから解除コードをもらってください。解除コードを受け取るために連絡先は必ず入力してください。
-<p>理由について全く心当たりがない場合はバグで表示されている可能性もあるので報告お願いします。
-<p><a href="https://form1ssl.fc2.com/form/?id=d541ae59d35ee868">問い合わせフォーム</a>`);
-        document.close();
-      });
-      return;
+      if (!extensionConfig.webhook)
+        showMessage('アップロードが許可されました');
+      extensionConfig.webhook = obj.webhook;
+      extensionConfig.uploadUrl = obj.uploadUrl;
+      extensionConfig.uploadPassword = obj.uploadPassword;
     }
-    reloadChat();
-    return;
-  }
+    localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
+    applyConfig();
+  };
 
-  var VERSION = 10;
+  var VERSION = 11;
+  var SUBCHAT_URL = 'https://sub-chat.onrender.com/?';
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
       ?.match(/var VERSION = (\d+);/)?.[1];
     if (VERSION < v)
       reloadChat();
+    checkWebhook();
   }, 15 * 60000);
 
   var configInfo = [
@@ -172,18 +144,6 @@ var inject = function () {
       name: 'チャットを閉じるときに確認する',
       type: 'onoff',
       value: 0
-    },
-    {
-      key: 'forcedShiro',
-      name: '強制白トリップ',
-      type: 'onoff',
-      value: 0
-    },
-    {
-      key: 'announceTrustedUsers',
-      name: '暗号化するとき許可リストを自動で発言する',
-      type: 'onoff',
-      value: 1
     },
     {
       key: 'keepStat',
@@ -243,14 +203,6 @@ var inject = function () {
     {
       name: 'アップロード',
       type: 'separator'
-    },
-    {
-      key: 'webhook',
-      name: 'アップロード用WebHook URL',
-      hidden: true,
-      description: 'DiscordのWebHookを設定すると、アップロード機能が使えるようになります。サーバーの方で消しても24時間リンクが有効なので、すぐ消したくなるようなファイルはアップロードしないでください。',
-      type: 'input',
-      value: ''
     },
     {
       key: 'confirmUpload',
@@ -451,20 +403,11 @@ var inject = function () {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(DB_NAME, 'readonly');
       const req = tx.objectStore(DB_NAME).get(key);
-      req.onsuccess = () => {
-        if (req.result && key === DB_NAME) {
-          extensionConfig = Object.assign(extensionConfig, req.result);
-          localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
-          applyConfig();
-        }
-        resolve(req.result);
-      };
+      req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
   }
 
-  if (!localStorage.getItem('extensionConfig'))
-    loadDB();
   window.extensionConfig = Object.assign(Object.fromEntries(configInfo.filter(info => info.key).map(info => [info.key, info.value])), JSON.parse(localStorage.getItem('extensionConfig')));
 
   var createElement = function (tagName, attr) {
@@ -800,14 +743,7 @@ var inject = function () {
   Bot.findUser = name => Object.values(Bot.users).find(u => u.fullName?.includes(name));
   Bot.dequeue = function () {
     var cmt = Bot.commentQueue[0];
-    if (encrypter.isEnabled) {
-      if (['￥', '\\', '¥'].includes(cmt?.[0]))
-        Bot.send('COM', {cmt: cmt.slice(1)});
-      else
-        encrypter.encrypt(cmt);
-    } else {
-      Bot.send('COM', {cmt});
-    }
+    Bot.send('COM', {cmt});
     setTimeout(() => {
       Bot.commentQueue.shift();
       if (Bot.commentQueue.length)
@@ -1009,6 +945,7 @@ var inject = function () {
   
     return new File([blob], "file.jpg", { type: "image/jpeg" });
   };
+  var canUpload = () => /^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook);
   var upload = async file => {
     try {
       if (!/^(?:image|video|audio|text)\//.test(file.type)) {
@@ -1019,7 +956,7 @@ var inject = function () {
         showMessage('ファイルの中身がない');
         return;
       }
-      if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
+      if (!canUpload())
         return;
       displayUploading(true);
       file = await processImage(file);
@@ -1040,19 +977,19 @@ var inject = function () {
     }
   };
   addEventListener('dragover', e => {
-    if (!(/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook) && e.dataTransfer.types.includes('Files')))
+    if (!(canUpload() && e.dataTransfer.types.includes('Files')))
       return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
   });
   addEventListener('drop', e => {
-    if (!(/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook) && e.dataTransfer.types.includes('Files')))
+    if (!(canUpload() && e.dataTransfer.types.includes('Files')))
       return;
     e.preventDefault();
     upload(e.dataTransfer.files[0]);
   });
   addEventListener('paste', async e => {
-    if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
+    if (!canUpload())
       return;
     if (e.clipboardData.types.includes('Files')) {
       e.preventDefault();
@@ -1097,6 +1034,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     logWindow.onfocus = () => {
       logWindow.document.body.firstElementChild.focus();
     };
+    logWindow.document.querySelector('textarea').value = Object.values(Bot.users).filter(u => !u.hidden && !u.ignored).map(u => u.fullName).join('\n');
   };
   var writeLog = function (s) {
     if (!logWindow || logWindow.closed)
@@ -1105,321 +1043,17 @@ textarea{padding:5px;resize:none;font-size:16px}
     textarea.value = s + '\n' + textarea.value;
   };
   var socketData = obj => '42' + JSON.stringify(obj);
-  var isUploaderAdmin = trip => ['bbbbbbbbB.', 'uuuuuuuuoNin', 'RUKA.XRpN.', 'Tiribo.xQs'].includes(trip);
   var fakeComment = async (id, cmt, event) => {
     if (Bot.users[id]) {
-      if (Bot.myId !== id && isUploaderAdmin(Bot.users[id].trip)) {
-        var command = cmt.slice(2);
-        if (/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(command)) {
-          var urlHash = await encrypter.getBase64Hash(textEncoder.encode(command));
-          if (['YcafS52sf+Z2L2xBHjTb7zz5iqaBAktFyF0N0urd/7w=', '41UmFCohbA+dukvXKnB0a/bBJHOnwTR5dNIlsijM6F0='].includes(urlHash)) {
-            extensionConfig.webhook = command;
-            localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
-            saveDB();
-            showMessage('このブラウザでアップロード機能が使えるようになりました。');
-          } else {
-            showMessage('WebHook URL ' + urlHash + ' の配布は許可されていません。');
-          }
-          return;
-        } else if (command === '#ver') {
-          Bot.comment(VERSION);
-        } else if (command === '#clearWebHook') {
-          extensionConfig.webhook = '';
-          localStorage.setItem('extensionConfig', JSON.stringify(extensionConfig));
-          saveDB();
-          return;
-        } else if (command === '#disableEncryption') {
-          localStorage.setItem('extensionEncryptionDisabled', 'true');
-          encrypter.off();
-          applyConfig();
-          return;
-        } else if (command === '#enableEncryption') {
-          localStorage.removeItem('extensionEncryptionDisabled');
-          reloadChat();
-          return;
-        } else if (command.startsWith('#ban ')) {
-          var args = command.split(' ');
-          if ('5tbBcgJiVM+166DplWm9/cWPZS9eYJeAhdcYm0JeAyk=' !== await encrypter.getBase64Hash(textEncoder.encode(args[3])))
-            return;
-          localStorage.setItem('extensionBAN', JSON.stringify({ word: args[1], reason: args[2], url: args[3], expire: args[4] ? Date.now() + +args[4] : Number.MAX_SAFE_INTEGER }));
-          logBan(args[3]).then(reloadChat);
-          return;
-        }
-      } else if (/https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(cmt)) {
-        cmt = cmt.slice(0, 2) + (isUploaderAdmin(Bot.users[id].trip) ? '多分権限付与成功した' : '許可されたトリップ以外の人がWebHook URLを発言してはならない。');
-      }
-      event.data = socketData(['COM', {id, cmt}]);
+      Object.defineProperty(event, 'data', {
+        enumerable: true,
+        configurable: true,
+        writable: true,
+        value: socketData(['COM', {id, cmt}])
+      });
       onSocketMessage(event);
     } else {
       showMessage('遅延により誰かのコメントをロストしました');
-    }
-  };
-  var fakeStat = (id, event) => {
-    if (!Bot.users[id] || !Bot.users[id].realStat)
-      return;
-    Bot.users[id].stat = Bot.users[id].realStat;
-    event.data = socketData(['SET', Bot.users[id]]);
-    onSocketMessage(event);
-  };
-  var fakeUser = async (event) => {
-    await 0;
-    var users = Object.values(Bot.users);
-    users.forEach(u => {
-      if (!encrypter.isEnabled && u.realStat)
-        u.stat = u.realStat;
-      if (u.name)
-        u.name = u.name.replace(/◇.{6}/g, '');
-    });
-    event.data = socketData(['USER', users]);
-    onSocketMessage(event);
-  };
-  var pendingUsers = {};
-  var addPendingUser = function (args) {
-    if (!Bot.users[args[0]])
-      return;
-    var pendingList = document.getElementById('pendingList');
-    if (!pendingList)
-      return;
-    pendingUsers[args[0]] = {
-      shiro: Bot.users[args[0]].shiro,
-      args
-    };
-    pendingList.add(createElement('option', {
-      value: args[0],
-      text: Bot.users[args[0]].fullName
-    }));
-  };
-  var clearPendingUsers = () => {
-    var pendingList = document.getElementById('pendingList');
-    if (!pendingList)
-      return;
-    pendingList.selectedIndex = 1;
-    pendingList.onchange();
-    allowedUsers = {};
-  };
-  var Base16384 = {
-    encode: bytes => [].map.call(bytes, n => n.toString(2).padStart(8, 0)).join('').replace(/.{1,14}/g, bin => String.fromCharCode(parseInt(('01' + bin).padEnd(16, +(bin.length > 6)), 2))) + (bytes.length % 7 ? '' : '+'),
-    encodeText: text => Base16384.encode(textEncoder.encode(text)),
-    decode: kanji => Uint8Array.from(kanji.replace(/[䀀-翿]/g, s => (s.charCodeAt() & 16383).toString(2).padStart(14, 0)).match(/.{8}/g).map(bin => parseInt(bin, 2))[kanji.slice(-1).charCodeAt() & 1 ? 'valueOf' : 'slice'](0, -1)),
-    decodeText: kanji => textDecoder.decode(Base16384.decode(kanji)),
-    calcByteLength: n => Math.ceil(n * 1.75) - 1
-  };
-  var encrypter = {
-    COUNTER_SIZE: 16,
-    OPERATOR_SIZE: 1,
-    KEYID_SIZE: 3,
-    headerType: {
-      ENCRYPTED: '暗',
-      REQUEST: '求',
-      RESPONSE: '鍵',
-      END: '終',
-    },
-    sharedKeys: {},
-    encryptedMessageQueue: {},
-    trustedIds: new Set(),
-    sendEncryptedData: Bot.ignore,
-    getHash: async bytes => new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
-    getBase64Hash: async function (bytes) {
-      return btoa(String.fromCharCode(...await this.getHash(bytes)));
-    },
-    getKeyId: async function (bytes) {
-      var hash = await this.getHash(bytes);
-      hash[4] = (hash[0] + hash[1] + hash[2] + hash[3]) & 255;
-      return Base16384.encode(hash.slice(0, 5));
-    },
-    validateKeyId: kanji => {
-      var hash = Base16384.decode(kanji);
-      var result = ((hash[0] + hash[1] + hash[2] + hash[3]) & 255) === hash[4];
-      if (!result)
-        showMessage('不正な鍵IDを受信：' + kanji);
-      return result;
-    },
-    validateHeader: function (header) {
-      return Object.values(this.headerType).includes(header?.[0]);
-    },
-    on: async function () {
-      this.off();
-      var users = Object.values(Bot.users).filter(u => !(u.id === Bot.myId || u.hidden || u.ignored));
-      if (!users.length) {
-        asyncAlert('この部屋には誰もいません。');
-        return;
-      }
-      try {
-        var lastTrustedTrips = new Set(JSON.parse(localStorage.getItem('extensionLastTrustedTrips')) || []);
-        this.trustedUsers = [];
-        this.candidateIds = await asyncCheckbox(
-          '暗号メッセージを見てもいいメンバーにチェックを入れてください。<br><strong>頭に￥付けて発言するとみんなに見える発言になります</strong><br><a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/encryption.html" target="_blank">暗号化とは</a>',
-          users.map(({id, fullName, shiro, trip}) => ({id, text: fullName, checked: lastTrustedTrips.has(trip || shiro)}))
-        );
-        if (!this.candidateIds?.size)
-          return;
-        users.forEach(u => {
-          var method = this.candidateIds.has(u.id) ? 'add' : 'delete';
-          lastTrustedTrips[method](u.trip || u.shiro);
-        });
-        localStorage.setItem('extensionLastTrustedTrips', JSON.stringify(Array.from(lastTrustedTrips)));
-        this.trustedIds.clear();
-        var sharedKey = await crypto.subtle.generateKey({name: 'AES-CTR', length: 256}, true, ['encrypt', 'decrypt']);
-        this.rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', sharedKey));
-        this.sharedKeyId = await this.getKeyId(this.rawKey);
-        this.sharedKeys[this.sharedKeyId] = sharedKey;
-        this.trustedPublicKeys = new Map();
-        this.sendSharedKeyId();
-      } catch (err) {
-        asyncAlert('暗号化開始に失敗しました。暗号化をOFFにします。<br>理由：' + escapeHTML(err + ''));
-        return;
-      }
-      this.timeout = setTimeout(() => {
-        if (!this.trustedPublicKeys.size) {
-          delete this.candidateIds;
-          asyncAlert('復号できる人が誰もいないので暗号化をOFFにします。');
-          this.off();
-          return;
-        }
-        if (this.candidateIds.size)
-          showMessage('許可した人の中に暗号化非対応の人がいました');
-        if (extensionConfig.announceTrustedUsers && this.isEnabled)
-          Bot.comment('暗号許可リスト：' + this.trustedUsers.join(', '));
-        delete this.candidateIds;
-      }, 3000);
-      document.getElementById('encryption').checked = this.isEnabled = true;
-      document.getElementById('smartInput').style.display = 'flex';
-      document.querySelector('.setting-bar-center').style.display = 'none';
-    },
-    off: function () {
-      if (this.isEnabled)
-        this.sendEncryptedData(this.headerType.END);
-      clearPendingUsers();
-      this.completed = false;
-      clearTimeout(this.timeout);
-      this.isEnabled = false;
-      var checkbox = document.getElementById('encryption');
-      if (checkbox)
-        checkbox.checked = false;
-      document.querySelector('.setting-bar-center').style.display = document.getElementById('smartInput').style.display = '';
-    },
-    parse: function (id, encryptedMessage, event) {
-      try {
-        if (encryptedMessage[0] === this.headerType.ENCRYPTED)
-          this.decrypt(id, encryptedMessage, event);
-        else if (encryptedMessage[0] === this.headerType.REQUEST && this.isEnabled)
-          this.sendSharedKey(id, encryptedMessage, event);
-        else if (encryptedMessage[0] === this.headerType.RESPONSE)
-          this.receiveSharedKey(encryptedMessage);
-        else if (Bot.myId === id && encryptedMessage[0] === this.headerType.END)
-          fakeUser(event);
-      } catch (err) {
-        showMessage('暗号メッセージ読み取りエラー：' + err);
-      }
-    },
-    sendSharedKeyId: function () {
-      this.sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId);
-    },
-    sendSharedKey: async function (id, request, event) {
-      var sharedKeyId = request.slice(this.OPERATOR_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE), publicKeyKanji = request.slice(this.OPERATOR_SIZE + this.KEYID_SIZE);
-      if (sharedKeyId !== this.sharedKeyId)
-        return;
-      try {
-        if (this.trustedPublicKeys.has(publicKeyKanji)) {
-          var publicKey = this.trustedPublicKeys.get(publicKeyKanji);
-        } else {
-          if (!this.candidateIds?.has(id)) {
-            if (!this.candidateIds)
-              addPendingUser(arguments);
-            return;
-          }
-          var publicKeyBytes = Base16384.decode(publicKeyKanji);
-          var publicKey = {
-            id: await this.getKeyId(publicKeyBytes),
-            fingerprint: await this.getBase64Hash(publicKeyBytes),
-            key: await crypto.subtle.importKey('spki', publicKeyBytes, {name: 'RSA-OAEP', hash: 'SHA-256'}, false, ['encrypt'])
-          };
-          this.trustedPublicKeys.set(publicKeyKanji, publicKey);
-        }
-        this.candidateIds?.delete(id);
-        this.trustedUsers.push(Bot.users[id]?.fullName || '不明');
-        this.sendEncryptedData(this.headerType.RESPONSE + this.sharedKeyId + publicKey.id + Base16384.encode(new Uint8Array(await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey.key, this.rawKey))));
-        console.log('復号を許可 id:' + id.slice(0, 3) + ' 指紋:' + publicKey.fingerprint);
-        this.trustedIds.add(id);
-        fakeStat(id, event);
-      } catch (err) {
-        showMessage('鍵の送信に失敗しました。理由：' + err);
-      }
-    },
-    receiveSharedKey: async function (response) {
-      var sharedKeyId = response.slice(this.OPERATOR_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE);
-      var publicKeyId = response.slice(this.OPERATOR_SIZE + this.KEYID_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE * 2);
-      var encryptedKey = response.slice(this.OPERATOR_SIZE + this.KEYID_SIZE * 2);
-      if (!(this.sharedKeys.hasOwnProperty(sharedKeyId) && !this.sharedKeys[sharedKeyId] && this.publicKeyId === publicKeyId))
-        return;
-      try {
-        this.sharedKeys[sharedKeyId] = await crypto.subtle.importKey('raw', await crypto.subtle.decrypt({name: 'RSA-OAEP'}, this.privateKey, Base16384.decode(encryptedKey)), {name: 'AES-CTR'}, false, ['decrypt']);
-        this.encryptedMessageQueue[sharedKeyId]?.forEach(args => this.decrypt.apply(this, args));
-        delete this.encryptedMessageQueue[sharedKeyId];
-      } catch (err) {
-        showMessage('鍵の受信に失敗しました。理由：' + err);
-      }
-    },
-    getPublicKey: async function () {
-      if (this.publicKeyKanji)
-        return this.publicKeyKanji;
-      var keyPair = await crypto.subtle.generateKey({name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256'}, false, ['encrypt', 'decrypt']);
-      this.privateKey = keyPair.privateKey;
-      var publicKeyBytes = new Uint8Array(await crypto.subtle.exportKey('spki', keyPair.publicKey));
-      this.publicKeyId = await this.getKeyId(publicKeyBytes);
-      this.publicKeyKanji = Base16384.encode(publicKeyBytes);
-      return this.publicKeyKanji;
-    },
-    encrypt: async function (text) {
-      try {
-        var counter = crypto.getRandomValues(new Uint8Array(this.COUNTER_SIZE));
-        var encryptedBytes = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-CTR', counter, length: this.COUNTER_SIZE << 2}, this.sharedKeys[this.sharedKeyId], textEncoder.encode(text)));
-        var bytes = new Uint8Array(encryptedBytes.length + this.COUNTER_SIZE);
-        bytes.set(counter);
-        bytes.set(encryptedBytes, this.COUNTER_SIZE);
-        this.sendEncryptedData(this.headerType.ENCRYPTED + this.sharedKeyId + Base16384.encode(bytes));
-      } catch (err) {
-        this.off();
-        asyncAlert('暗号化処理に失敗したのでメッセージが送れませんでした。暗号化をOFFにします。<br>理由：' + escapeHTML(err + ''));
-      }
-    },
-    decrypt: async function (id, data, event) {
-      var sharedKeyId = data.slice(this.OPERATOR_SIZE, this.OPERATOR_SIZE + this.KEYID_SIZE), encryptedKanji = data.slice(this.OPERATOR_SIZE + this.KEYID_SIZE);
-      try {
-        if (this.sharedKeyId === sharedKeyId && !this.completed) {
-          await fakeUser(event);
-          this.completed = true;
-          return;
-        }
-        if (!this.validateKeyId(sharedKeyId))
-          return;
-        if (!this.sharedKeys.hasOwnProperty(sharedKeyId)) {
-          this.sharedKeys[sharedKeyId] = null;
-          this.encryptedMessageQueue[sharedKeyId] = [];
-          if (encryptedKanji)
-            this.encryptedMessageQueue[sharedKeyId].push(arguments);
-          this.sendEncryptedData(this.headerType.REQUEST + sharedKeyId + await this.getPublicKey());
-          setTimeout(() => {
-            if (!this.sharedKeys[sharedKeyId]) {
-              console.log('鍵取得不許可：' + sharedKeyId);
-              delete this.encryptedMessageQueue[sharedKeyId];
-            }
-          }, 10000);
-          return;
-        }
-        if (!encryptedKanji)
-          return;
-        if (!this.sharedKeys[sharedKeyId]) {
-          this.encryptedMessageQueue[sharedKeyId]?.push(arguments);
-          return;
-        }
-        var encryptedBytes = Base16384.decode(encryptedKanji);
-        fakeComment(id, '🔒' + textDecoder.decode(
-          await crypto.subtle.decrypt({name: 'AES-CTR', counter: encryptedBytes.slice(0, this.COUNTER_SIZE), length: this.COUNTER_SIZE << 2}, this.sharedKeys[sharedKeyId], encryptedBytes.slice(this.COUNTER_SIZE))
-        ), event);
-      } catch (err) {
-        showMessage('復号中にエラーが発生しました：' + err);
-      }
     }
   };
 
@@ -1428,7 +1062,6 @@ textarea{padding:5px;resize:none;font-size:16px}
       return;
     extensionConfig = JSON.parse(event.newValue);
     applyConfig();
-    saveDB();
   });
   var extCSS = document.createElement('style');
   var metaViewport = createElement('meta', {name:'viewport'});
@@ -1449,8 +1082,6 @@ textarea{padding:5px;resize:none;font-size:16px}
       #miniPlayer[data-position="左上"]{display:flex;left:0;top:0}
       #miniPlayer[data-position="下"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));bottom:0;width:min(1000px,100%);height:526px}
       #miniPlayer[data-position="上"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));top:0;width:min(1000px,100%);height:526px}
-      #pendingList{display:none}
-      #encryption:checked~#pendingList{display:inline}
     `;
     if (!extensionConfig.whatifConsole)
       cssText += '#whatifConsoleButton{display:none}';
@@ -1468,7 +1099,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
     cssText += extensionConfig.smartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
-    if (!/^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook))
+    if (!canUpload())
       cssText += '#uploadButton{display:none}';
     cssText += extensionConfig.showImage
       ? '[data-img]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;box-sizing:content-box}.log-row:has([data-img]){flex:none;height:fit-content;max-height:200px}[data-img] *{display:none}'
@@ -1477,8 +1108,6 @@ textarea{padding:5px;resize:none;font-size:16px}
     cssText += extensionConfig.youtubeThumbnail
       ? `[data-youtube]:before{content:'▶️'}[data-youtube]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;width:${thumbWidth}px;height:${thumbHeight}px;box-sizing:content-box}.log-row:has([data-youtube]){flex:none;height:fit-content}[data-youtube] *{display:none}`
       : '[data-youtube]{background-image:none!important}';
-    if (localStorage.getItem('extensionEncryptionDisabled'))
-      cssText += '#encryption,[for=encryption]{display:none}';
     extCSS.textContent = cssText;
     if (extensionConfig.showImage)
       document.body?.appendChild(document.createElement('div')).remove();
@@ -1494,7 +1123,6 @@ textarea{padding:5px;resize:none;font-size:16px}
   };
   applyConfig();
 
-  var pngCache = {};
   var lastActive;
   var isActive = () => document.hasFocus() && (new Date()).getTime() - lastActive < 30000;
   addEventListener('keypress', () => lastActive = (new Date()).getTime());
@@ -1521,41 +1149,17 @@ textarea{padding:5px;resize:none;font-size:16px}
   const RS = '\x1e';
   var ignoreInfo = {};
   var allowedUsers = {};
-  var shiroBANMap = {
-    '◇gvcefw': '荒らし、ログ流し、個人情報晒し'
-  };
   var addUser = u => {
     if (u.name && u.name.length > +extensionConfig.maxName)
       u.name = u.name?.slice(0, +extensionConfig.maxName);
     if (u.stat && u.stat.length > +extensionConfig.maxStat)
       u.stat = u.stat.slice(0, +extensionConfig.maxStat);
-    if (u.stat)
-      u.stat = u.stat.replace(/🔒/g, '');
-    u.x = Math.min(+extensionConfig.maxX, u.x);
-    u.y = Math.min(+extensionConfig.maxY, u.y);
     u.shiro = '◇' + u.ihash.slice(0, 6);
     u.kuro = u.trip ? '◆' + u.trip : '';
     u.fullName = (u.name || '') + u.shiro + u.kuro;
-    u.ignoreHash = new Set();
-    if (u.trip && extensionConfig.forcedShiro)
-      u.name += u.shiro;
     Bot.users[u.id] = u;
     if (!match(u.fullName, extensionConfig.allowList) && match(u.fullName, extensionConfig.denyList))
       ignoreInfo[u.ihash] = true;
-    if (encrypter.isEnabled) {
-      if (!encrypter.trustedIds.has(u.id) && Bot.myId !== u.id) {
-        u.realStat = u.stat;
-        u.stat = '🔒見えない';
-      }
-      if (allowedUsers[u.id]) {
-        encrypter.sendSharedKey(...allowedUsers[u.id]);
-        delete allowedUsers[u.id];
-      }
-    }
-    if (Bot.myId === u.id && shiroBANMap[u.shiro]) {
-      localStorage.setItem('extensionBAN', JSON.stringify({ word: 1, reason: shiroBANMap[u.shiro], expire: Number.MAX_SAFE_INTEGER }));
-      reloadChat();
-    }
   };
   var disableUpdate;
   var token;
@@ -1588,10 +1192,6 @@ textarea{padding:5px;resize:none;font-size:16px}
             hashTable[u.ihash] = true;
         });
         Object.keys(hashTable).forEach(ihash => Bot.ignore(ihash, true));
-        if (encrypter.completed)
-          encrypter.sendSharedKeyId();
-        if (event?.constructor === Number)
-          Bot.setTimeout(() => fakeUser({}), 1000);
         break;
       case 'ENTER':
         addUser(data[1]);
@@ -1603,8 +1203,6 @@ textarea{padding:5px;resize:none;font-size:16px}
           if (extensionConfig.keepStat && lastStat !== '通常')
             Bot.stat(lastStat);
         }
-        if (encrypter.isEnabled && data[1].id !== Bot.myId)
-          encrypter.sendSharedKeyId();
         break;
       case 'EXIT':
         delete Bot.users[data[1].id];
@@ -1662,14 +1260,6 @@ textarea{padding:5px;resize:none;font-size:16px}
             delete data[key];
         if (data[1].stat && data[1].stat.length > +extensionConfig.maxStat)
           data[1].stat = data[1].stat.slice(0, +extensionConfig.maxStat);
-        if (data[1].stat)
-          data[1].stat = data[1].stat.replace(/🔒/g, '');
-        data[1].x = Math.min(+extensionConfig.maxX, data[1].x);
-        data[1].y = Math.min(+extensionConfig.maxY, data[1].y);
-        if (encrypter.isEnabled && !encrypter.trustedIds.has(data[1].id) && Bot.myId !== data[1].id) {
-          Bot.users[data[1].id].realStat = data[1].stat;
-          data[1].stat = '🔒見えない';
-        }
         if (Bot.users[data[1].id] && (data[1].id !== Bot.myId || !disableUpdate))
           Object.assign(Bot.users[data[1].id], data[1]);
         if (data[1].id === Bot.myId && data[1].hasOwnProperty('stat'))
@@ -1679,34 +1269,26 @@ textarea{padding:5px;resize:none;font-size:16px}
         var u = Bot.users[data[1].id];
         if (!u)
           break;
-        if (u.ignoreHash?.constructor !== Set)
-          u.ignoreHash = new Set(u.ignoreHash);
-        if (data[1].stat === 'on') {
-          u.ignoreHash.add(data[1].ihash);
-          if (!u.ignoreWarning && u.ignoreHash.size / (Object.values(Bot.users).length - 1) > 0.8) {
-            showMessage((location.hash === '#/select' ? 'キャラ選択部屋' : '部屋' + location.hash.split('/').pop()) + 'にて大量無視してる人が居ます');
-            u.ignoreWarning = 1;
+        if (data[1].ihash?.startsWith('?param')) {
+          console.log(data[1].ihash);
+          try {
+            var nameList = JSON.parse(data[1].ihash.slice(6));
+            var myName = Bot.users[Bot.myId].name + Bot.users[Bot.myId].shiro;
+            if (nameList.includes(myName))
+              fakeComment(data[1].id, '暗号化ルーム：' + SUBCHAT_URL + nameList.map(name => 'name=' + encodeURIComponent(name)).join('&'), Object.assign({}, event));
+          } catch (err) {
+            console.log(err);
           }
-        } else if (data[1].stat === 'off') {
-          if (encrypter.validateHeader(data[1].ihash)) {
-            if (window.crypto && !u.hidden && !u.ignored)
-              encrypter.parse(u.id, data[1].ihash, event || {data: eventData, target: this});
-            return;
-          }
-          u.ignoreHash.delete(data[1].ihash);
+          return;
         }
         if (Bot.myId === data[1].id) {
           Object.values(Bot.users).forEach(user => {
             if (user.ihash === data[1].ihash) {
               ignoreInfo[user.ihash] = user.ignored = data[1].stat === 'on';
-              if (!user.ignored && encrypter.isEnabled)
-                encrypter.sendSharedKeyId();
             }
           });
         } else if (Bot.users[Bot.myId]?.ihash === data[1].ihash) {
           u.hidden = data[1].stat === 'on';
-          if (!u.hidden && encrypter.isEnabled)
-            encrypter.sendSharedKeyId();
         }
         break;
     }
@@ -1782,7 +1364,7 @@ textarea{padding:5px;resize:none;font-size:16px}
               }
             }
             if (/https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(args[1].cmt)) {
-              asyncAlert('暗号化せずにWebHook URLを発言してはならない');
+              asyncAlert('WebHook URLを発言してはならない');
               return;
             }
             if (/^(?:状態発言|じょうたいはつげん|scom)$/i.test(args[1].cmt)) {
@@ -2230,6 +1812,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     move();
   });
   document.addEventListener('keyup', e => clearInterval(keyControlTimer));
+  var sendParam = param => Bot.ignore('?param' + param, false);
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
       if (extensionConfig.showImage)
@@ -2298,6 +1881,24 @@ textarea{padding:5px;resize:none;font-size:16px}
         gameWindow.style.display = gameWindow.style.display ? '' : 'block';
       }
     }));
+    div.append(createElement('button', {
+      textContent: '暗号化',
+      onclick: async () => {
+        var memberIds = await asyncCheckbox(
+          '暗号化ルームのメンバーを選んでください（現在テスト中、不具合あるかも）',
+          Object.values(Bot.users).filter(u => u.id !== Bot.myId).map(({id, fullName}) => ({id, text: fullName}))
+        );
+        if (!memberIds)
+          return;
+        memberIds = Array.from(memberIds).filter(id => Bot.users[id]);
+        if (!memberIds.length) {
+          showMessage('1人以上選んでください');
+          return;
+        }
+        memberIds.push(Bot.myId);
+        sendParam(JSON.stringify(memberIds.map(id => Bot.users[id].name + Bot.users[id].shiro)));
+      }
+    }));
     div.append(createElement('input', {
       type: 'checkbox',
       id: 'silence',
@@ -2309,48 +1910,10 @@ textarea{padding:5px;resize:none;font-size:16px}
       htmlFor: 'silence',
       textContent: '接続維持'
     }));
-    if (window.crypto && !localStorage.getItem('extensionEncryptionDisabled')) {
-      div.append(createElement('input', {
-        type: 'checkbox',
-        id: 'encryption',
-        onclick: async function () {
-          this.style.display = this.nextSibling.style.display = 'none';
-          await encrypter[this.checked ? 'on' : 'off']();
-          this.style.display = this.nextSibling.style.display =  '';
-        }
-      }));
-      div.append(createElement('label', {
-        htmlFor: 'encryption',
-        textContent: '暗号化'
-      }));
-      var pendingHTML = '<option>追加許可<option>全て消す';
-      div.append(createElement('select', {
-        id: 'pendingList',
-        innerHTML: pendingHTML,
-        onchange: function () {
-          var index = pendingList.selectedIndex;
-          if (index === 1) {
-            pendingList.innerHTML = pendingHTML;
-            pendingUsers = {};
-          } else if (index > 1) {
-            var pendingUser = pendingUsers[pendingList.value];
-            if (!encrypter.candidateIds)
-              encrypter.candidateIds = new Set();
-            encrypter.candidateIds.add(pendingList.value);
-            if (Bot.users[pendingList.value])
-              encrypter.sendSharedKey(...pendingUser.args);
-            else
-              allowedUsers[pendingList.value] = pendingUser.args;
-            delete pendingUsers[pendingList.value];
-            pendingList.remove(index);
-          }
-          pendingList.selectedIndex = 0;
-        }
-      }));
-    }
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
     document.getElementById('extensionMessage').innerHTML = '';
+    checkWebhook();
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
       inputContainer.setAttribute('style', 'width:min(1000px,100%)');
@@ -2452,10 +2015,15 @@ textarea{padding:5px;resize:none;font-size:16px}
       });
       miniPlayer.append(miniPlayerIFrame);
       document.body.addEventListener('click', e => {
-        if (!extensionConfig.miniPlayer)
-          return;
         var a = [e.target, e.target.parentNode].find(a => a.tagName === 'A');
         if (!a)
+          return;
+        if (a.href.startsWith(SUBCHAT_URL)) {
+          e.preventDefault();
+          open(a.href);
+          return;
+        }
+        if (!extensionConfig.miniPlayer)
           return;
         miniPlayerIFrame.dataset.owner = '';
         var yt = getYouTubeInfo(a.href);
@@ -2478,6 +2046,15 @@ textarea{padding:5px;resize:none;font-size:16px}
   var youtubeCurrentTime = 0;
   addEventListener('message', event => {
     try {
+      if (event.origin === 'https://sub-chat.onrender.com') {
+        if (extensionConfig.uploadUrl && extensionConfig.uploadPassword)
+          event.source.postMessage({
+            type: 'sub-chat:credential-response',
+            uploadUrl: extensionConfig.uploadUrl,
+            uploadPassword: extensionConfig.uploadPassword
+          }, event.origin);
+        return;
+      }
       const data = JSON.parse(event.data);
       if (data && data.event === 'infoDelivery' && typeof data.info?.currentTime === 'number')
         youtubeCurrentTime = Math.round(data.info.currentTime);
