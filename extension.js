@@ -633,14 +633,11 @@ var inject = function () {
     gameWindow.appendChild(document.createElement('p')).id = 'gameMessage';
   };
   var pendingCount = 0;
-  var executeCount = 0;
   window.Bot = async function () {
     if (pendingCount++)
       return;
     do {
-      onerror('起動開始' + (++executeCount));
       await _Bot();
-      onerror('起動終了' + (executeCount));
     } while (--pendingCount);
   };
   var _Bot = async function () {
