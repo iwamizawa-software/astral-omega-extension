@@ -633,17 +633,11 @@ var inject = function () {
     gameWindow.appendChild(document.createElement('p')).id = 'gameMessage';
   };
   var pendingCount = 0;
-  var errorRecord = content => {
-    if (extensionConfig.externalBot?.length)
-      fetch(extensionConfig.webhook, { method : 'POST', headers : {'Content-Type' : 'application/json'}, body : JSON.stringify({content})}).catch(e => e);
-  };
   window.Bot = async function () {
     if (pendingCount++)
       return;
     do {
-      errorRecord('起動開始');
       await _Bot();
-      errorRecord('起動終了');
     } while (--pendingCount);
   };
   var _Bot = async function () {
