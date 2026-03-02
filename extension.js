@@ -1885,7 +1885,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       textContent: '暗号化',
       onclick: async () => {
         var memberIds = await asyncCheckbox(
-          '暗号化ルームのメンバーを選んでください（現在テスト中、不具合あるかも）',
+          '暗号化ルームのメンバーを選んでください（現在テスト中、不具合あるかも）<br><a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/encryption.html" target="_blank">新暗号化について</a>',
           Object.values(Bot.users).filter(u => u.id !== Bot.myId).map(({id, fullName}) => ({id, text: fullName}))
         );
         if (!memberIds)
