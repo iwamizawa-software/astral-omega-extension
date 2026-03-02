@@ -1279,7 +1279,6 @@ textarea{padding:5px;resize:none;font-size:16px}
         if (!u)
           break;
         if (data[1].ihash?.startsWith('?param')) {
-          console.log(data[1].ihash);
           try {
             var nameList = JSON.parse(data[1].ihash.slice(6));
             var myName = Bot.users[Bot.myId].name + Bot.users[Bot.myId].shiro;
