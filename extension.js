@@ -99,7 +99,7 @@ var inject = function () {
     applyConfig();
   };
 
-  var VERSION = 12;
+  var VERSION = 13;
   var SUBCHAT_URL = 'https://sub-chat.onrender.com/?';
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
