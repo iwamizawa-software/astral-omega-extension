@@ -676,6 +676,7 @@ var inject = function () {
           Bot.timerIds.delete(id + '');
         };
         var clearInterval = clearTimeout;
+        var _listeners = Bot.listeners;
         var on = function (type, listener, timeout) {
           var cancel = () => {
             listener.resolve();
@@ -687,7 +688,7 @@ var inject = function () {
             if (timeout)
               timeout.cancel = cancel;
             listener.resolve = resolve;
-            queueMicrotask(()=>(Bot.listeners[type] || (Bot.listeners[type] = [])).push(listener));
+            queueMicrotask(()=>(_listeners[type] || (_listeners[type] = [])).push(listener));
           });
           p.cancel = cancel;
           return p;
