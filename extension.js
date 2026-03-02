@@ -632,7 +632,15 @@ var inject = function () {
     }
     gameWindow.appendChild(document.createElement('p')).id = 'gameMessage';
   };
+  var pendingCount = 0;
   window.Bot = async function () {
+    if (pendingCount++)
+      return;
+    do {
+      await _Bot();
+    } while (--pendingCount);
+  };
+  var _Bot = async function () {
     var bot = (extensionConfig.whatifConsole ? '(' + whatifConsole + ')();\n' : '') +
       extensionConfig.bot + (await Promise.allSettled(extensionConfig.externalBot.map(url => fetch(url + (url.includes('?') ? '&' : '?') + Date.now()).then(async res => {
       if (!res.ok)
