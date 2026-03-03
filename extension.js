@@ -81,6 +81,10 @@ var inject = function () {
 /*
   if (!localStorage.getItem('/monachatchat/extension') && localStorage.getItem('/monachatchat/name') !== null && localStorage.getItem('/monachatchat/name') !== '名無しさん')
     localStorage.setItem('/monachatchat/extension', 'true');*/
+  
+  var officialSetting = localStorage.getItem('/monachatchat/extension');
+  if (!officialSetting && officialSetting === 'false')
+    return;
 
   var checkWebhook = async () => {
     var obj = await (await fetch('https://sub-chat.onrender.com/webhook?t=' + Date.now())).json();
@@ -1964,7 +1968,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       statCommentButton.setAttribute('style', 'font-size:' + smartSize);
       inputContainer.append(statCommentButton);
       var button = createElement('button', {
-        textContent: '🎮',
+        textContent: '✥',
         onclick: e => {
           controller.style.display = controller.style.display ? '' : 'none';
         }
