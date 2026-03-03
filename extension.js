@@ -82,8 +82,7 @@ var inject = function () {
   if (!localStorage.getItem('/monachatchat/extension') && localStorage.getItem('/monachatchat/name') !== null && localStorage.getItem('/monachatchat/name') !== '名無しさん')
     localStorage.setItem('/monachatchat/extension', 'true');*/
   
-  var officialSetting = localStorage.getItem('/monachatchat/extension');
-  if (!officialSetting && officialSetting === 'false')
+  if (localStorage.getItem('/monachatchat/extension') !== 'true' || window.extensionConfig)
     return;
 
   var checkWebhook = async () => {
