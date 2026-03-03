@@ -656,7 +656,8 @@ var inject = function () {
       return externalBot;
     }).catch(error => console.log(`外部BOTエラー：${url} - ${error.message}`))))).map(result => result.value || '').join('\n');
     Bot.timerIds.forEach(Bot.clearTimeout);
-    Bot.timerIds.clear();
+    Bot.timerIds.disabled = true;
+    var timerIds = Bot.timerIds = new Set();
     Bot.listeners = {};
     Bot.commands = {};
     if (!bot)
@@ -665,18 +666,30 @@ var inject = function () {
       document.currentScript?.remove();
       (function () {
         var setTimeout = function () {
+          if (timerIds.disabled) {
+            console.log('古いBOTのタイマー呼び出し');
+            return;
+          }
           var id = Bot.setTimeout.apply(window, arguments);
-          Bot.timerIds.add(id + '');
+          timerIds.add(id + '');
           return id;
         };
         var setInterval = function () {
+          if (timerIds.disabled) {
+            console.log('古いBOTのタイマー呼び出し');
+            return;
+          }
           var id = Bot.setInterval.apply(window, arguments);
-          Bot.timerIds.add(id + '');
+          timerIds.add(id + '');
           return id;
         };
         var clearTimeout = function (id) {
+          if (timerIds.disabled) {
+            console.log('古いBOTのタイマー呼び出し');
+            return;
+          }
           Bot.clearTimeout(id);
-          Bot.timerIds.delete(id + '');
+          timerIds.delete(id + '');
         };
         var clearInterval = clearTimeout;
         var _listeners = Bot.listeners;
