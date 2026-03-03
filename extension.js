@@ -655,15 +655,15 @@ var inject = function () {
       }
       return externalBot;
     }).catch(error => console.log(`外部BOTエラー：${url} - ${error.message}`))))).map(result => result.value || '').join('\n');
-    Bot.timerIds.forEach(Bot.clearTimeout);
-    Bot.timerIds.disabled = true;
-    var timerIds = Bot.timerIds = new Set();
     Bot.listeners = {};
     Bot.commands = {};
     if (!bot)
       return;
     var code = `
       document.currentScript?.remove();
+      Bot.timerIds.forEach(Bot.clearTimeout);
+      Bot.timerIds.disabled = true;
+      var timerIds = Bot.timerIds = new Set();
       (function () {
         var setTimeout = function () {
           if (timerIds.disabled) {
