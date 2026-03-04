@@ -1123,7 +1123,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.smartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
+    cssText += extensionConfig.smartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center,#extensionBarUpload{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
     if (!canUpload())
       cssText += '#uploadButton{display:none}';
     cssText += extensionConfig.showImage
@@ -1922,6 +1922,11 @@ textarea{padding:5px;resize:none;font-size:16px}
         memberIds.push(Bot.myId);
         sendParam(JSON.stringify(memberIds.map(id => Bot.users[id].name + Bot.users[id].shiro)));
       }
+    }));
+    div.append(createElement('button', {
+      id: 'extensionBarUpload',
+      textContent: 'うｐ',
+      onclick: () => document.getElementById('uploadButton')?.click()
     }));
     div.append(createElement('input', {
       type: 'checkbox',
