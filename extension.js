@@ -1145,6 +1145,8 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     onbeforeunload = extensionConfig.onbeforeunload ? () => forceReload ? null : 1 : null;
     Bot();
+    setTimeout(() => dispatchEvent(new Event('resize')), 0);
+    setTimeout(() => dispatchEvent(new Event('resize')), 500);
   };
   applyConfig();
 
