@@ -2120,6 +2120,10 @@ textarea{padding:5px;resize:none;font-size:16px}
     else
       console.log(event);
   });
+  window.visualViewport?.addEventListener('resize', event => {
+    if (extensionConfig.smartMode)
+      event.stopImmediatePropagation();
+  }, { capture: true });
 };
 try {
   inject();
