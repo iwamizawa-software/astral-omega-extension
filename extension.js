@@ -1878,7 +1878,15 @@ textarea{padding:5px;resize:none;font-size:16px}
     document.querySelector('meta[name=viewport]:not(#extensionViewport)')?.remove();
     document.head.append(metaViewport);
     setTimeout(() => dispatchEvent(new Event('resize')), 0);
-    setTimeout(() => dispatchEvent(new Event('resize')), 500);
+    setTimeout(() => {
+      dispatchEvent(new Event('resize'));
+      setTimeout(() => {
+        window.addEventListener('resize', event => {
+          if (extensionConfig.smartMode)
+            event.stopImmediatePropagation();
+        }, { capture: true });
+      }, 500);
+    }, 500);
     var div = document.createElement('div');
     div.id = 'extensionBar';
     menu.id = 'extensionMenu';
@@ -2120,10 +2128,6 @@ textarea{padding:5px;resize:none;font-size:16px}
     else
       console.log(event);
   });
-  window.visualViewport?.addEventListener('resize', event => {
-    if (extensionConfig.smartMode)
-      event.stopImmediatePropagation();
-  }, { capture: true });
 };
 try {
   inject();
