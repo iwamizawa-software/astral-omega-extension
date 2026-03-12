@@ -1137,7 +1137,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     if (extensionConfig.showImage)
       document.body?.appendChild(document.createElement('div')).remove();
     if (extensionConfig.smartMode) {
-      var targetWidth = 1000;
+      var targetWidth = 1001;
       var scale = window.screen.width / targetWidth;
       metaViewport.setAttribute('content',
         'width=' + targetWidth +
@@ -1148,7 +1148,6 @@ textarea{padding:5px;resize:none;font-size:16px}
     } else {
       metaViewport.setAttribute('content', 'width=device-width');
     }
-    document.head?.append(metaViewport);
     if (extensionConfig.notifySoundURL) {
       sound = new Audio(extensionConfig.notifySoundURL);
       sound.volume = extensionConfig.notifySoundVolume;
