@@ -1089,7 +1089,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     applyConfig();
   });
   var extCSS = document.createElement('style');
-  var metaViewport = createElement('meta', {name:'viewport'});
+  var metaViewport = createElement('meta', {name:'viewport', id: 'extensionViewport'});
   var sound;
   var applyConfig = function () {
     var cssText = `
@@ -1148,6 +1148,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     } else {
       metaViewport.setAttribute('content', 'width=device-width');
     }
+    document.head?.append(metaViewport);
     if (extensionConfig.notifySoundURL) {
       sound = new Audio(extensionConfig.notifySoundURL);
       sound.volume = extensionConfig.notifySoundVolume;
