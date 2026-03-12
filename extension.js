@@ -1,6 +1,6 @@
 var inject = function () {
 
-  if (navigator.userAgent.includes(';;;'))
+  if (navigator.userAgent.includes('MonaChatApp'))
     return;
 
   var forceReload;
@@ -102,7 +102,7 @@ var inject = function () {
     applyConfig();
   };
 
-  var VERSION = 13;
+  var VERSION = 14;
   var SUBCHAT_URL = 'https://sub-chat.onrender.com/?';
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
@@ -119,14 +119,14 @@ var inject = function () {
     },
     {
       key: 'smartMode',
-      name: 'スマホモード',
+      name: '旧スマホモード',
       description: 'ONにすると移動したいところを長押しで移動出来るようになります。また接続維持用チェックボックスとスマホ入力用メッセージボックスが表示されます。',
       type: 'onoff',
-      value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
+      value: 0
     },
     {
       key: 'hideStatCommentButton',
-      name: 'スマホモードの状態発言ボタンを消す',
+      name: '旧スマホモードの状態発言ボタンを消す',
       type: 'onoff',
       value: 0
     },
@@ -1292,22 +1292,24 @@ textarea{padding:5px;resize:none;font-size:16px}
           Object.assign(Bot.users[data[1].id], data[1]);
         if (data[1].id === Bot.myId && data[1].hasOwnProperty('stat'))
           lastStat = data[1].stat;
-        break;
-      case 'IG':
-        var u = Bot.users[data[1].id];
-        if (!u)
-          break;
-        if (data[1].ihash?.startsWith('?param')) {
+        if (data[1].param) {
           try {
-            var nameList = JSON.parse(data[1].ihash.slice(6));
+            var obj = JSON.parse(data[1].ihash.slice(6));
+            if (obj.type !== 'encrypt')
+              return;
             var myName = Bot.users[Bot.myId].name + Bot.users[Bot.myId].shiro;
-            if (nameList.includes(myName))
-              fakeComment(data[1].id, '暗号化ルーム：' + SUBCHAT_URL + nameList.map(name => 'name=' + encodeURIComponent(name)).join('&'), Object.assign({}, event));
+            if (obj.nameList.includes(myName))
+              fakeComment(data[1].id, '暗号化ルーム：' + SUBCHAT_URL + obj.nameList.map(name => 'name=' + encodeURIComponent(name)).join('&'), Object.assign({}, event));
           } catch (err) {
             console.log(err);
           }
           return;
         }
+        break;
+      case 'IG':
+        var u = Bot.users[data[1].id];
+        if (!u)
+          break;
         if (Bot.myId === data[1].id) {
           Object.values(Bot.users).forEach(user => {
             if (user.ihash === data[1].ihash) {
@@ -1839,7 +1841,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     move();
   });
   document.addEventListener('keyup', e => clearInterval(keyControlTimer));
-  var sendParam = param => Bot.ignore('?param' + param, false);
+  var sendParam = param => Bot.set({param});
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
       if (extensionConfig.showImage)
@@ -1924,7 +1926,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           return;
         }
         memberIds.push(Bot.myId);
-        sendParam(JSON.stringify(memberIds.map(id => Bot.users[id].name + Bot.users[id].shiro)));
+        sendParam(JSON.stringify({type: 'encrypt', nameList: memberIds.map(id => Bot.users[id].name + Bot.users[id].shiro)}));
       }
     }));
     div.append(createElement('button', {
