@@ -1294,7 +1294,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           lastStat = data[1].stat;
         if (data[1].param) {
           try {
-            var obj = JSON.parse(data[1].ihash.slice(6));
+            var obj = JSON.parse(data[1].param);
             if (obj.type !== 'encrypt')
               return;
             var myName = Bot.users[Bot.myId].name + Bot.users[Bot.myId].shiro;
