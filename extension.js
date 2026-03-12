@@ -569,7 +569,7 @@ var inject = function () {
     var toNumber = s => '♠♥♣♦'.indexOf(s[0]) * 13 + 'A23456789⒑JQK'.indexOf(s[1]);
     var cards = Array(52);
     on('SET', async user => {
-      if (user.kuro !== '◆bbbbbbbbB.')
+      if (user?.kuro !== '◆bbbbbbbbB.')
         return;
       if (/^(\d+)｜([^｜]+)｜(.+)$/.test(user.stat)) {
         var currentCard = RegExp.$2;
