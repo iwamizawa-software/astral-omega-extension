@@ -1136,7 +1136,18 @@ textarea{padding:5px;resize:none;font-size:16px}
     extCSS.textContent = cssText;
     if (extensionConfig.showImage)
       document.body?.appendChild(document.createElement('div')).remove();
-    metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1000' : 'width=device-width');
+    if (extensionConfig.smartMode) {
+      var targetWidth = 1000;
+      var scale = window.screen.width / targetWidth;
+      metaViewport.setAttribute('content',
+        'width=' + targetWidth +
+        ', initial-scale=' + scale +
+        ', minimum-scale=' + scale +
+        ', maximum-scale=' + scale
+      );
+    } else {
+      metaViewport.setAttribute('content', 'width=device-width');
+    }
     if (extensionConfig.notifySoundURL) {
       sound = new Audio(extensionConfig.notifySoundURL);
       sound.volume = extensionConfig.notifySoundVolume;
