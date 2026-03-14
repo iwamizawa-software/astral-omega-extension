@@ -102,7 +102,7 @@ var inject = function () {
     applyConfig();
   };
 
-  var VERSION = 14;
+  var VERSION = 15;
   var SUBCHAT_URL = 'https://sub-chat.onrender.com/?';
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
@@ -122,7 +122,7 @@ var inject = function () {
       name: '旧スマホモード',
       description: 'ONにすると移動したいところを長押しで移動出来るようになります。また接続維持用チェックボックスとスマホ入力用メッセージボックスが表示されます。',
       type: 'onoff',
-      value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
+      value: 0
     },
     {
       key: 'hideStatCommentButton',
@@ -322,30 +322,6 @@ var inject = function () {
       name: '状態の最大文字数',
       type: 'input',
       value: '20'
-    },
-    {
-      key: 'minX',
-      name: '最小のX',
-      type: 'input',
-      value: '0'
-    },
-    {
-      key: 'maxX',
-      name: '最大のX',
-      type: 'input',
-      value: '1000'
-    },
-    {
-      key: 'minY',
-      name: '最小のY',
-      type: 'input',
-      value: '140'
-    },
-    {
-      key: 'maxY',
-      name: '最大のY',
-      type: 'input',
-      value: '390'
     },
     {
       key: 'maxComment',
@@ -786,9 +762,9 @@ var inject = function () {
   Bot.set = function (attr) {
     var {x, y, scl, stat} = Bot.users[Bot.myId];
     if ('x' in attr)
-      attr.x = Math.max(+extensionConfig.minX, Math.min(+extensionConfig.maxX, attr.x));
+      attr.x = Math.max(0, Math.min(100, attr.x));
     if ('y' in attr)
-      attr.y = Math.max(+extensionConfig.minY, Math.min(+extensionConfig.maxY, attr.y));
+      attr.y = Math.max(0, Math.min(100, attr.y));
     if (attr?.stat !== undefined && typeof attr.stat !== 'string')
       attr.stat += '';
     if (attr?.stat?.length > 20)
@@ -1829,7 +1805,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     myself.x = Bot.users[Bot.myId].x;
     myself.y = Bot.users[Bot.myId].y;
     var move = () => {
-      var attr = {up: {y: -5}, down: {y: 5}, right: {x: 5}, left: {x: -5}}[direction];
+      var attr = {up: {y: -1.7}, down: {y: 1.7}, right: {x: 0.5}, left: {x: -0.5}}[direction];
       count++;
       Object.keys(attr).forEach(key => {
         myself[key] += attr[key] * (count < 2 ? 2 : count < 4 ? 10 : 20);
@@ -2005,7 +1981,7 @@ textarea{padding:5px;resize:none;font-size:16px}
           var myself = Bot.users[Bot.myId];
           if (!myself)
             return;
-          var attr = {up: {y: -2}, down: {y: 2}, right: {x: 5}, left: {x: -5}}[direction];
+          var attr = {up: {y: -0.7}, down: {y: 0.7}, right: {x: 0.5}, left: {x: -0.5}}[direction];
           Object.keys(attr).forEach(key => {
             attr[key] *= count < 2 ? 5 : count < 4 ? 20 : 40;
             attr[key] += myself[key];
