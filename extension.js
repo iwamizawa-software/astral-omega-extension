@@ -102,7 +102,7 @@ var inject = function () {
     applyConfig();
   };
 
-  var VERSION = 15;
+  var VERSION = 16;
   var SUBCHAT_URL = 'https://sub-chat.onrender.com/?';
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
@@ -118,7 +118,7 @@ var inject = function () {
       type: 'separator'
     },
     {
-      key: 'smartMode',
+      key: 'oldSmartMode',
       name: '旧スマホモード',
       description: 'ONにすると移動したいところを長押しで移動出来るようになります。また接続維持用チェックボックスとスマホ入力用メッセージボックスが表示されます。',
       type: 'onoff',
@@ -392,6 +392,8 @@ var inject = function () {
   var createElement = function (tagName, attr) {
     var element = document.createElement(tagName);
     Object.assign(element, attr);
+    if (attr?.style)
+      element.setAttribute('style', attr.style);
     return element;
   };
   var observedSelectors = [];
@@ -1083,6 +1085,10 @@ textarea{padding:5px;resize:none;font-size:16px}
       #miniPlayer[data-position="左上"]{display:flex;left:0;top:0}
       #miniPlayer[data-position="下"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));bottom:0;width:min(1000px,100%);height:526px}
       #miniPlayer[data-position="上"]{display:flex;left:calc(max(0px, (100% - 1000px) / 2));top:0;width:min(1000px,100%);height:526px}
+      @media (min-width: 1000px) {
+        .setting-bar-center {width: 50%!important}
+        .setting-bar-center .button:last-child{display:none}
+      }
     `;
     if (!extensionConfig.whatifConsole)
       cssText += '#whatifConsoleButton{display:none}';
@@ -1099,9 +1105,9 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.smartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center,#extensionBarUpload{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
+    cssText += extensionConfig.oldSmartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
     if (!canUpload())
-      cssText += '#uploadButton{display:none}';
+      cssText += '.uploadButton{display:none}';
     cssText += extensionConfig.showImage
       ? '[data-img]{display:inline-block;background-repeat:no-repeat;background-size:contain;background-color:#fff;border:1px solid #000;box-sizing:content-box}.log-row:has([data-img]){flex:none;height:fit-content;max-height:200px}[data-img] *{display:none}'
       : '[data-img]{background-image:none!important}';
@@ -1112,7 +1118,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     extCSS.textContent = cssText;
     if (extensionConfig.showImage)
       document.body?.appendChild(document.createElement('div')).remove();
-    metaViewport.setAttribute('content', extensionConfig.smartMode ? 'width=1001' : 'width=device-width');
+    metaViewport.setAttribute('content', extensionConfig.oldSmartMode ? 'width=1001' : 'width=device-width');
     if (extensionConfig.notifySoundURL) {
       sound = new Audio(extensionConfig.notifySoundURL);
       sound.volume = extensionConfig.notifySoundVolume;
@@ -1158,6 +1164,8 @@ textarea{padding:5px;resize:none;font-size:16px}
       u.name = u.name?.slice(0, +extensionConfig.maxName);
     if (u.stat && u.stat.length > +extensionConfig.maxStat)
       u.stat = u.stat.slice(0, +extensionConfig.maxStat);
+    if (!u.ihash)
+      u.ihash = '?'.repeat(10);
     u.shiro = '◇' + u.ihash.slice(0, 6);
     u.kuro = u.trip ? '◆' + u.trip : '';
     u.fullName = (u.name || '') + u.shiro + u.kuro;
@@ -1818,8 +1826,24 @@ textarea{padding:5px;resize:none;font-size:16px}
   });
   document.addEventListener('keyup', e => clearInterval(keyControlTimer));
   var sendParam = param => Bot.set({param});
+  var settingBarCenters = document.getElementsByClassName('setting-bar-center');
+  var file = createElement('input', {
+    type: 'file',
+    onchange: e => {
+      upload(e.target.files[0]);
+      e.target.value = '';
+    }
+  });
+  var uploadButton = createElement('button', {
+    className: 'uploadButton',
+    textContent: '＋',
+    style: 'width:44px;height:100%;font-size:20px;border:1px solid;background:none;color:inherit;cursor:pointer;flex-shrink:0',
+    onclick: () => file.click()
+  });
   addEventListener('load', () => {
     var observer = new MutationObserver(() => {
+      if (!document.contains(uploadButton))
+        settingBarCenters[0]?.firstElementChild?.prepend(uploadButton);
       if (extensionConfig.showImage)
         Array.from(document.body.querySelectorAll('[href^="https://cdn.discordapp.com/attachments/1328162542463483994/"]:not([data-youtube],[data-img])')).forEach(a => {
           if (!/\.(?:png|jpe?g|gif|bmp|webp)\?/i.test(a.href))
@@ -1891,7 +1915,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       textContent: '暗号化',
       onclick: async () => {
         var memberIds = await asyncCheckbox(
-          '暗号化ルームのメンバーを選んでください。（現在テスト中、不具合あるかも）<br>・同じ白トリしか入れません。<br>　入れない人はリロードして部屋を作り直してください。<br>・ルームURLは指定した人にのみ表示されます。<br>　相手が拡張OFFだとURLが見えません。<br><a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/encryption.html" target="_blank">新暗号化について</a>',
+          '暗号化ルームのメンバーを選んでください（テスト中、不具合あるかも<br>・同じ白トリしか入れません<br>　入れない人はリロードして部屋を作り直してください<br>・ルームURLは指定した人にのみ表示されます<br>　相手が拡張OFFだとURLが見えません<br><a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/encryption.html" target="_blank">新暗号化について</a>',
           Object.values(Bot.users).filter(u => u.id !== Bot.myId).map(({id, fullName}) => ({id, text: fullName}))
         );
         if (!memberIds)
@@ -1904,11 +1928,6 @@ textarea{padding:5px;resize:none;font-size:16px}
         memberIds.push(Bot.myId);
         sendParam(JSON.stringify({type: 'encrypt', nameList: memberIds.map(id => Bot.users[id].name + Bot.users[id].shiro)}));
       }
-    }));
-    div.append(createElement('button', {
-      id: 'extensionBarUpload',
-      textContent: 'うｐ',
-      onclick: () => document.getElementById('uploadButton')?.click()
     }));
     div.append(createElement('input', {
       type: 'checkbox',
@@ -1945,20 +1964,12 @@ textarea{padding:5px;resize:none;font-size:16px}
       var smartSize = Math.max(16, Math.ceil(16000 / defaultWidth)) + 'px';
       input.setAttribute('style', 'flex-grow:1;font-size:' + smartSize);
       inputContainer.append(input);
-      var file = createElement('input', {
-        type: 'file',
-        onchange: e => {
-          upload(e.target.files[0]);
-          e.target.value = '';
-        }
-      });
-      var uploadButton = createElement('button', {
-        id: 'uploadButton',
+      input.before(createElement('button', {
+        className: 'uploadButton',
         textContent: '＋',
-        onclick: e => file.click()
-      });
-      uploadButton.setAttribute('style', 'font-size:' + smartSize);
-      input.before(uploadButton);
+        onclick: e => file.click(),
+        style: 'font-size:' + smartSize
+      }));
       var statCommentButton = createElement('button', {
         id: 'toggleStatCommentMobile',
         textContent: '🔈',
@@ -2026,7 +2037,7 @@ textarea{padding:5px;resize:none;font-size:16px}
       });
       miniPlayer.append(miniPlayerIFrame);
       document.body.addEventListener('click', e => {
-        var a = [e.target, e.target.parentNode].find(a => a.tagName === 'A');
+        var a = [e.target, e.target.parentNode].find(a => a?.tagName === 'A');
         if (!a)
           return;
         if (a.href.startsWith(SUBCHAT_URL)) {
