@@ -108,7 +108,7 @@ var inject = function () {
     applyConfig();
   };
 
-  var VERSION = 16;
+  var VERSION = 17;
   var SUBCHAT_URL = 'https://sub-chat.onrender.com/?';
   setInterval(async () => {
     var v = +(await (await fetch('https://raw.githubusercontent.com/iwamizawa-software/astral-omega-extension/refs/heads/main/extension.js?t=' + (new Date).getTime())).text())
@@ -135,6 +135,12 @@ var inject = function () {
       name: '旧スマホモードの状態発言ボタンを消す',
       type: 'onoff',
       value: 0
+    },
+    {
+      key: 'showSilence',
+      name: '接続維持用チェックボックスを表示',
+      type: 'onoff',
+      value: +/iPad|iPhone|Android/.test(navigator?.userAgent)
     },
     {
       key: 'invisibleMode',
@@ -1111,7 +1117,9 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.oldSmartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#silence,[for=silence],#smartInput{display:none}';
+    cssText += extensionConfig.oldSmartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}' : '#characterController,#smartInput{display:none}';
+    if (!extensionConfig.oldSmartMode && !extensionConfig.showSilence)
+      cssText += '#silence,[for=silence]{display:none}';
     if (!canUpload())
       cssText += '.uploadButton{display:none}';
     cssText += extensionConfig.showImage
