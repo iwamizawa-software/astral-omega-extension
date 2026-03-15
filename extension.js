@@ -1,6 +1,12 @@
 var inject = function () {
 
-  if (navigator.userAgent.includes('MonaChatApp') || navigator.userAgent.includes(';;;;'))
+  //暫定措置
+  if (navigator.userAgent.includes(';;;;')) {
+    addEventListener('load', () => document.head.appendChild(document.createElement('style')).textContent = '.field-wrapper:has(#extension){display:none}');
+    return;
+  }
+
+  if (navigator.userAgent.includes('MonaChatApp'))
     return;
 
   var forceReload;
@@ -1090,9 +1096,6 @@ textarea{padding:5px;resize:none;font-size:16px}
         .setting-bar-center .button:last-child{display:none}
       }
     `;
-    //暫定措置
-    if (navigator.userAgent.includes(';;;;'))
-      cssText += '.field-wrapper:has(#extension){display:none}';
     if (!extensionConfig.whatifConsole)
       cssText += '#whatifConsoleButton{display:none}';
     if (extensionConfig.hideStatCommentButton)
