@@ -896,7 +896,10 @@ var inject = function () {
       await new Promise(r => dialogQueue.push(r));
     dialogCallback = resolve;
     dialog.innerHTML = `<div>${html}</div><div><button data-command="ok" autofocus>OK</button>${alert ? '' : '<button>キャンセル</button>'}</div>`;
-    dialog.showModal();
+    if (dialog.showModal)
+      dialog.showModal();
+    else
+      showMessage('ブラウザが古いため使えません');
   });
   var asyncAlert = async html => await asyncConfirm(html, true);
   var escapeHTML = s => s.replace(/[<>&"]/g, s => '&#' + s.charCodeAt(0) + ';');
