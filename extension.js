@@ -1,6 +1,6 @@
 var inject = function () {
 
-  if (navigator.userAgent.includes('MonaChatApp'))
+  if (navigator.userAgent.includes('MonaChatApp') || navigator.userAgent.includes(';;;;'))
     return;
 
   var forceReload;
