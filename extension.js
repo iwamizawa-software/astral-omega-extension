@@ -865,7 +865,7 @@ var inject = function () {
 
 
   var dialog = document.createElement('dialog'), dialogQueue = [], dialogCallback;
-  dialog.onclick = e => {
+  dialog.onclick = (e, esc) => {
     switch (e.target.dataset.command) {
       case 'selectAll':
         Array.from(dialog.querySelectorAll('input[type=checkbox]')).forEach(e => e.checked = true);
@@ -877,7 +877,7 @@ var inject = function () {
         var result = true;
     }
     var {left, right, top, bottom} = dialog.getBoundingClientRect();
-    if (e.clientX < left || e.clientX > right || e.clientY < top || e.clientY > bottom || e.target.tagName === 'BUTTON') {
+    if (esc || e.clientX < left || e.clientX > right || e.clientY < top || e.clientY > bottom || e.target.tagName === 'BUTTON') {
       dialogCallback(result && new Set(Array.from(dialog.querySelectorAll(':checked')).map(e => e.id.slice(6))));
       Array.from(dialog.querySelectorAll('[src]')).forEach(media => URL.revokeObjectURL(media.src));
       dialog.innerHTML = '';
@@ -885,6 +885,10 @@ var inject = function () {
       if (dialogQueue.length)
         dialogQueue.shift()();
     }
+  };
+  dialog.oncancel = e => {
+    e.preventDefault();
+    dialog.onclick(e, true);
   };
   var asyncCheckbox = (html, list) => asyncConfirm('<p>' + html + '<p><button data-command="selectAll">すべて選択</button><button data-command="resetAll">すべて解除</button><p>' + list.map(({id, text, checked}) => {
     id = escapeHTML(id);
@@ -914,11 +918,15 @@ var inject = function () {
     else
       return `<iframe src="${URL.createObjectURL(new Blob([file], {type: 'text/plain;charset=utf-8'}))}" sandbox></iframe><br>`;
   };
+  var isUploading = false;
   var displayUploading = uploading => {
+    isUploading = uploading;
     var inputBox = document.querySelector('.setting-bar-center [type=text]');
     var smartInputBox = document.querySelector('#smartInput [type=text]');
-    if (!inputBox)
+    if (!inputBox) {
+      alert('おかしなことが起こった');
       return;
+    }
     smartInputBox.placeholder = inputBox.placeholder = (smartInputBox.disabled = inputBox.disabled = uploading) ? 'ファイルをアップロード中...' : '';
   };
   var processImage = async function (file) {
@@ -966,6 +974,8 @@ var inject = function () {
   var canUpload = () => /^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook);
   var upload = async file => {
     try {
+      if (isUploading)
+        return;
       if (!/^(?:image|video|audio|text)\//.test(file.type)) {
         showMessage('画像と動画と音声とテキストファイル以外アップロードできません');
         return;
