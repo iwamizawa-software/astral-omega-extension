@@ -995,12 +995,21 @@ var inject = function () {
       var formData = new FormData();
       formData.append('file', file, file.name.replace(/^[\s\S]*?(\.[^\.]+)?$/, 'file$1'));
       formData.append('username', Bot?.users?.[Bot.myId]?.fullName);
-      var result = await (await fetch(extensionConfig.webhook, {method: 'POST', body: formData})).json();
+      var res = await fetch(extensionConfig.webhook, {method: 'POST', body: formData});
+      var text = await res.text();
+      if (!res.ok)
+        throw new Error('サーバーエラー ' + res.status + ': ' + text.slice(0, 50));
+      var result;
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        throw new Error('サーバーエラー ' + text.slice(0, 50));
+      }
       Bot.comment(result.attachments[0].url);
       setTimeout(() => fetch(extensionConfig.webhook + '/messages/' + result.id, {method: 'DELETE'}), 60000);
       displayUploading(false);
     } catch (err) {
-      alert('アップロード中にエラーが出た\n' + err);
+      alert('アップロード中にエラーが出た\n' + err + '\n' + err.stack);
       displayUploading(false);
     }
   };
