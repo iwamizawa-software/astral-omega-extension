@@ -914,11 +914,15 @@ var inject = function () {
     else
       return `<iframe src="${URL.createObjectURL(new Blob([file], {type: 'text/plain;charset=utf-8'}))}" sandbox></iframe><br>`;
   };
+  var isUploading = false;
   var displayUploading = uploading => {
+    isUploading = uploading;
     var inputBox = document.querySelector('.setting-bar-center [type=text]');
     var smartInputBox = document.querySelector('#smartInput [type=text]');
-    if (!inputBox)
+    if (!inputBox) {
+      alert('おかしなことが起こった');
       return;
+    }
     smartInputBox.placeholder = inputBox.placeholder = (smartInputBox.disabled = inputBox.disabled = uploading) ? 'ファイルをアップロード中...' : '';
   };
   var processImage = async function (file) {
@@ -966,6 +970,8 @@ var inject = function () {
   var canUpload = () => /^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook);
   var upload = async file => {
     try {
+      if (isUploading)
+        return;
       if (!/^(?:image|video|audio|text)\//.test(file.type)) {
         showMessage('画像と動画と音声とテキストファイル以外アップロードできません');
         return;
