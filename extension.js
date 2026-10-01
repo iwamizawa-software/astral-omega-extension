@@ -971,7 +971,7 @@ var inject = function () {
   
     return new File([blob], "file.jpg", { type: "image/jpeg" });
   };
-  var canUpload = () => /^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook);
+  var canUpload = () => !document.getElementsByClassName('photo-select-button').length && /^https:\/\/(?:canary\.)?discord\.com\/api\/webhooks/.test(extensionConfig.webhook);
   var upload = async file => {
     try {
       if (isUploading)
@@ -1123,6 +1123,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         .setting-bar-center {width: 50%!important}
         .setting-bar-center .button:last-child{display:none}
       }
+      .uploadButton:has(~ .photo-select-button){display:none}
     `;
     if (!extensionConfig.whatifConsole)
       cssText += '#whatifConsoleButton{display:none}';
