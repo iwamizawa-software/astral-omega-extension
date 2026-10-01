@@ -1123,7 +1123,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         .setting-bar-center {width: 50%!important}
         .setting-bar-center .button:last-child{display:none}
       }
-      .uploadButton:has(~ .photo-select-button){display:none}
+      :has(.photo-select-button) .uploadButton{display:none}
     `;
     if (!extensionConfig.whatifConsole)
       cssText += '#whatifConsoleButton{display:none}';
