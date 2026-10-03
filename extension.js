@@ -839,6 +839,10 @@ var inject = function () {
         if (!listener.run) {
           try {
             var startTime = performance.now();
+            if (type !== '*' && !data?.[1]) {
+              console.log('知らない何かが起きた', type, data);
+              return true;
+            }
             var value = listener.apply(this, type === '*' ? data : [Bot.users[data[1].id]]);
             listener.maxExecutionTime = Math.max(performance.now() - startTime, listener.maxExecutionTime || 0);
           } catch (err) {
