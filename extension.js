@@ -1984,7 +1984,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }));
     div.append(createElement('span', {id:'extensionMessage'}));
     document.body.firstElementChild.before(div);
-    document.getElementById('extensionMessage').innerHTML = '';
+    document.getElementById('extensionMessage').innerHTML = '<a href="https://iwamizawa-software.github.io/astral-omega-extension/docs/uploader.html" target="_blank">アップローダーを引き続き使いたい方はクリック</a>';
     checkWebhook();
     querySelectorAsync('.panel-container').then(element => {
       var inputContainer = createElement('div', {id: 'smartInput'});
