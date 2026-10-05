@@ -730,12 +730,6 @@ var inject = function () {
         ${bot}
       })();
     `;
-    try {
-      new Function(code);
-    } catch (err) {
-      botError(err);
-      return;
-    }
     code = `try{${code}}catch(err){botError(err)}`;
     querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code, nonce})));
   };
