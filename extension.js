@@ -730,8 +730,13 @@ var inject = function () {
         ${bot}
       })();
     `;
-    code = `try{${code}}catch(err){botError(err)}`;
-    querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code, nonce})));
+    addEventListener('error', botError);
+    try {
+      querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code, nonce})));
+    } catch (err) {
+      botError(err);
+    }
+    removeEventListener('error', botError);
   };
   (function () {
     var timers = {}, id = 0, w = new Worker(URL.createObjectURL(new Blob(['var ids={};onmessage=function(e){if(e.data.length===1){clearTimeout(ids[e.data[0]]);delete ids[e.data[0]]}else{ids[e.data[1]]=self[e.data[0]](function(){postMessage(e.data[1])},e.data[2])}}'])));
