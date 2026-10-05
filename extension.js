@@ -721,6 +721,15 @@ var inject = function () {
         ${bot}
       })();
     `;
+    code = `try{${code}}catch(err){
+      var output = document.getElementById('extensionMessage');
+      var msg = 'BOTのコードでエラー出てるよ。詳しくはコンソールを見てください。';
+      if (output)
+        output.innerHTML = msg;
+      else
+        alert(msg);
+      console.error(err);
+    }`;
     querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code, nonce})));
   };
   (function () {
