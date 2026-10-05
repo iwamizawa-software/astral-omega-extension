@@ -626,13 +626,9 @@ var inject = function () {
     gameWindow.appendChild(document.createElement('p')).id = 'gameMessage';
   };
   var pendingCount = 0;
-  window.botError = err => {
-    var output = document.getElementById('extensionMessage');
-    var msg = 'BOTのコードでエラー出てるよ。詳しくはコンソールを見てください。';
-    if (output)
-      output.innerHTML = msg;
-    else
-      asyncAlert(msg);
+  window.botError = async err => {
+    var output = await querySelectorAsync('#extensionMessage'));
+    setTimeout(() => output.innerHTML = 'BOTのコードでエラー出てるよ。詳しくはコンソールを見てください。');
     console.error(err);
   };
   window.Bot = async function () {
