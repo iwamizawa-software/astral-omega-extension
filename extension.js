@@ -736,7 +736,7 @@ var inject = function () {
     } catch (err) {
       botError(err);
     }
-    removeEventListener('error', botError);
+    setTimeout(() => removeEventListener('error', botError));
   };
   (function () {
     var timers = {}, id = 0, w = new Worker(URL.createObjectURL(new Blob(['var ids={};onmessage=function(e){if(e.data.length===1){clearTimeout(ids[e.data[0]]);delete ids[e.data[0]]}else{ids[e.data[1]]=self[e.data[0]](function(){postMessage(e.data[1])},e.data[2])}}'])));
