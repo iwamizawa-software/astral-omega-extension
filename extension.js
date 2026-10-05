@@ -627,7 +627,7 @@ var inject = function () {
   };
   var pendingCount = 0;
   window.botError = async err => {
-    var output = await querySelectorAsync('#extensionMessage'));
+    var output = await querySelectorAsync('#extensionMessage');
     setTimeout(() => output.innerHTML = 'BOTのコードでエラー出てるよ。詳しくはコンソールを見てください。');
     console.error(err);
   };
