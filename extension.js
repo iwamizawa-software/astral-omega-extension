@@ -626,6 +626,15 @@ var inject = function () {
     gameWindow.appendChild(document.createElement('p')).id = 'gameMessage';
   };
   var pendingCount = 0;
+  window.botError = err => {
+    var output = document.getElementById('extensionMessage');
+    var msg = 'BOTのコードでエラー出てるよ。詳しくはコンソールを見てください。';
+    if (output)
+      output.innerHTML = msg;
+    else
+      alert(msg);
+    console.error(err);
+  };
   window.Bot = async function () {
     if (pendingCount++)
       return;
@@ -721,15 +730,13 @@ var inject = function () {
         ${bot}
       })();
     `;
-    code = `try{${code}}catch(err){
-      var output = document.getElementById('extensionMessage');
-      var msg = 'BOTのコードでエラー出てるよ。詳しくはコンソールを見てください。';
-      if (output)
-        output.innerHTML = msg;
-      else
-        alert(msg);
-      console.error(err);
-    }`;
+    try {
+      new Function(code);
+    } catch (err) {
+      botError(err);
+      return;
+    }
+    code = `try{${code}}catch(err){botError(err)}`;
     querySelectorAsync('head').then(head => head.append(createElement('script', {textContent: code, nonce})));
   };
   (function () {
