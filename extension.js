@@ -632,7 +632,7 @@ var inject = function () {
     if (output)
       output.innerHTML = msg;
     else
-      alert(msg);
+      asyncAlert(msg);
     console.error(err);
   };
   window.Bot = async function () {
