@@ -1328,18 +1328,18 @@ textarea{padding:5px;resize:none;font-size:16px}
           Object.assign(Bot.users[data[1].id], data[1]);
         if (data[1].id === Bot.myId && data[1].hasOwnProperty('stat'))
           lastStat = data[1].stat;
-        if (data[1].param) {
+        if (data[1].param && !data[1].param.startsWith('set-stat:')) {
           try {
             var obj = JSON.parse(data[1].param);
             if (obj.type !== 'encrypt')
-              return;
+              break;
             var myName = Bot.users[Bot.myId].name + Bot.users[Bot.myId].shiro;
             if (obj.nameList.includes(myName))
               fakeComment(data[1].id, '暗号化ルーム：' + SUBCHAT_URL + obj.nameList.map(name => 'name=' + encodeURIComponent(name)).join('&'), Object.assign({}, event));
+            return;
           } catch (err) {
             console.log(err);
           }
-          return;
         }
         break;
       case 'IG':
