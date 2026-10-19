@@ -6,7 +6,7 @@ var inject = function () {
     return;
   }
 
-  if (navigator.userAgent.includes('MonaChatApp') || location.href === 'https://monachat.tech/#/stamp-submissions')
+  if (navigator.userAgent.includes('MonaChatApp') || location.href.startsWith('https://monachat.tech/#/stamp-submissions'))
     return;
 
   var forceReload;
