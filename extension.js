@@ -1155,7 +1155,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.oldSmartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}.log-container .log-row *{font-size:var(--smart-log-size)!important;vertical-align: baseline}' : '#characterController,#smartInput{display:none}';
+    cssText += extensionConfig.oldSmartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}.log-container .log-row *{font-size:var(--smart-log-size)!important;vertical-align: baseline!important}' : '#characterController,#smartInput{display:none}';
     if (!extensionConfig.oldSmartMode && !extensionConfig.showSilence)
       cssText += '#silence,[for=silence]{display:none}';
     if (!canUpload())
@@ -2015,7 +2015,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         }
       });
       var smartSize = Math.max(16, Math.ceil(16000 / defaultWidth)) + 'px';
-      document.body.style.setProperty('--smart-log-size', 14 * Math.max(1, 1000 / defaultWidth) + 'px');
+      document.body.style.setProperty('--smart-log-size', 9 * Math.max(1, 1000 / defaultWidth) + 'px');
       input.setAttribute('style', 'flex-grow:1;font-size:' + smartSize);
       inputContainer.append(input);
       input.before(createElement('button', {
