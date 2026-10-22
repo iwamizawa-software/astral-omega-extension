@@ -2015,7 +2015,7 @@ textarea{padding:5px;resize:none;font-size:16px}
         }
       });
       var smartSize = Math.max(16, Math.ceil(16000 / defaultWidth)) + 'px';
-      document.body.style.setProperty('--smart-log-size', 12 * Math.max(1, 1000 / defaultWidth) + 'px');
+      document.body.style.setProperty('--smart-log-size', 9 * Math.max(1, 1000 / defaultWidth) + 'px');
       input.setAttribute('style', 'flex-grow:1;font-size:' + smartSize);
       inputContainer.append(input);
       input.before(createElement('button', {
