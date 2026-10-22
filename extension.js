@@ -1155,7 +1155,7 @@ textarea{padding:5px;resize:none;font-size:16px}
     }
     if (extensionConfig.hideTimestamp)
       cssText += '.log-row span:last-child{display: none}';
-    cssText += extensionConfig.oldSmartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}.log-container .log-row {font-size:var(--smart-log-size)!important}' : '#characterController,#smartInput{display:none}';
+    cssText += extensionConfig.oldSmartMode ? '#extensionMenu,#logWindowButton,.setting-bar-center{display:none}#smartInput{display:flex}.log-container .log-row *{font-size:var(--smart-log-size)!important;vertical-align: baseline}' : '#characterController,#smartInput{display:none}';
     if (!extensionConfig.oldSmartMode && !extensionConfig.showSilence)
       cssText += '#silence,[for=silence]{display:none}';
     if (!canUpload())
